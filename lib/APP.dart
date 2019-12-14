@@ -17,14 +17,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamProvider<User>(
       initialData: User.initial(),
-      create: (context) =>locator<FirestoreServiceAuth>().userController.stream,
+      create: (context) =>
+          locator<AuthService>().userController.stream,
       child: MaterialApp(
-        title: 'Flutter Demo',
+        title: 'SSDASD',
         theme: ThemeData(),
         initialRoute: 'login',
         onGenerateRoute: Router.generateRoute,
       ),
     );
   }
-
 }

@@ -11,7 +11,7 @@ GetIt locator = GetIt.instance;
 
 void setupLocator() {
   // Register services
-  locator.registerLazySingleton<FirestoreServiceAuth>(() => FirestoreServiceAuth());
+  locator.registerLazySingleton<AuthService>(() => AuthService());
   locator.registerLazySingleton<FirestoreServiceDatabase>(() => FirestoreServiceDatabase());
   locator.registerLazySingleton(() => Api());
   // Register models

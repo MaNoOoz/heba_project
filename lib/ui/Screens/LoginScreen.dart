@@ -6,6 +6,7 @@ import 'package:heba_project/ui/Views/BaseView.dart';
 import 'package:heba_project/ui/shared/app_colors.dart';
 import 'package:heba_project/ui/shared/text_styles.dart';
 import 'package:heba_project/ui/shared/ui_helpers.dart';
+import 'package:logger/logger.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -14,6 +15,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _controller = TextEditingController();
+  final log = Logger(printer: PrettyPrinter(
+    methodCount: 0,
+    errorMethodCount: 3,
+    lineLength: 30,
+    colors: true,
+    printEmojis: true,
+    printTime: false
+  ));
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +43,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.black),
                     ),
                     onPressed: () async {
+
                       var loginSuccess = await model.login(_controller.text);
                       if (loginSuccess) {
                         Navigator.pushNamed(context, '/');
+                      } else {
+                        print('Something wrong !! check login info');
                       }
                     },
                   )
@@ -44,14 +56,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
-}
-
-class MyFloating extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // TODO: implement build
-    return null;
   }
 }
 
@@ -76,8 +80,8 @@ class LoginHeader extends StatelessWidget {
 }
 
 class LoginTextField extends StatelessWidget {
-  final TextEditingController controller;
 
+  final TextEditingController controller;
   LoginTextField(this.controller);
 
   @override

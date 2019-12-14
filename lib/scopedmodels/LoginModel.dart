@@ -6,8 +6,7 @@ import 'BaseModel.dart';
 
 class LoginModel extends BaseModel {
 
-  final FirestoreServiceAuth _authenticationService =
-      locator<FirestoreServiceAuth>();
+  final AuthService _authenticationService = locator<AuthService>();
   String errorMessage;
 
   Future<bool> login(String userIdText) async {

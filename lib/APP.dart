@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamProvider<User>(
       initialData: User.initial(),
-      builder: (context) =>locator<FirestoreServiceAuth>().userController as Stream,
+      create: (context) =>locator<FirestoreServiceAuth>().userController.stream,
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(),

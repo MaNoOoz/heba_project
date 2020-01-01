@@ -1,16 +1,12 @@
-/*
- * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
- */
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/post_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
-import 'package:heba_project/service/constants.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Views/post_view.dart';
+import 'package:heba_project/ui/shared/constants.dart';
 import 'package:provider/provider.dart';
 
 import 'edit_profile_screen.dart';
@@ -29,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isFollowing = false;
   int _followerCount = 0;
   int _followingCount = 0;
-  List<Post> _posts = [];
+  List<Post2> _posts = [];
   int _displayPosts = 0; // 0 - grid, 1 - column
   User _profileUser;
 
@@ -68,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   _setupPosts() async {
-    List<Post> posts = await DatabaseService.getUserPosts(widget.userId);
+    List<Post2> posts = await DatabaseService.getUserPosts(widget.userId);
     setState(() {
       _posts = posts;
     });
@@ -226,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                user.name,
+                user.name ?? 'testName',
                 style: TextStyle(
                   fontSize: 18.0,
                   fontWeight: FontWeight.bold,
@@ -276,10 +272,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  _buildTilePost(Post post) {
+  _buildTilePost(Post2 post) {
     return GridTile(
       child: Image(
-        image: CachedNetworkImageProvider(post.imageUrl),
+        image: CachedNetworkImageProvider(post.imageUrls),
         fit: BoxFit.cover,
       ),
     );
@@ -322,18 +318,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        centerTitle: true,
         backgroundColor: Colors.white,
-        title: Text(
-          'Instagram',
-          style: TextStyle(
-            color: Colors.black,
-            fontFamily: 'Billabong',
-            fontSize: 35.0,
-          ),
+        leading: IconButton(
+            padding: EdgeInsets.only(left: 30.0),
+            onPressed: () => print('Menu'),
+            icon: Icon(Icons.menu),
+            iconSize: 30.0,
+            color: Colors.black45),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'assets/images/appicon.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.scaleDown,
+                scale: 3.0,
+              ),
+            ),
+            Text(
+              'هبــة',
+              style: TextStyle(
+                fontSize: 32,
+                color: Colors.black45,
+              ),
+            ),
+          ],
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.exit_to_app),
+            icon: Icon(Icons.exit_to_app, color: Colors.black45,),
             onPressed: AuthService.logout,
           ),
         ],
@@ -341,10 +358,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: FutureBuilder(
         future: usersRef.document(widget.userId).get(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.hasData) {
             return Center(
               child: CircularProgressIndicator(),
             );
+          } else if (!snapshot.hasError) {
+            print('u have error in future');
           }
           User user = User.fromDoc(snapshot.data);
           return ListView(
@@ -352,7 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildProfileInfo(user),
               _buildToggleButtons(),
               Divider(),
-              _buildDisplayPosts(),
+//              _buildDisplayPosts(),
             ],
           );
         },

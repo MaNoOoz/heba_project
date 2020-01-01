@@ -3,10 +3,10 @@
  */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:heba_project/models/post_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 
-import 'constants.dart';
+import '../ui/shared/constants.dart';
 
 class DatabaseService {
   static void updateUser(User user) {
@@ -16,22 +16,46 @@ class DatabaseService {
       'bio': user.bio,
     });
   }
-
   static Future<QuerySnapshot> searchUsers(String name) {
     Future<QuerySnapshot> users =
         usersRef.where('name', isGreaterThanOrEqualTo: name).getDocuments();
     return users;
   }
 
-  static void createPost(Post post) {
+//  static void createPost(Post2 post) {
+//    postsRef.document(post.authorId).collection('userPosts').add({
+//      'imageUrl': post.imageUrl,
+//      'caption': post.caption,
+//      'likeCount': post.likes,
+//      'authorId': post.authorId,
+//      'timestamp': post.timestamp,
+//    });
+//  }
+
+  /// ===============================================================================
+  static void createPost2(Post2 post) {
     postsRef.document(post.authorId).collection('userPosts').add({
-      'imageUrl': post.imageUrl,
-      'caption': post.caption,
-      'likeCount': post.likeCount,
+      'imagesUrls': post.imageUrls,
+      'hName': post.hName,
+      'hDesc': post.hDesc,
+      'hLocation': post.hLocation,
       'authorId': post.authorId,
       'timestamp': post.timestamp,
     });
   }
+
+  static Future<List<Post2>> getUserPosts2(String userId) async {
+    QuerySnapshot userPostsSnapshot = await postsRef
+        .document(userId)
+        .collection('userPosts')
+        .orderBy('timestamp', descending: true)
+        .getDocuments();
+    List<Post2> posts =
+    userPostsSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
+    return posts;
+  }
+
+  /// ===============================================================================
 
   static void followUser({String currentUserId, String userId}) {
     // Add user to current user's following collection
@@ -99,25 +123,35 @@ class DatabaseService {
     return followersSnapshot.documents.length;
   }
 
-  static Future<List<Post>> getFeedPosts(String userId) async {
+//  static Future<List<Post>> getFeedPosts(String userId) async {
+//    QuerySnapshot feedSnapshot = await feedsRef
+//        .document(userId)
+//        .collection('userFeed')
+//        .orderBy('timestamp', descending: true)
+//        .getDocuments();
+//    List<Post> posts =
+//        feedSnapshot.documents.map((doc) => Post.fromDoc(doc)).toList();
+//    return posts;
+//  }
+  static Future<List<Post2>> getFeedPosts2(String userId) async {
     QuerySnapshot feedSnapshot = await feedsRef
         .document(userId)
         .collection('userFeed')
         .orderBy('timestamp', descending: true)
         .getDocuments();
-    List<Post> posts =
-        feedSnapshot.documents.map((doc) => Post.fromDoc(doc)).toList();
+    List<Post2> posts =
+    feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
     return posts;
   }
 
-  static Future<List<Post>> getUserPosts(String userId) async {
+  static Future<List<Post2>> getUserPosts(String userId) async {
     QuerySnapshot userPostsSnapshot = await postsRef
         .document(userId)
         .collection('userPosts')
         .orderBy('timestamp', descending: true)
         .getDocuments();
-    List<Post> posts =
-        userPostsSnapshot.documents.map((doc) => Post.fromDoc(doc)).toList();
+    List<Post2> posts =
+    userPostsSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
     return posts;
   }
 
@@ -129,7 +163,7 @@ class DatabaseService {
     return User();
   }
 
-  static void likePost({String currentUserId, Post post}) {
+  static void likePost({String currentUserId, Post2 post}) {
     DocumentReference postRef = postsRef
         .document(post.authorId)
         .collection('userPosts')
@@ -145,7 +179,7 @@ class DatabaseService {
     });
   }
 
-  static void unlikePost({String currentUserId, Post post}) {
+  static void unlikePost({String currentUserId, Post2 post}) {
     DocumentReference postRef = postsRef
         .document(post.authorId)
         .collection('userPosts')
@@ -166,7 +200,7 @@ class DatabaseService {
     });
   }
 
-  static Future<bool> didLikePost({String currentUserId, Post post}) async {
+  static Future<bool> didLikePost({String currentUserId, Post2 post}) async {
     DocumentSnapshot userDoc = await likesRef
         .document(post.id)
         .collection('postLikes')

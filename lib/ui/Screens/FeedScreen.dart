@@ -5,7 +5,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts_arabic/fonts.dart';
-import 'package:heba_project/models/post_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Views/post_view.dart';
@@ -22,7 +22,13 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  List<Post> _posts = [];
+//  @override
+//  Widget build(BuildContext context) {
+//    // TODO: implement build
+//    return Text('F');
+//  }
+
+  List<Post2> _posts = [];
 
   @override
   void initState() {
@@ -31,7 +37,8 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   _setupFeed() async {
-    List<Post> posts = await DatabaseService.getFeedPosts(widget.currentUserId);
+    List<Post2> posts =
+    await DatabaseService.getFeedPosts2(widget.currentUserId);
     setState(() {
       _posts = posts;
     });
@@ -53,15 +60,19 @@ class _FeedScreenState extends State<FeedScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Image.asset(
-              'assets/images/myIcon.png',
+              'assets/images/appicon.png',
+              width: 32,
+              height: 32,
               fit: BoxFit.scaleDown,
               scale: 3.0,
             ),
             UIHelper.horizontalSpace(10),
             Text(
-              'HEBA-Project',
+              'هبــة',
               style: TextStyle(
-                  color: Colors.black45, fontFamily: ArabicFonts.Cairo),
+                  fontSize: 32,
+                  color: Colors.black45,
+                  fontFamily: ArabicFonts.Cairo),
             ),
           ],
         ),
@@ -92,7 +103,7 @@ class _FeedScreenState extends State<FeedScreen> {
         child: ListView.builder(
           itemCount: _posts.length,
           itemBuilder: (BuildContext context, int index) {
-            Post post = _posts[index];
+            Post2 post = _posts[index];
             return FutureBuilder(
               future: DatabaseService.getUserWithId(post.authorId),
               builder: (BuildContext context, AsyncSnapshot snapshot) {

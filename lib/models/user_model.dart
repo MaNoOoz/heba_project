@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class User {
@@ -18,9 +22,9 @@ class User {
   factory User.fromDoc(DocumentSnapshot doc) {
     return User(
       id: doc.documentID,
-      name: doc['name'],
-      profileImageUrl: doc['profileImageUrl'],
-      email: doc['email'],
+      name: doc['name'] ?? 'no Name',
+      profileImageUrl: doc['profileImageUrl'] ?? 'NoPic',
+      email: doc['email'] ?? 'NoEmail',
       bio: doc['bio'] ?? '',
     );
   }

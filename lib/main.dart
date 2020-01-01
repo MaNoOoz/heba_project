@@ -1,17 +1,22 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:heba_project/ui/Screens/FeedScreen.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
-import 'package:heba_project/ui/shared/themes.dart';
+import 'package:heba_project/ui/shared/AppNavigation.dart';
+import 'package:heba_project/ui/shared/UtilsImporter.dart';
 import 'package:provider/provider.dart';
 
 import 'models/user_data.dart';
 
 void main() {
-//  setupLocator();
   runApp(MyApp());
 }
 
@@ -24,25 +29,41 @@ class MyApp extends StatelessWidget {
           Provider.of<UserData>(context).currentUserId = snapshot.data.uid;
           return HomeScreen();
         } else {
-          return LoginScreen();
+          return LoginScreen(
+            primaryColor: Color(0xFF4aa0d5),
+            backgroundColor: Colors.white,
+            backgroundImage: new AssetImage("assets/images/building.gif"),
+          );
         }
       },
     );
   }
 
-  /// This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    /// Force DeviceOrientation
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return ChangeNotifierProvider(
       create: (context) => UserData(),
       child: MaterialApp(
         title: 'Heba Project',
         debugShowCheckedModeBanner: false,
-        theme: themeData,
+        theme: UtilsImporter().uStyleUtils.themeData,
         home: _getScreenId(),
+        onGenerateRoute: Router.generateRoute,
         routes: {
           LoginScreen.id: (context) => LoginScreen(),
-          SignupScreen.id: (context) => SignupScreen(),
+
+          SignupScreen.id: (context) =>
+              SignupScreen(
+//                primaryColor: Color(0xFF4aa0d5),
+//                backgroundColor: Colors.white,
+//                backgroundImage: new AssetImage("assets/images/building.gif"),
+              ),
+
           FeedScreen.id: (context) => FeedScreen(),
         },
       ),

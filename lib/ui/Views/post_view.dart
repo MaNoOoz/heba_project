@@ -1,16 +1,17 @@
-import 'dart:async';
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
 
 import 'package:animator/animator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/post_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
-import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 
 class PostView extends StatefulWidget {
   final String currentUserId;
-  final Post post;
+  final Post2 post;
   final User author;
 
   PostView({this.currentUserId, this.post, this.author});
@@ -27,55 +28,55 @@ class _PostViewState extends State<PostView> {
   @override
   void initState() {
     super.initState();
-    _likeCount = widget.post.likeCount;
-    _initPostLiked();
+//    _likeCount = widget.post.;
+//    _initPostLiked();
   }
 
-  @override
-  void didUpdateWidget(PostView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.post.likeCount != widget.post.likeCount) {
-      _likeCount = widget.post.likeCount;
-    }
-  }
+//  @override
+//  void didUpdateWidget(PostView oldWidget) {
+//    super.didUpdateWidget(oldWidget);
+//    if (oldWidget.post.likes != widget.post.likes) {
+//      _likeCount = widget.post.likes;
+//    }
+//  }
 
-  _initPostLiked() async {
-    bool isLiked = await DatabaseService.didLikePost(
-      currentUserId: widget.currentUserId,
-      post: widget.post,
-    );
-    if (mounted) {
-      setState(() {
-        _isLiked = isLiked;
-      });
-    }
-  }
+//  _initPostLiked() async {
+//    bool isLiked = await DatabaseService.didLikePost(
+//      currentUserId: widget.currentUserId,
+//      post: widget.post,
+//    );
+//    if (mounted) {
+//      setState(() {
+//        _isLiked = isLiked;
+//      });
+//    }
+//  }
 
-  _likePost() {
-    if (_isLiked) {
-      // Unlike Post
-      DatabaseService.unlikePost(
-          currentUserId: widget.currentUserId, post: widget.post);
-      setState(() {
-        _isLiked = false;
-        _likeCount = _likeCount - 1;
-      });
-    } else {
-      // Like Post
-      DatabaseService.likePost(
-          currentUserId: widget.currentUserId, post: widget.post);
-      setState(() {
-        _heartAnim = true;
-        _isLiked = true;
-        _likeCount = _likeCount + 1;
-      });
-      Timer(Duration(milliseconds: 350), () {
-        setState(() {
-          _heartAnim = false;
-        });
-      });
-    }
-  }
+//  _likePost() {
+//    if (_isLiked) {
+//      // Unlike Post
+//      DatabaseService.unlikePost(
+//          currentUserId: widget.currentUserId, post: widget.post);
+//      setState(() {
+//        _isLiked = false;
+//        _likeCount = _likeCount - 1;
+//      });
+//    } else {
+//      // Like Post
+////      DatabaseService.likePost(
+////          currentUserId: widget.currentUserId, post: widget.post);
+//      setState(() {
+//        _heartAnim = true;
+//        _isLiked = true;
+//        _likeCount = _likeCount + 1;
+//      });
+//      Timer(Duration(milliseconds: 350), () {
+//        setState(() {
+//          _heartAnim = false;
+//        });
+//      });
+//    }
+//  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +90,7 @@ class _PostViewState extends State<PostView> {
                   builder: (_) =>
                       ProfileScreen(
                         currentUserId: widget.currentUserId,
-                        userId: widget.post.authorId,
+                        userId: widget.post.id.toString(),
                       ),
                 ),
               ),
@@ -121,7 +122,7 @@ class _PostViewState extends State<PostView> {
           ),
         ),
         GestureDetector(
-          onDoubleTap: _likePost,
+//          onDoubleTap: _likePost,
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
@@ -132,7 +133,8 @@ class _PostViewState extends State<PostView> {
                     .width,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: CachedNetworkImageProvider(widget.post.imageUrl),
+//                    image: CachedNetworkImageProvider(widget.post.imageUrl),
+                    image: null,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -171,7 +173,8 @@ class _PostViewState extends State<PostView> {
                     )
                         : Icon(Icons.favorite_border),
                     iconSize: 30.0,
-                    onPressed: _likePost,
+//                    onPressed: _likePost,
+                    onPressed: () {},
                   ),
                   IconButton(
                     icon: Icon(Icons.comment),
@@ -208,7 +211,7 @@ class _PostViewState extends State<PostView> {
                   ),
                   Expanded(
                     child: Text(
-                      widget.post.caption,
+                      widget.post.hDesc,
                       style: TextStyle(
                         fontSize: 16.0,
                       ),

@@ -104,7 +104,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _users == null
               ? Center(
                   child: Text('Search for a user',
-                      style: UtilsImporter().styleUtils.loginTextFieldStyle()),
+                      style: UtilsImporter().uStyleUtils.loginTextFieldStyle()),
                 )
               : FutureBuilder(
                   future: _users,

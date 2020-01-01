@@ -1,12 +1,22 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
-
-import 'SignupScreen.dart';
+import 'package:heba_project/ui/Screens/SignupScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   static final String id = 'login_screen';
+  final Color primaryColor;
+  final Color backgroundColor;
+  final AssetImage backgroundImage;
+
+  const LoginScreen(
+      {Key key, this.primaryColor, this.backgroundColor, this.backgroundImage})
+      : super(key: key);
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -16,195 +26,320 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   String _email, _password;
 
-  _submit() {
+  /// Methods ================================================================================
+  _LoginToTheApp() {
+    print('Called');
     if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
-      // Logging in the user w/ Firebase
       AuthService.login(_email, _password);
+
+//      await loginAction();
+    } else {
+      print('some thing wrong with form');
     }
   }
 
-//  TextEditingController _controller = TextEditingController();
-//
-//  final log = Logger(printer: PrettyPrinter(
-//    methodCount: 0,
-//    errorMethodCount: 3,
-//    lineLength: 30,
-//    colors: true,
-//    printEmojis: true,
-//    printTime: false
-//  ));
+//  Future<bool> loginAction() async {
+//    //replace the below line of code with your login request
+//    // Logging in the user w/ Firebase
+//    await new Future.delayed(const Duration(seconds: 2));
+//    return true;
+//  }
+
+  /// Widgets ================================================================================
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery
-              .of(context)
-              .size
-              .height,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return SafeArea(
+      child: Scaffold(
+        body: ListView(children: <Widget>[
+          Container(
+            height: MediaQuery
+                .of(context)
+                .size
+                .height,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
 
-            children: <Widget>[
-              Text(
-                'HEBA PROJECT',
-                style: TextStyle(
-                  fontFamily: ArabicFonts.Cairo,
-                  fontSize: 50.0,
+                /// Image
+                SizedBox(
+                  child: Image(
+                    image: widget.backgroundImage,
+                    fit: BoxFit.fill,
+                  ),
                 ),
-              ),
-              Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 30.0,
-                        vertical: 10.0,
-                      ),
-                      child: TextFormField(
-                        decoration: InputDecoration(labelText: 'Email'),
-                        validator: (input) =>
-                        !input.contains('@')
-                            ? 'Please enter a valid email'
-                            : null,
-                        onSaved: (input) => _email = input,
-                      ),
+
+                /// AppName
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Text(
+                    ' هــبـة ',
+                    style: TextStyle(
+                      fontFamily: ArabicFonts.Cairo,
+                      fontSize: 32.0,
+                      letterSpacing: 5,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
                     ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 30.0,
-                        vertical: 10.0,
-                      ),
-                      child: TextFormField(
-                        decoration: InputDecoration(labelText: 'Password'),
-                        validator: (input) =>
-                        input.length < 6
-                            ? 'Must be at least 6 characters'
-                            : null,
-                        onSaved: (input) => _password = input,
-                        obscureText: true,
-                      ),
+                  ),
+                ),
+
+                /// Form
+                Flexible(
+                  flex: 4,
+                  child: FormUi(),
+                ),
+
+                /// login btn
+                Flexible(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10.0),
+                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: new Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        new Expanded(
+                          child: FlatButton(
+                              shape: new RoundedRectangleBorder(
+                                  borderRadius:
+                                  new BorderRadius.circular(30.0)),
+                              splashColor: Colors.grey,
+                              color: Colors.grey,
+                              child: new Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Center(
+                                    child: new Padding(
+                                      padding:
+                                      const EdgeInsets.only(left: 20.0),
+                                      child: Text(
+                                        "LOGIN",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                  Center(
+                                    child: Icon(
+                                      Icons.arrow_forward,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                ],
+                              ),
+                              onPressed: () {
+                                _LoginToTheApp();
+                              }),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 20.0),
-                    Container(
-                      width: 250.0,
-                      child: FlatButton(
-                        onPressed: _submit,
-                        color: Colors.blue,
-                        padding: EdgeInsets.all(10.0),
-                        child: Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.0,
+                  ),
+                ),
+
+                /// Register btn
+                Flexible(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10.0),
+                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: new Row(
+                      children: <Widget>[
+                        new Expanded(
+                          child: FlatButton(
+                            shape: new RoundedRectangleBorder(
+                                borderRadius: new BorderRadius.circular(30.0)),
+                            color: Colors.transparent,
+                            child: Container(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              alignment: Alignment.center,
+                              child: Text(
+                                "DON'T HAVE AN ACCOUNT?",
+                                style: TextStyle(color: Colors.blueAccent),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.pushNamed(context, SignupScreen.id);
+                            },
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    SizedBox(height: 20.0),
-                    Container(
-                      width: 250.0,
-                      child: FlatButton(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, SignupScreen.id),
-                        color: Colors.blue,
-                        padding: EdgeInsets.all(10.0),
-                        child: Text(
-                          'Go to Signup',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+
+                /// facebook btn  + google btn
+//                Flexible(
+//                  child: Container(
+//                    margin: const EdgeInsets.only(top: 10.0),
+//                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+//                    child: Row(
+//                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                      children: <Widget>[
+//                        Expanded(
+//                          flex: 2,
+//                          child: FlatButton(
+//                            shape: new RoundedRectangleBorder(
+//                                borderRadius: new BorderRadius.circular(30.0)),
+//                            splashColor: Colors.white,
+//                            color: Color(0xff3B5998),
+//                            child: new Row(
+//                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                              children: <Widget>[
+//                                Icon(
+//                                  FontAwesomeIcons.facebookF,
+//                                  color: Colors.white,
+//                                ),
+//                                Padding(
+//                                  padding: const EdgeInsets.only(left: 2.0),
+//                                  child: Text(
+//                                    "FACEBOOK",
+//                                    style: TextStyle(color: Colors.white),
+//                                  ),
+//                                ),
+//                              ],
+//                            ),
+//                            onPressed: () => {},
+//                          ),
+//                        ),
+//                        UIHelper.horizontalSpace(10),
+//                        Expanded(
+//                          flex: 2,
+//                          child: FlatButton(
+//                            shape: new RoundedRectangleBorder(
+//                                borderRadius: new BorderRadius.circular(30.0)),
+//                            splashColor: Colors.red[200],
+//                            color: Colors.red,
+//                            child: Row(
+//                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                              children: <Widget>[
+//                                Icon(
+//                                  FontAwesomeIcons.google,
+//                                  color: Colors.white,
+//                                ),
+//                                Padding(
+//                                  padding: const EdgeInsets.only(left: 2.0),
+//                                  child: Text(
+//                                    "GOOGLE",
+//                                    style: TextStyle(color: Colors.white),
+//                                  ),
+//                                ),
+//                              ],
+//                            ),
+//                            onPressed: () => {},
+//                          ),
+//                        ),
+//                      ],
+//                    ),
+//                  ),
+//                ),
+              ],
+            ),
           ),
-        ),
+        ]),
+      ),
+    );
+  }
+
+  Widget FormUi() {
+    return Form(
+      key: _formKey,
+      child: ListView(
+        children: <Widget>[
+
+          ///
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.grey.withOpacity(0.5),
+                width: 1.0,
+              ),
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            margin:
+            const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+            child: Row(
+              children: <Widget>[
+                Padding(
+                  padding:
+                  EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                  child: Icon(
+                    Icons.person_outline,
+                    color: Colors.grey,
+                  ),
+                ),
+                Container(
+                  height: 30.0,
+                  width: 1.0,
+                  color: Colors.grey.withOpacity(0.5),
+                  margin: const EdgeInsets.only(left: 00.0, right: 10.0),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      border: InputBorder.none,
+                      hintText: 'Enter your email',
+                    ),
+                    validator: (input) =>
+                    !input.contains('@')
+                        ? 'Please enter a valid email'
+                        : null,
+                    onSaved: (input) => _email = input,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.grey.withOpacity(0.5),
+                width: 1.0,
+              ),
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            margin:
+            const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+            child: Row(
+              children: <Widget>[
+                Padding(
+                  padding:
+                  EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                  child: Icon(
+                    Icons.lock_open,
+                    color: Colors.grey,
+                  ),
+                ),
+                Container(
+                  height: 30.0,
+                  width: 1.0,
+                  color: Colors.grey.withOpacity(0.5),
+                  margin: const EdgeInsets.only(left: 00.0, right: 10.0),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      border: InputBorder.none,
+                      hintText: 'Enter your email',
+                    ),
+                    validator: (input) =>
+                    input.length < 6
+                        ? 'Must be at least 6 characters'
+                        : null,
+                    onSaved: (input) => _password = input,
+                    obscureText: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
-//  @override
-//  Widget build(BuildContext context) {
-//    return BaseView<LoginModel>(
-//      builder: (context, model, child) => Scaffold(
-//        backgroundColor: backgroundColor,
-//        body: Column(
-//          mainAxisAlignment: MainAxisAlignment.center,
-//          children: <Widget>[
-//            LoginHeader(
-//                validationMessage: model.errorMessage, controller: _controller),
-//            model.state == ViewState.Busy
-//                ? CircularProgressIndicator()
-//                : FlatButton(
-//                    color: Colors.white,
-//                    child: Text(
-//                      'Login',
-//                      style: TextStyle(color: Colors.black),
-//                    ),
-//                    onPressed: () async {
-//
-//                      var loginSuccess = await model.login(_controller.text);
-//                      if (loginSuccess) {
-//                        Navigator.pushNamed(context, '/');
-//                      } else {
-//                        print('Something wrong !! check login info');
-//                      }
-//                    },
-//                  )
-//          ],
-//        ),
-//      ),
-//    );
-//  }
-//}
-//
-//class LoginHeader extends StatelessWidget {
-//  final TextEditingController controller;
-//  final String validationMessage;
-//
-//  LoginHeader({@required this.controller, this.validationMessage});
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    return Column(children: <Widget>[
-//      Text('Login', style: headerStyle),
-//      UIHelper.verticalSpaceMedium(),
-//      Text('Enter a number between 1 - 10', style: subHeaderStyle),
-//      LoginTextField(controller),
-//      this.validationMessage != null
-//          ? Text(validationMessage, style: TextStyle(color: Colors.red))
-//          : Container()
-//    ]);
-//  }
-//}
-//
-//class LoginTextField extends StatelessWidget {
-//
-//  final TextEditingController controller;
-//  LoginTextField(this.controller);
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    return Container(
-//      padding: EdgeInsets.symmetric(horizontal: 15.0),
-//      margin: EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
-//      height: 50.0,
-//      alignment: Alignment.centerLeft,
-//      decoration: BoxDecoration(
-//          color: Colors.white, borderRadius: BorderRadius.circular(10.0)),
-//      child: TextField(
-//          decoration: InputDecoration.collapsed(hintText: 'User Id'),
-//          controller: controller),
-//    );
-//  }
-//}

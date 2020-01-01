@@ -9,7 +9,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-import 'constants.dart';
+import '../ui/shared/constants.dart';
 
 class StorageService {
   static Future<String> uploadUserProfileImage(

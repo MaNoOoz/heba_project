@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 //
 //import 'package:flutter/material.dart';
 //import 'package:heba_project/models/comment.dart';
@@ -5,7 +9,7 @@
 //import 'package:heba_project/service/ViewState.dart';
 //import 'package:heba_project/ui/Views/BaseView.dart';
 //import 'package:heba_project/ui/shared/app_colors.dart';
-//import 'package:heba_project/ui/shared/ui_helpers.dart';
+//import 'package:heba_project/ui/shared/UI_Helpers.dart';
 //
 //class Comments extends StatelessWidget {
 //  final int postId;

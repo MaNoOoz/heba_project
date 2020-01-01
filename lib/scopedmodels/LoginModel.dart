@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 //import 'package:heba_project/service/FirestoreServiceAuth.dart';
 //import 'package:heba_project/service/ViewState.dart';
 //import 'package:heba_project/service/service_loceter.dart';

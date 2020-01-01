@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 //import 'package:flutter/material.dart';
 //import 'package:heba_project/models/post.dart';
 //

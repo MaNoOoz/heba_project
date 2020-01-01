@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 import 'package:flutter/material.dart';
 
 /// Contains useful functions to reduce boilerplate code
 class UIHelper {
+
   // Vertical spacing constants. Adjust to your liking.
   static const double _VerticalSpaceSmall = 10.0;
   static const double _VerticalSpaceMedium = 20.0;
@@ -31,6 +36,12 @@ class UIHelper {
   static Widget verticalSpace(double height) {
     return Container(height: height);
   }
+
+  /// Returns a vertical space equal to the [height] supplied with color
+  static Widget verticalSpaceWithGrayColor(double height, Color color) {
+    return Container(height: height, color: color,);
+  }
+
 
   /// Returns a vertical space with height set to [_HorizontalSpaceSmall]
   static Widget horizontalSpaceSmall() {

@@ -1,7 +1,17 @@
+/*
+ * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ */
+
 import 'package:flutter/material.dart';
+import 'package:google_fonts_arabic/fonts.dart';
 
 import 'StringUtils.dart';
 import 'UtilsImporter.dart';
+
+const bold = TextStyle(fontWeight: FontWeight.bold);
+const link = TextStyle(color: Color(0xFF3F729B));
+const headerStyle = TextStyle(fontSize: 35, fontWeight: FontWeight.w900);
+const subHeaderStyle = TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500);
 
 class StyleUtils {
   /// ========================================================================================================
@@ -32,8 +42,7 @@ class StyleUtils {
   }
 
   /// ========================================================================================================
-  InputDecoration textFieldDecorationCircle(
-      {String hint, String lable, Icon icon}) {
+  InputDecoration textFieldDecorationCircle({String hint, String lable, Icon icon}) {
     return InputDecoration(
       icon: icon,
       contentPadding: EdgeInsets.all(16),
@@ -68,7 +77,7 @@ class StyleUtils {
   /// ========================================================================================================
   TextStyle segmanetTextStyle() {
     return TextStyle(
-        fontFamily: UtilsImporter().stringUtils.cairo,
+        fontFamily: UtilsImporter().uStringUtils.cairo,
         color: Colors.black87,
         fontWeight: FontWeight.w700,
         fontSize: 16);
@@ -90,12 +99,20 @@ class StyleUtils {
         fontSize: 28);
   }
 
-  TextStyle AppTextStyle() {
-    return TextStyle(
-        color: Colors.black45,
-        fontFamily: StringUtils().cairo,
-        letterSpacing: 3.0,
-        fontWeight: FontWeight.bold,
-        fontSize: 28);
-  }
+  /// ========================================================================================================
+
+  ThemeData themeData = ThemeData(
+    primaryColor: Colors.blue,
+    accentColor: Colors.blueAccent[500],
+    fontFamily: ArabicFonts.Cairo,
+    textTheme: TextTheme(
+        display1: TextStyle(fontSize: 14
+            , wordSpacing: 2, fontFamily: ArabicFonts.Cairo)),
+  );
+
+/// ========================================================================================================
+
+
+/// ========================================================================================================
+
 }

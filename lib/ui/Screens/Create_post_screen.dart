@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +10,7 @@ import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
+import 'package:heba_project/ui/shared/CommanUtils.dart';
 import 'package:heba_project/ui/shared/UtilsImporter.dart';
 import 'package:heba_project/ui/shared/ui_helpers.dart';
 import 'package:heba_project/widgets/CustomDialog.dart';
@@ -19,13 +23,28 @@ class CreatePostScreen extends StatefulWidget {
   _CreatePostScreenState createState() => _CreatePostScreenState();
 }
 
-class _CreatePostScreenState extends State<CreatePostScreen> {
-  /// Multi Image Picker ====================================================
-  List<Asset> readyToUploadImages = List<Asset>();
-  Stream<Asset> readyToUploadImages2;
+class _CreatePostScreenState extends State<CreatePostScreen>
+    with SingleTickerProviderStateMixin {
+  /// CustomProgressBar ====================================================
+  /// https://mrflutter.com/how-to-use-progress-indicators-in-flutter/
+  bool _loading;
+  double _progressValue;
 
+  /// CustomProgressBar ====================================================
+//  double _percentage;
+//  double _nextPercentage;
+//  Timer _timer;
+//  AnimationController _progressAnimationController;
+//  bool _progressDone;
+
+  /// Multi Image Picker ====================================================
+  List<Asset> _readyToUploadImages = List<Asset>();
+
+  Stream<Asset> _readyToUploadImages2; // test
   var imageUrl2;
   var uploadingState;
+  var mSelectedImage;
+  var mImagesPath;
 
   /// My Posts ====================================================
   var userId;
@@ -52,6 +71,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   void initState() {
     super.initState();
+    _loading = false;
+    _progressValue = 0.0;
+
+//
+//    /// ===========================
+//    _percentage = 0.0;
+//    _nextPercentage = 0.0;
+//    _timer = null;
+//    _progressDone = false;
+//
+//    /// ============================
+
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
     _textFieldControllerLoca = TextEditingController();
@@ -180,7 +211,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     IconButton(
                       splashColor: Colors.teal,
                       iconSize: 42.0,
-                      icon: readyToUploadImages.length > 0
+                      icon: _readyToUploadImages.length > 0
                           ? Icon(
                         Icons.edit,
                         color: Colors.blueAccent,
@@ -203,7 +234,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
           UIHelper.verticalSpace(10),
 
-//          buildGridView2(),
+          /// Buttons
           _Buttons(),
 //todo Fix Must not be null Error
 //          FutureBuilder<bool>(
@@ -243,8 +274,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   /// Methods ==========================================================================================
+  /// helpers
+  _checkConnection() async {
+    bool connectionResult = await CommanUtils.checkConnection();
+    CommanUtils.showAlert(context, connectionResult ? "OK" : "internet needed");
+  }
+
   /// Form
-  bool _validateInputs() {
+  Future<bool> _validateInputs() async {
     if (_formkey.currentState.validate()) {
 //    If all data are correct then save data to out variables
       _formkey.currentState.save();
@@ -273,7 +310,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       resultList = await MultiImagePicker.pickImages(
         maxImages: 5,
         enableCamera: true,
-        selectedAssets: readyToUploadImages,
+        selectedAssets: _readyToUploadImages,
         cupertinoOptions: CupertinoOptions(takePhotoIcon: "chat"),
         materialOptions: MaterialOptions(
           actionBarColor: "#abcdef",
@@ -294,13 +331,25 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (!mounted) return;
 
     setState(() {
-      readyToUploadImages = resultList;
+      _readyToUploadImages = resultList;
       _error = error;
     });
   }
 
-  var mSelectedImage;
-  var listOfImageLinks = [];
+  Future<dynamic> _listOfImageLinks() async {
+    var listOfImageLinks = [5];
+    await for (var imageFile in _readyToUploadImages2) {
+      mSelectedImage = await editedImages(imageFile);
+      print('From _listOfImageLinks() : image identifier is : ${imageFile
+          .identifier}');
+      print("From _listOfImageLinks() : mUploadedImagePath : ${mSelectedImage
+          .toString()}");
+    }
+    listOfImageLinks.add(mSelectedImage);
+
+//    listOfImageLinks.add(mSelectedImage);
+    return listOfImageLinks;
+  }
 
 //  Future UploadImageList() async {
 //
@@ -337,6 +386,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Widget FormUI() {
     return Column(
       children: <Widget>[
+
         /// Name OF Heba
         Padding(
           padding: const EdgeInsets.all(8.0),
@@ -349,8 +399,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
               hint: UtilsImporter().uStringUtils.hintName,
               lable: UtilsImporter().uStringUtils.lableFullname1,
-                  icon: Icon(Icons.card_giftcard),
-                ),
+              icon: Icon(Icons.card_giftcard),
+            ),
             textDirection: TextDirection.rtl,
             validator: UtilsImporter().uCommanUtils.validateName,
             onSaved: (String val) {
@@ -372,8 +422,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
               hint: UtilsImporter().uStringUtils.hintDesc,
               lable: UtilsImporter().uStringUtils.lableFullname2,
-                  icon: Icon(Icons.description),
-                ),
+              icon: Icon(Icons.description),
+            ),
             textDirection: TextDirection.rtl,
             validator: UtilsImporter().uCommanUtils.validateDesc,
             onSaved: (String val) {
@@ -394,8 +444,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
               hint: UtilsImporter().uStringUtils.hintLocation,
               lable: UtilsImporter().uStringUtils.lableFullname3,
-                  icon: Icon(Icons.not_listed_location),
-                ),
+              icon: Icon(Icons.not_listed_location),
+            ),
             textDirection: TextDirection.rtl,
             validator: UtilsImporter().uCommanUtils.validateLocation,
             onSaved: (String val) {
@@ -416,8 +466,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       shrinkWrap: true,
       physics: ScrollPhysics(),
       // to disable GridView's scrolling
-      children: List.generate(readyToUploadImages.length, (index) {
-        Asset images = readyToUploadImages[index];
+      children: List.generate(_readyToUploadImages.length, (index) {
+        Asset images = _readyToUploadImages[index];
         return Center(
           child: AssetThumb(
             asset: images,
@@ -430,7 +480,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   ///  Buttons
-  Widget _Buttons() {
+  _Buttons() {
     return Padding(
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
@@ -445,50 +495,61 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           UIHelper.verticalSpace(10),
 
           ///  Submit Btn
-          FlatButton(
+          OutlineButton(
             shape: new RoundedRectangleBorder(
                 borderRadius: new BorderRadius.circular(10.0)),
-            splashColor: Colors.white,
-            color: Colors.amber,
+            splashColor: Colors.lightGreen,
+            color: Colors.green,
             child: new Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 Center(
                   child: new Padding(
                     padding: const EdgeInsets.only(left: 20.0),
-                    child: Text(
-                      "إضافة الإعلان",
-                      style: TextStyle(
-                          fontSize: 22.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                    child: Center(
+                      child: Text(
+                        "إضافة الإعلان",
+                        style: TextStyle(
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black45),
+                      ),
                     ),
                   ),
                 ),
-                Center(
-                  child: Icon(
-                    Icons.image,
-                    color: Colors.white,
-                  ),
-                )
+//                Center(
+//                  child: Icon(
+//                    Icons.image,
+//                    color: Colors.black,
+//                  ),
+//                )
               ],
             ),
             onPressed: () async {
-              await _SendToServer();
-              showDialog();
+              setState(() {
+                _loading = !_loading;
+//                _updateProgress();
+              });
+              var sdsd = await _SendToServer();
+
+//              CommanUtils.showAlertForConfirmAddData(context," Are You Sure U Wants To Add Heba",sdsd);
+//              showDialog();
 //              print("onPressed Triggerd \n"
 //                  "Post Object :  name : $_name desc : $_desc location: $_location \n"
 //                  " images pathes : ${listOfImageLinks.length} "
 //                  "Selected Images List : ${readyToUploadImages.length} \n");
 
-//              Navigator.push(
-//                context,
-//                MaterialPageRoute<void>(
-//                  builder: (BuildContext context) => Loading(),
-////                  fullscreenDialog: true,
-//                ),
-//              );
+              /// loding ??
+
+              if (!sdsd)
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) => HomeScreen(),
+//                  fullscreenDialog: true,
+                  ),
+                );
             },
           ),
 
@@ -501,62 +562,51 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   /// Functions ==========================================================================================
 
-  _CreatePost() async {
+  Future<Post2> _CreatePost() async {
+    Post2 post2;
     print("_CreatePost Called");
 
-    var imageFile;
-    var mPostCreated = false;
+//    var imageFile;
 
-    if (!_validateInputs()) {
-      try {
-        await for (imageFile in readyToUploadImages2) {
-          print(
-              'FROM _CreatePost() : image identifier is : ${imageFile
-                  .identifier}');
-          mSelectedImage = await editedImages(imageFile);
+    mImagesPath = await _listOfImageLinks();
 
-          print(
-              "FROM UploadImageList() : mUploadedImagePath : ${mSelectedImage
-                  .toString()}");
-        }
+    ///
+    post2 = Post2(
+        imageUrls: mImagesPath,
+        hName: _name,
+        hDesc: _desc,
+        hLocation: _location,
+        authorId: Provider
+            .of<UserData>(context)
+            .currentUserId,
+        timestamp: Timestamp.fromDate(DateTime.now()));
 
-        listOfImageLinks.add(mSelectedImage);
-        mPostCreated = true;
+    ///
+    DatabaseService.createPost2(post2);
 
-        if (mPostCreated == true) {
-          Post2 post2 = Post2(
-              imageUrls: listOfImageLinks,
-              hName: _name,
-              hDesc: _desc,
-              hLocation: _location,
-              authorId: Provider
-                  .of<UserData>(context)
-                  .currentUserId,
-              timestamp: Timestamp.fromDate(DateTime.now()));
-          DatabaseService.createPost2(post2);
-          mPostCreated = true;
-        } else {
-          print('mPostCreated = false ');
-        }
-      } finally {
-        print('all done');
-      }
+    print("onPressed Triggerd \n"
+        "Post Object :  name : $_name desc : $_desc location: $_location \n"
+        " images pathes : ${mImagesPath.length} "
+        "Selected Images List : ${_readyToUploadImages.length} \n");
+//    _displaySnackBar(context);
 
-      setState(() {});
-    } else {
-      _displaySnackBar(context);
-    }
+    setState(() {});
+//    } else {
+//      _displaySnackBar(context);
+//    }
+    return post2;
   }
 
-  _Resetdata() {
+  /// Reset data
+  Future<bool> _Resetdata() async {
+    var dateRested = true;
     print("_Resetdata Called");
 
-    /// Reset data
     _textFieldControllerName.clear();
     _textFieldControllerDesc.clear();
     _textFieldControllerLoca.clear();
-    readyToUploadImages.clear();
-    listOfImageLinks.clear();
+    _readyToUploadImages.clear();
+    mImagesPath.clear();
     setState(() {
       _desc = '';
       _location = '';
@@ -564,39 +614,44 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 //      readyToUploadImages.length = -1;
 //      listOfImageLinks.length = -1;
     });
+    return dateRested;
   }
 
-  _SendToServer() async {
-    print("_SendToServer Called");
+  /// Reset data
+  Future<bool> _SendToServer() async {
+    var dateScented = false;
 
     /// Check Inputs
-    _validateInputs();
+    var dateChecked = await _validateInputs();
 
     /// Create post
-    await _CreatePost();
+    var dateCreated = await _CreatePost();
 
     /// RestData
-    _Resetdata();
-    print('please enter value');
-//    if (_validateInputs() == false) {
-//      _displaySnackBar(context);
-//    }
+    var dateRested = await _Resetdata();
+    print('_SendToServer Ended');
+
+    if (dateChecked == false || dateCreated != null || dateRested == false) {
+      dateScented = false;
+      _displaySnackBar(context, "$dateRested" + "$dateChecked" + "$dateRested");
+    }
+    return dateScented;
   }
 
-  void _displaySnackBar(BuildContext context) {
+  /// Reset data
+  void _displaySnackBar(BuildContext context, var s) async {
     print("_displaySnackBar Called");
 
-    if (!_validateInputs() || imageUrl2 == null) {
-      final snackBar = SnackBar(content: Text('أكمل الحقول'));
+    if (await mImagesPath.length == 0) {
+      final snackBar = SnackBar(content: Text('إختر صورة للهبة على الأقل'));
       _scaffoldKey.currentState.showSnackBar(snackBar);
-    } else {
+    } else if (mImagesPath.length < mSelectedImage) {
       final snackBar = SnackBar(content: Text('جاري رفع الإعلان'));
       _scaffoldKey.currentState.showSnackBar(snackBar);
     }
   }
 
-
-  Widget showDialog() {
+  showDialog(BuildContext context) {
 //    if (!_validateInputs() || imageUrl2 == null) {
     return CustomDialog(
       title: 'إضافة الإعلان',
@@ -613,7 +668,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 //      );
 //    }
   }
+
+  progress() {}
 }
+
 
 //  final snackBar = SnackBar(content: Text('أكمل الحقول'));
 //  _scaffoldKey.currentState.showSnackBar(snackBar);
@@ -622,6 +680,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 //  _scaffoldKey.currentState.showSnackBar(snackBar);
 
 /// =======================================================================================
+
+/**
+ * docs :
+    synchronous operation: A synchronous operation blocks other operations from executing until it completes.
+    synchronous function: A synchronous function only performs synchronous operations.
+    asynchronous operation: Once initiated, an asynchronous operation allows other operations to execute before it completes.
+    asynchronous function: An asynchronous function performs at least one asynchronous operation and can also perform synchronous operations.
+ */
 
 /// Backup
 //Future<bool> uploadFile(int imageId, int duration) async {
@@ -694,3 +760,116 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 //                print(error);
 //              });
 //              print(_error);
+
+/// good stuff
+/// progress
+//Widget progress() {
+//  return Container(
+//    alignment: Alignment.center,
+//    child: Column(
+//      mainAxisAlignment: MainAxisAlignment.center,
+//      crossAxisAlignment: CrossAxisAlignment.center,
+//      children: <Widget>[
+//        Container(
+//          height: 200.0,
+//          width: 200.0,
+//          padding: EdgeInsets.all(20.0),
+//          margin: EdgeInsets.all(30.0),
+//          child: progressView(),
+//        ),
+//        OutlineButton(
+//          child: Text("START"),
+//          onPressed: () {
+//            startProgress();
+//          },
+//        )
+//      ],
+//    ),
+//  );
+//}
+//
+/////  ==========================================================================================
+//initAnimationController() {
+//  _progressAnimationController = AnimationController(
+//    vsync: this,
+//    duration: Duration(milliseconds: 1000),
+//  )..addListener(
+//        () {
+//      setState(() {
+//        _percentage = lerpDouble(_percentage, _nextPercentage,
+//            _progressAnimationController.value);
+//      });
+//    },
+//  );
+//}
+//
+//start() {
+//  Timer.periodic(Duration(milliseconds: 30), handleTicker);
+//}
+//
+//handleTicker(Timer timer) {
+//  _timer = timer;
+//  if (_nextPercentage < 100) {
+//    publishProgress();
+//  } else {
+//    timer.cancel();
+//    setState(() {
+//      _progressDone = true;
+//    });
+//  }
+//}
+//
+//startProgress() {
+//  if (null != _timer && _timer.isActive) {
+//    _timer.cancel();
+//  }
+//  setState(() {
+//    _percentage = 0.0;
+//    _nextPercentage = 0.0;
+//    _progressDone = false;
+//    start();
+//  });
+//}
+//
+//publishProgress() {
+//  setState(() {
+//    _percentage = _nextPercentage;
+//    _nextPercentage += 0.5;
+//    if (_nextPercentage > 100.0) {
+//      _percentage = 0.0;
+//      _nextPercentage = 0.0;
+//    }
+//    _progressAnimationController.forward(from: 0.0);
+//  });
+//}
+//
+//getDoneImage() {
+//  return Image.asset(
+//    'assets/images/appicon.png',
+//    width: 50,
+//    height: 50,
+//  );
+//}
+//
+//getProgressText() {
+//  return Text(
+//    _nextPercentage == 0 ? '' : '${_nextPercentage.toInt()}',
+//    style: TextStyle(
+//        fontSize: 40, fontWeight: FontWeight.w800, color: Colors.green),
+//  );
+//}
+//
+//progressView() {
+//  return CustomPaint(
+//    child: Center(
+//      child: _progressDone ? getDoneImage() : getProgressText(),
+//    ),
+//    foregroundPainter: ProgressPainter(
+//        defaultCircleColor: Colors.amber,
+//        percentageCompletedCircleColor: Colors.green,
+//        completedPercentage: _percentage,
+//        circleWidth: 50.0),
+//  );
+//}
+//
+/////  ==========================================================================================

@@ -2,6 +2,7 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:toast/toast.dart';
 
@@ -10,6 +11,81 @@ Function PRINT(String funName) {
 }
 
 class CommanUtils {
+  /// checkConnection -------------------------------------------------------------------------
+  static Future<bool> checkConnection() async {
+    ConnectivityResult connectivityResult =
+    await (new Connectivity().checkConnectivity());
+    await Future.delayed(Duration(seconds: 2))
+        .catchError((onError) => {print(onError)});
+    debugPrint(connectivityResult.toString());
+
+    if ((connectivityResult == ConnectivityResult.mobile) ||
+        (connectivityResult == ConnectivityResult.wifi)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  static void showAlertForConfirmAddData(BuildContext context, String text,
+      bool function) {
+    var alert = new AlertDialog(
+      content: Container(
+        child: Row(
+          children: <Widget>[Text(text)],
+        ),
+      ),
+      actions: <Widget>[
+        new FlatButton(
+            onPressed: () async {
+              function;
+            },
+            child: Text(
+              "OK",
+              style: TextStyle(color: Colors.blue),
+            )),
+        FlatButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: Colors.blue),
+            ))
+      ],
+    );
+
+    showDialog(
+        context: context,
+        builder: (_) {
+          return alert;
+        });
+  }
+
+  static void showAlert(BuildContext context, String text) {
+    var alert = new AlertDialog(
+      content: Container(
+        child: Row(
+          children: <Widget>[Text(text)],
+        ),
+      ),
+      actions: <Widget>[
+        new FlatButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "OK",
+              style: TextStyle(color: Colors.blue),
+            ))
+      ],
+    );
+
+    showDialog(
+        context: context,
+        builder: (_) {
+          return alert;
+        });
+  }
+
+  /// showSnackbar ---------------------------------------------------------------------
   void showSnackbar(BuildContext context, String text) {
     Scaffold.of(context).showSnackBar(
       SnackBar(
@@ -19,11 +95,20 @@ class CommanUtils {
     );
   }
 
-  static String generateImagePlaceHolderUrl(
-      {int width = 200, int height = 80}) {
+  static String generateImagePlaceHolderUrl({int width = 200, int height = 80}) {
     return 'https://via.placeholder.com/${width}x${height}';
   }
 
+  /// showToast -------------------------------------------------------------------------
+  void showToast(String message, BuildContext context) {
+    Toast.show(message, context,
+        duration: Toast.LENGTH_LONG,
+        gravity: Toast.TOP,
+        backgroundColor: Colors.black,
+        textColor: Colors.white);
+  }
+
+  /// Validation ------------------------------------------------------------------------
   bool checkEmail(String value) {
     Pattern pattern =
         r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
@@ -78,13 +163,5 @@ class CommanUtils {
     } else {
       return true;
     }
-  }
-
-  void showToast(String message, BuildContext context) {
-    Toast.show(message, context,
-        duration: Toast.LENGTH_LONG,
-        gravity: Toast.TOP,
-        backgroundColor: Colors.black,
-        textColor: Colors.white);
   }
 }

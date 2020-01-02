@@ -41,11 +41,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+
     /// Force DeviceOrientation
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+
     return ChangeNotifierProvider(
       create: (context) => UserData(),
       child: MaterialApp(
@@ -56,14 +59,12 @@ class MyApp extends StatelessWidget {
         onGenerateRoute: Router.generateRoute,
         routes: {
           LoginScreen.id: (context) => LoginScreen(),
-
           SignupScreen.id: (context) =>
               SignupScreen(
 //                primaryColor: Color(0xFF4aa0d5),
 //                backgroundColor: Colors.white,
 //                backgroundImage: new AssetImage("assets/images/building.gif"),
               ),
-
           FeedScreen.id: (context) => FeedScreen(),
         },
       ),

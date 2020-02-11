@@ -31,6 +31,25 @@ class StorageService {
     return downloadUrl;
   }
 
+  static Future<String> uploadUserProfileImageInSignUp(String url,
+      File imageFile) async {
+    String photoId = Uuid().v4();
+    File image = await compressImage(photoId, imageFile);
+
+    if (url.isNotEmpty) {
+      // Updating user profile image
+      RegExp exp = RegExp(r'userProfile_(.*).jpg');
+      photoId = exp.firstMatch(url)[1];
+    }
+
+    StorageUploadTask uploadTask = storageRef
+        .child('images/users/userProfile_$photoId.jpg')
+        .putFile(image);
+    StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
+    String downloadUrl = await storageSnap.ref.getDownloadURL();
+    return downloadUrl;
+  }
+
   static Future<File> compressImage(String photoId, File image) async {
     final tempDir = await getTemporaryDirectory();
     final path = tempDir.path;

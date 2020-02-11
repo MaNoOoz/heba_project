@@ -14,6 +14,7 @@ import 'FeedScreen.dart';
 import 'activity_screen.dart';
 
 class HomeScreen extends StatefulWidget {
+
   static String id = "home_screen";
 
   @override
@@ -35,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final String currentUserId = Provider
         .of<UserData>(context)
         .currentUserId;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: PageView(
@@ -70,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
             curve: Curves.easeIn,
           );
         },
-        activeColor: Colors.black,
+        activeColor: Colors.black45,
         items: [
           BottomNavigationBarItem(
             activeIcon: Icon(
@@ -139,10 +141,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Methods
   void openDialog() async {
-    Navigator.of(context).push(new MaterialPageRoute<Null>(
-        builder: (BuildContext context) {
-          return new CreatePostScreen();
-        },
-        fullscreenDialog: true));
+    Navigator.of(context).push(
+      new MaterialPageRoute<Null>(
+          builder: (BuildContext context) {
+            return new CreatePostScreen();
+          },
+          fullscreenDialog: true),
+    );
   }
+
+///
 }

@@ -39,7 +39,8 @@ import 'package:flutter/cupertino.dart';
 
 class Post2 {
   final String id;
-  dynamic imageUrls;
+  final String profileImage;
+  List<dynamic> imageUrls;
   final String hName;
   final String hDesc;
   final String hLocation;
@@ -54,6 +55,7 @@ class Post2 {
   Post2({
 //    @required this.postedAt,
     this.id,
+    this.profileImage,
     @required this.imageUrls,
     @required this.hName,
     @required this.hDesc,
@@ -68,6 +70,7 @@ class Post2 {
   factory Post2.fromDoc(DocumentSnapshot doc) {
     return Post2(
       id: doc.documentID,
+      profileImage: doc['profileImageUrl'],
       imageUrls: List.from(doc['imagesUrls']),
       hName: doc['hName'],
       hDesc: doc['hDesc'],
@@ -79,6 +82,7 @@ class Post2 {
 //      postedAt: doc['timestamp'],
     );
   }
+
 
 //  String timeAgo() {
 //    final now = DateTime.now();

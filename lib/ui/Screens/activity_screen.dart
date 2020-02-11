@@ -3,6 +3,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts_arabic/fonts.dart';
 
 class ActivityScreen extends StatefulWidget {
   @override
@@ -16,10 +17,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
-          'Heba Project',
+          'هبة',
           style: TextStyle(
             color: Colors.black,
-            fontFamily: 'Billabong',
+            fontFamily: ArabicFonts.Cairo,
             fontSize: 35.0,
           ),
         ),

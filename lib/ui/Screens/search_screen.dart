@@ -5,12 +5,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
-import 'package:heba_project/ui/shared/UtilsImporter.dart';
-import 'package:provider/provider.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -34,7 +31,6 @@ class _SearchScreenState extends State<SearchScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => ProfileScreen(
-            currentUserId: Provider.of<UserData>(context).currentUserId,
             userId: user.id,
           ),
         ),
@@ -99,37 +95,31 @@ class _SearchScreenState extends State<SearchScreen> {
         ],
         backgroundColor: Colors.white,
       ),
-      body: ListView(
-        children: <Widget>[
-          _users == null
-              ? Center(
-                  child: Text('Search for a user',
-                      style: UtilsImporter().uStyleUtils.loginTextFieldStyle()),
-                )
-              : FutureBuilder(
-                  future: _users,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    if (snapshot.data.documents.length == 0) {
-                      return Center(
-                        child: Text('No users found! Please try again.'),
-                      );
-                    }
-                    return ListView.builder(
-                      itemCount: snapshot.data.documents.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        User user =
-                            User.fromDoc(snapshot.data.documents[index]);
-                        return _buildUserTile(user);
-                      },
-                    );
-                  },
-                ),
-        ],
+      body: _users == null
+          ? Center(
+        child: Text('Search for a user'),
+      )
+          : FutureBuilder(
+        future: _users,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          if (snapshot.data.documents.length == 0) {
+            return Center(
+              child: Text('No users found! Please try again.'),
+            );
+          }
+          return ListView.builder(
+            itemCount: snapshot.data.documents.length,
+            itemBuilder: (BuildContext context, int index) {
+              User user = User.fromDoc(snapshot.data.documents[index]);
+              return _buildUserTile(user);
+            },
+          );
+        },
       ),
     );
   }

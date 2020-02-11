@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-class Loading extends StatefulWidget {
+class Loading2 extends StatefulWidget {
   final String title;
 
 //  final key = GlobalKey<>();
 
   @override
-  _LoadingState createState() => _LoadingState();
+  _Loading2State createState() => _Loading2State();
 
-  Loading({this.title});
+  Loading2({this.title});
 }
 
-class _LoadingState extends State<Loading> {
+class _Loading2State extends State<Loading2> {
   bool _loading = true;
 
   @override

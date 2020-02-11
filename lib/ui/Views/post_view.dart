@@ -101,11 +101,17 @@ class _PostViewState extends State<PostView> {
             ),
             child: Row(
               children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Center(
+                    child: Image.asset('assets/images/user_placeholder.jpg'),
+                  ),
+                ),
                 CircleAvatar(
                   radius: 25.0,
                   backgroundColor: Colors.grey,
                   backgroundImage: widget.author.profileImageUrl.isEmpty
-                      ? AssetImage('assets/images/uph.jpg')
+                      ? AssetImage('assets/images/user_placeholder.jpg')
                       : CachedNetworkImageProvider(
                       widget.author.profileImageUrl),
                 ),
@@ -133,8 +139,7 @@ class _PostViewState extends State<PostView> {
                     .width,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-//                    image: CachedNetworkImageProvider(widget.post.imageUrl),
-                    image: null,
+                    image: CachedNetworkImageProvider(widget.post.profileImage),
                     fit: BoxFit.cover,
                   ),
                 ),

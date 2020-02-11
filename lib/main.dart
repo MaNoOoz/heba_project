@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:heba_project/ui/Screens/Create_post_screen.dart';
 import 'package:heba_project/ui/Screens/FeedScreen.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
@@ -26,7 +27,9 @@ class MyApp extends StatelessWidget {
       stream: FirebaseAuth.instance.onAuthStateChanged,
       builder: (BuildContext context, snapshot) {
         if (snapshot.hasData) {
-          Provider.of<UserData>(context).currentUserId = snapshot.data.uid;
+          Provider
+              .of<UserData>(context)
+              .currentUserId = snapshot.data.uid;
           return HomeScreen();
         } else {
           return LoginScreen(
@@ -41,8 +44,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-
     /// Force DeviceOrientation
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -59,12 +60,9 @@ class MyApp extends StatelessWidget {
         onGenerateRoute: Router.generateRoute,
         routes: {
           LoginScreen.id: (context) => LoginScreen(),
-          SignupScreen.id: (context) =>
-              SignupScreen(
-//                primaryColor: Color(0xFF4aa0d5),
-//                backgroundColor: Colors.white,
-//                backgroundImage: new AssetImage("assets/images/building.gif"),
-              ),
+//          HomeScreen.id: (context) => HomeScreen(),
+          SignupScreen.id: (context) => SignupScreen(),
+          CreatePostScreen.id: (context) => CreatePostScreen(),
           FeedScreen.id: (context) => FeedScreen(),
         },
       ),

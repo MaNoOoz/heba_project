@@ -23,9 +23,10 @@ class User {
     return User(
       id: doc.documentID,
       name: doc['name'] ?? 'no Name',
-      profileImageUrl: doc['profileImageUrl'] ?? 'NoPic',
+      profileImageUrl: doc['profileImageUrl'],
       email: doc['email'] ?? 'NoEmail',
       bio: doc['bio'] ?? '',
     );
   }
+
 }

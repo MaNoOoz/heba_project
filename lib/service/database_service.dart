@@ -9,6 +9,7 @@ import 'package:heba_project/models/user_model.dart';
 import '../ui/shared/constants.dart';
 
 class DatabaseService {
+
   static void updateUser(User user) {
     usersRef.document(user.id).updateData({
       'name': user.name,
@@ -16,9 +17,10 @@ class DatabaseService {
       'bio': user.bio,
     });
   }
+
   static Future<QuerySnapshot> searchUsers(String name) {
     Future<QuerySnapshot> users =
-        usersRef.where('name', isGreaterThanOrEqualTo: name).getDocuments();
+    usersRef.where('name', isGreaterThanOrEqualTo: name).getDocuments();
     return users;
   }
 
@@ -139,6 +141,7 @@ class DatabaseService {
         .collection('userFeed')
         .orderBy('timestamp', descending: true)
         .getDocuments();
+
     List<Post2> posts =
     feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
     return posts;

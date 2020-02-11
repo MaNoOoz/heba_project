@@ -2,21 +2,29 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts_arabic/fonts.dart';
+import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
+import 'package:heba_project/service/storage_service.dart';
+import 'package:heba_project/ui/Screens/LoginScreen.dart';
+import 'package:image_picker/image_picker.dart';
 
 class SignupScreen extends StatefulWidget {
-
-  static final String id = 'signup_screen';
+  static final String id = ' signup_screen';
   final Color primaryColor;
   final Color backgroundColor;
   final AssetImage backgroundImage;
+  final User user;
 
-  const SignupScreen(
-      {Key key, this.primaryColor, this.backgroundColor, this.backgroundImage})
+  const SignupScreen({Key key,
+    this.user,
+    this.primaryColor,
+    this.backgroundColor,
+    this.backgroundImage})
       : super(key: key);
 
   @override
@@ -25,81 +33,240 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final globalKey = GlobalKey<ScaffoldState>();
+  final _scaffoldState = GlobalKey<ScaffoldState>();
   String _name, _email, _password;
+  String _imageUrl = "";
+  File _profileImage;
+  String currentUserId;
+  User _profileUser;
 
-  /// methods ================================================================================
-  _CreateNewAcount() {
-    print('_CreateNewAcount Called');
-    if (_formKey.currentState.validate()) {
-      _formKey.currentState.save();
-      // Logging in the user w/ Firebase
-      AuthService.signUpUser(context, _name, _email, _password);
+  /// methods =========================
+//  _CreateNewAcount() async {
+//    try {
+//      print('_CreateNewAcount Called');
+//      if (_formKey.currentState.validate() && !_isLoading) {
+//        _formKey.currentState.save();
+//
+//        setState(() {
+//          _isLoading = true;
+//        });
+//        // Logging in the user w/ Firebase
+//        AuthService.signUpUser(context, _name, _email, _password, _imageUrl);
+//        _imageUrl = await StorageService.uploadUserProfileImageInSignUp(
+//            _imageUrl, _profileImage);
+//      } else {
+//        _displaySnackBar(context);
+//      }
+//    } catch (e) {
+//      print(e);
+//    }
+//  }
+
+//  _setupProfileUser() async {
+//      currentUserId = Provider.of<UserData>(context).currentUserId;
+//
+//    User profileUser =
+//    await DatabaseService.getUserWithId(currentUserId);
+//    print("Current User Id :  ${profileUser.id}");
+//    setState(() {
+//      _profileUser = profileUser;
+//    });
+//  }
+
+  @override
+  void initState() {
+    super.initState();
+//    _setupProfileUser();
+  }
+
+  Future<bool> _CreateNewAcount() async {
+    try {
+      await new Future.delayed(Duration(seconds: 5));
+      var valdited = _formKey.currentState.validate();
+
+      print('_CreateNewAcount Called');
+      if (valdited) {
+        _formKey.currentState.save();
+
+        /// SignUp the User In Firebase
+        AuthService.signUpUser(context, _name, _email, _password, _imageUrl);
+        _imageUrl = await StorageService.uploadUserProfileImageInSignUp(
+            _imageUrl, _profileImage);
+      } else {
+        _displaySnackBar(context);
+      }
+    } catch (e) {
+      print(e);
+    }
+    return true;
+  }
+
+  _displayProfileImage() {
+    // No new profile image
+    if (_profileImage == null) {
+      return AssetImage('assets/images/uph.jpg');
+    } else {
+      // New profile image
+      return FileImage(_profileImage);
+    }
+  }
+
+  _handleImageFromGallery() async {
+    File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
+    if (imageFile != null) {
+      setState(() {
+        _profileImage = imageFile;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: globalKey,
-      body: ListView(
-        children: <Widget>[
-          Image(
-            image: widget.backgroundImage,
-          ),
-          Center(
-            child: Text(
-              ' هبة',
-              style: TextStyle(
-                fontFamily: ArabicFonts.Cairo,
-                fontSize: 32.0,
-                letterSpacing: 5,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
-          ),
-
-          FormUi(context),
-
-          /// Register btn
-          Padding(
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-            child: FlatButton(
-              shape: new RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(30.0)),
-              splashColor: Colors.white,
-              color: Color(0xff3B5998),
-              child: new Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(
-                    FontAwesomeIcons.creativeCommonsZero,
-                    color: Colors.white,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: Text(
-                      "Create Acount",
-                      style: TextStyle(color: Colors.white),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          key: _scaffoldState,
+          body: ListView(
+            children: <Widget>[
+              Container(
+                height: MediaQuery
+                    .of(context)
+                    .size
+                    .height,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: CircleAvatar(
+                            radius: 60.0,
+                            backgroundColor: Colors.grey,
+                            backgroundImage: _displayProfileImage(),
+                          ),
+                        ),
+                        FlatButton(
+                          onPressed: _handleImageFromGallery,
+                          child: OutlineButton(
+                            onPressed: () => _handleImageFromGallery,
+                            child: Text(
+                              'Add Profile Image',
+                              style: TextStyle(
+                                  color: Theme
+                                      .of(context)
+                                      .accentColor,
+                                  fontSize: 16.0),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+
+//                    /// Image
+//                    Center(
+//                      child: CircleAvatar(
+//                          radius: 60.0,
+//                          backgroundColor: Colors.transparent,
+////                        backgroundImage:
+////                            AssetImage('assets/images/appicon.png'),
+//                          child: Image.asset(
+//                            'assets/images/appicon.png',
+//                            scale: 2.0,
+//                          )),
+//                    ),
+
+                    FormUi(context),
+
+                    /// Register btn
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                      child: FlatButton(
+                        shape: new RoundedRectangleBorder(
+                            borderRadius: new BorderRadius.circular(30.0)),
+                        splashColor: Colors.white,
+                        color: Colors.blueAccent,
+                        child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(
+                              FontAwesomeIcons.userPlus,
+                              color: Colors.white,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: Text(
+                                "Create New Acount",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        onPressed: () async {
+                          _scaffoldState.currentState.showSnackBar(
+                            new SnackBar(
+                              duration: new Duration(seconds: 4),
+                              content: new Row(
+                                children: <Widget>[
+                                  new CircularProgressIndicator(),
+                                  new Text("  Signing-Up...")
+                                ],
+                              ),
+                            ),
+                          );
+                          await _CreateNewAcount().whenComplete(() {
+                            print("Acount Created With Name : ${_name}");
+                          }).catchError((onError) {
+                            print("$onError");
+                          });
+                        },
+                      ),
+                    ),
+
+                    /// Go To Login
+                    Container(
+                      margin: const EdgeInsets.only(top: 10.0),
+                      padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                      child: new Row(
+                        children: <Widget>[
+                          new Expanded(
+                            child: FlatButton(
+                              shape: new RoundedRectangleBorder(
+                                  borderRadius:
+                                  new BorderRadius.circular(30.0)),
+                              color: Colors.transparent,
+                              child: Container(
+                                padding: const EdgeInsets.only(left: 20.0),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "ALREADY HAVE AN ACCOUNT?",
+                                  style: TextStyle(color: Colors.black45),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.pushNamed(context, LoginScreen.id);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              onPressed: () {
-                _CreateNewAcount();
-                _displaySnackBar(context);
-              },
-            ),
-          )
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
   _displaySnackBar(BuildContext context) {
-    final snackBar = SnackBar(content: Text('Are you talkin\' to me?'));
-    globalKey.currentState.showSnackBar(snackBar);
+    final snackBar = SnackBar(content: Text('U Can ?'));
+    _scaffoldState.currentState.showSnackBar(snackBar);
   }
 
   Widget FormUi(BuildContext context) {
@@ -142,7 +309,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       hintText: 'Enter your Name',
                     ),
                     validator: (input) =>
-                    input.length < 3 ? 'Please enter a valid name' : null,
+                    input
+                        .trim()
+                        .length < 3
+                        ? 'Please enter a valid name'
+                        : null,
                     onSaved: (input) => _name = input,
                   ),
                 ),
@@ -184,7 +355,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hintText: 'Enter your email',
                     ),
                     validator: (input) =>
-                    !input.contains('@')
+                    !input.trim().contains('@')
                         ? 'Please enter a valid email'
                         : null,
                     onSaved: (input) => _email = input,
@@ -225,10 +396,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       labelText: 'Password',
                       hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
-                      hintText: 'Enter your email',
+                      hintText: 'Enter your Password',
                     ),
                     validator: (input) =>
-                    input.length < 6
+                    input
+                        .trim()
+                        .length < 6
                         ? 'Must be at least 6 characters'
                         : null,
                     onSaved: (input) => _password = input,

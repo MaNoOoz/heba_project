@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,14 +12,22 @@ import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/shared/CommanUtils.dart';
+import 'package:heba_project/ui/shared/Dialogs.dart';
 import 'package:heba_project/ui/shared/UtilsImporter.dart';
 import 'package:heba_project/ui/shared/ui_helpers.dart';
-import 'package:heba_project/widgets/CustomDialog.dart';
-import 'package:heba_project/widgets/circular_clipper.dart';
+import 'package:heba_project/ui/widgets/CustomDialog.dart';
+import 'package:heba_project/ui/widgets/circular_clipper.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:provider/provider.dart';
 
 class CreatePostScreen extends StatefulWidget {
+  static final String id = 'CreatePostScreen';
+  Key key;
+
+//  const CreatePostScreen(
+//      {Key key, this.primaryColor, this.backgroundColor, this.backgroundImage})
+//      : super(key: key);
+
   @override
   _CreatePostScreenState createState() => _CreatePostScreenState();
 }
@@ -29,6 +38,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   /// https://mrflutter.com/how-to-use-progress-indicators-in-flutter/
   bool _loading;
   double _progressValue;
+  bool tappedYes = false;
 
   /// CustomProgressBar ====================================================
 //  double _percentage;
@@ -39,7 +49,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   /// Multi Image Picker ====================================================
   List<Asset> _readyToUploadImages = List<Asset>();
-
   Stream<Asset> _readyToUploadImages2; // test
   var imageUrl2;
   var uploadingState;
@@ -50,8 +59,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   var userId;
 
 //  List<Asset> fakeList;
-
-  // todo Strings >???
   String _error = 'No Error Dectected';
 
   /// Form ====================================================
@@ -67,6 +74,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   String _desc;
   String _location;
   var color;
+
+  ///  ====================================================
 
   @override
   void initState() {
@@ -97,57 +106,59 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       key: _scaffoldKey,
 //      resizeToAvoidBottomPadding: false,
 
-      body: ListView(
-        children: <Widget>[
-          Stack(
-            children: <Widget>[
-              Container(
-                transform: Matrix4.translationValues(0.0, -50.0, 0.0),
-                child: Hero(
-                  tag: "widget.movie.imageUrl",
-                  child: ClipShadowPath(
-                    clipper: CircularClipper(),
-                    shadow: Shadow(blurRadius: 20.0),
-                    child: Image(
-                      height: 400.0,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      image: AssetImage("assets/images/addheba.gif"),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: ListView(
+          children: <Widget>[
+            Stack(
+              children: <Widget>[
+                Container(
+                  transform: Matrix4.translationValues(0.0, -50.0, 0.0),
+                  child: Hero(
+                    tag: "widget.movie.imageUrl",
+                    child: ClipShadowPath(
+                      clipper: CircularClipper(),
+                      shadow: Shadow(blurRadius: 20.0),
+                      child: Image(
+                        height: 400.0,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        image: AssetImage("assets/images/addheba.gif"),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  IconButton(
-                    padding: EdgeInsets.only(left: 30.0),
-                    onPressed: () =>
-                        Navigator.pushNamed(context, HomeScreen.id),
-                    // todo Fix Nav please
-                    icon: Icon(Icons.check),
-                    iconSize: 30.0,
-                    color: Colors.white,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    IconButton(
+                      padding: EdgeInsets.only(left: 30.0),
+                      onPressed: () =>
+//                          Navigator.pushNamed(context, FeedScreen.id),
+                      Navigator.pop(context),
+                      icon: Icon(Icons.check),
+                      iconSize: 30.0,
+                      color: Colors.white,
+                    ),
 //                  Image(
 //                    image: AssetImage('assets/images/myIcon.png'),
 //
 //                  ),
-                  Expanded(
-                    child: Center(
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          'هبة جديدة',
-                          style: TextStyle(
-                              fontSize: 32,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Center(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            'هبة جديدة',
+                            style: TextStyle(
+                                fontSize: 32,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),
-                  ),
 //                  Padding(
 //                    padding: const EdgeInsets.only(right: 20.0),
 //                    child: IconButton(
@@ -158,88 +169,89 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //                      color: Colors.black,
 //                    ),
 //                  ),
-                  IconButton(
-                    padding: EdgeInsets.only(right: 16.0),
-                    onPressed: () =>
-                        Navigator.pushNamed(context, HomeScreen.id),
-                    // todo Fix Nav please
-                    icon: Icon(Icons.clear),
-                    iconSize: 30.0,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          /// Form
-          Container(
-            margin: EdgeInsets.all(15.0),
-            child: Form(
-              key: _formkey,
-              autovalidate: _autoValidate,
-              child: FormUI(),
-            ),
-          ),
-          UIHelper.verticalSpaceWithGrayColor(1, Colors.teal),
-
-          /// Titles
-          Container(
-            margin: EdgeInsets.all(15.0),
-//            color: Colors.teal,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(
-                child: Text(
-                  ' صور الهبة  ',
-                  style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black45,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ),
-
-          /// Added Images
-          Card(
-            child: Center(
-              child: Container(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
                     IconButton(
-                      splashColor: Colors.teal,
-                      iconSize: 42.0,
-                      icon: _readyToUploadImages.length > 0
-                          ? Icon(
-                        Icons.edit,
-                        color: Colors.blueAccent,
-                      )
-                          : Icon(
-                        Icons.add_circle,
-                        color: Colors.blueAccent,
-                      ),
-                      onPressed: () {
-                        _loadAssets();
-                      },
+                      padding: EdgeInsets.only(right: 16.0),
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.clear),
+                      iconSize: 30.0,
+                      color: Colors.white,
                     ),
-                    Text('أضف صورة')
                   ],
                 ),
+              ],
+            ),
+
+            /// Form
+            Container(
+              margin: EdgeInsets.all(15.0),
+              child: Form(
+                key: _formkey,
+                autovalidate: _autoValidate,
+                child: FormUI(),
               ),
             ),
-          ),
-          buildGridView(),
+            UIHelper.verticalSpaceWithGrayColor(1, Colors.teal),
 
-          UIHelper.verticalSpace(10),
+            /// Titles
+            Container(
+              margin: EdgeInsets.all(15.0),
+//            color: Colors.teal,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: Text(
+                    ' صور الهبة  ',
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
 
-          /// Buttons
-          _Buttons(),
-//todo Fix Must not be null Error
-//          FutureBuilder<bool>(
-//            future: _CreatePost(),
+            /// Added Images
+            Card(
+              child: Center(
+                child: Container(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      IconButton(
+                        splashColor: Colors.teal,
+                        iconSize: 42.0,
+                        icon: _readyToUploadImages.length > 0
+                            ? Icon(
+                          Icons.edit,
+                          color: Colors.blueAccent,
+                        )
+                            : Icon(
+                          Icons.add_circle,
+                          color: Colors.blueAccent,
+                        ),
+                        onPressed: () {
+                          _loadAssets();
+                        },
+                      ),
+                      Text('أضف صورة')
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            buildGridView(),
+
+            UIHelper.verticalSpace(10),
+
+            /// Buttons
+            _Buttons(),
+
+//          FutureBuilder<Post2>(
+//            future: _CreatePost,
 //            builder: (BuildContext context, AsyncSnapshot snapshot) {
+//              if (snapshot.connectionState == ConnectionState.done) {
+//                return Center(child: Text('HI'));
+//              }
 //              if (snapshot.hasError) {
 //                return Center(child: Text('مشكلة في إنشاء الهبة '));
 //              } else if (snapshot.hasData) {
@@ -250,9 +262,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //            },
 //          ),
 
-          UIHelper.verticalSpace(10),
+            UIHelper.verticalSpace(10),
 
-          /// Image
+            /// Image
 //          Padding(
 //            padding: const EdgeInsets.all(8.0),
 //            child: ClipRRect(
@@ -266,7 +278,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //              ),
 //            ),
 //          ),
-        ],
+          ],
+        ),
       ),
     );
 
@@ -274,7 +287,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   /// Methods ==========================================================================================
-  /// helpers
   _checkConnection() async {
     bool connectionResult = await CommanUtils.checkConnection();
     CommanUtils.showAlert(context, connectionResult ? "OK" : "internet needed");
@@ -337,15 +349,17 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   Future<dynamic> _listOfImageLinks() async {
-    var listOfImageLinks = [5];
-    await for (var imageFile in _readyToUploadImages2) {
+    var listOfImageLinks = [];
+    for (var imageFile in _readyToUploadImages) {
       mSelectedImage = await editedImages(imageFile);
-      print('From _listOfImageLinks() : image identifier is : ${imageFile
-          .identifier}');
-      print("From _listOfImageLinks() : mUploadedImagePath : ${mSelectedImage
-          .toString()}");
+      print(
+          'From _listOfImageLinks() : image identifier is : ${imageFile
+              .identifier}');
+      print(
+          "From _listOfImageLinks() : mUploadedImagePath : ${mSelectedImage
+              .toString()}");
+      listOfImageLinks.add(mSelectedImage);
     }
-    listOfImageLinks.add(mSelectedImage);
 
 //    listOfImageLinks.add(mSelectedImage);
     return listOfImageLinks;
@@ -386,7 +400,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   Widget FormUI() {
     return Column(
       children: <Widget>[
-
         /// Name OF Heba
         Padding(
           padding: const EdgeInsets.all(8.0),
@@ -485,7 +498,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
         children: <Widget>[
-
           /// Add Images Btn
           UIHelper.verticalSpace(10),
 
@@ -493,6 +505,16 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           UIHelper.verticalSpace(10),
 
           UIHelper.verticalSpace(10),
+
+          _loading
+              ? Padding(
+            child: CircularProgressIndicator(
+              backgroundColor: Colors.lightGreen,
+              valueColor: AlwaysStoppedAnimation(Colors.white),
+            ),
+            padding: EdgeInsets.only(bottom: 10),
+          )
+              : SizedBox.shrink(),
 
           ///  Submit Btn
           OutlineButton(
@@ -527,13 +549,22 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               ],
             ),
             onPressed: () async {
-              setState(() {
-                _loading = !_loading;
-//                _updateProgress();
-              });
-              var sdsd = await _SendToServer();
+              var sdsd;
+              if (_name.isNotEmpty && !_loading) {
+//                CommanUtils.showAlertForConfirmAddData(context," ",sdsd);
 
-//              CommanUtils.showAlertForConfirmAddData(context," Are You Sure U Wants To Add Heba",sdsd);
+                final action = await Dialogs.yesAbortDialog(
+                    context, ' Add Heba', 'Are You Sure U Wants To Add Heba');
+                if (action == DialogAction.yes) {
+                  sdsd = await _SendToServer();
+                  setState(() => tappedYes = true);
+                } else {
+                  setState(() => tappedYes = false);
+                }
+              } else if (_name.isNotEmpty == false) {
+                _displaySnackBar(context, "ss");
+              }
+
 //              showDialog();
 //              print("onPressed Triggerd \n"
 //                  "Post Object :  name : $_name desc : $_desc location: $_location \n"
@@ -580,6 +611,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             .of<UserData>(context)
             .currentUserId,
         timestamp: Timestamp.fromDate(DateTime.now()));
+    log("${post2.authorId}");
 
     ///
     DatabaseService.createPost2(post2);
@@ -619,6 +651,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   /// Reset data
   Future<bool> _SendToServer() async {
+    await Future.delayed(Duration(seconds: 4));
     var dateScented = false;
 
     /// Check Inputs
@@ -642,36 +675,36 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   void _displaySnackBar(BuildContext context, var s) async {
     print("_displaySnackBar Called");
 
-    if (await mImagesPath.length == 0) {
-      final snackBar = SnackBar(content: Text('إختر صورة للهبة على الأقل'));
-      _scaffoldKey.currentState.showSnackBar(snackBar);
-    } else if (mImagesPath.length < mSelectedImage) {
-      final snackBar = SnackBar(content: Text('جاري رفع الإعلان'));
-      _scaffoldKey.currentState.showSnackBar(snackBar);
-    }
+//    if (mImagesPath = null || _name.isEmpty) {
+    final snackBar = SnackBar(content: Text('أدخل إسم للهبة '));
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+//    } else if (mImagesPath.length < mSelectedImage) {
+//      final snackBar = SnackBar(
+//        content: Text('جاري رفع الإعلان'),
+//      );
+//      _scaffoldKey.currentState.showSnackBar(snackBar);
   }
+}
 
-  showDialog(BuildContext context) {
+showDialog(BuildContext context) {
 //    if (!_validateInputs() || imageUrl2 == null) {
-    return CustomDialog(
-      title: 'إضافة الإعلان',
-      buttonText: 'Yes',
-      description: 'ss',
-      image: Image.asset(
-        'assets/images/myIcon.png',
-      ),
-    );
+  return CustomDialog(
+    title: 'إضافة الإعلان',
+    buttonText: 'Yes',
+    description: 'ss',
+    image: Image.asset(
+      'assets/images/myIcon.png',
+    ),
+  );
 
 //    } else {
 //      return Container(
 //        child: Text("sasdasd"),
 //      );
 //    }
-  }
-
-  progress() {}
 }
 
+progress() {}
 
 //  final snackBar = SnackBar(content: Text('أكمل الحقول'));
 //  _scaffoldKey.currentState.showSnackBar(snackBar);

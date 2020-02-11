@@ -2,20 +2,28 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts_arabic/fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
+import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
+import 'package:heba_project/ui/shared/UI_Helpers.dart';
 
 class LoginScreen extends StatefulWidget {
   static final String id = 'login_screen';
   final Color primaryColor;
   final Color backgroundColor;
   final AssetImage backgroundImage;
+  final String currentUserId;
 
-  const LoginScreen(
-      {Key key, this.primaryColor, this.backgroundColor, this.backgroundImage})
+  const LoginScreen({Key key,
+    this.currentUserId,
+    this.primaryColor,
+    this.backgroundColor,
+    this.backgroundImage})
       : super(key: key);
 
   @override
@@ -25,18 +33,36 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   String _email, _password;
+  bool loading = false;
+
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   /// Methods ================================================================================
-  _LoginToTheApp() {
-    print('Called');
-    if (_formKey.currentState.validate()) {
-      _formKey.currentState.save();
-      AuthService.login(_email, _password);
 
-//      await loginAction();
-    } else {
-      print('some thing wrong with form');
+  Future <bool> _LoginToTheApp() async {
+    print('_LoginToTheApp : Called');
+    try {
+      if (_formKey.currentState.validate()) {
+        _formKey.currentState.save();
+        AuthService.login(_email, _password);
+        return true;
+      } else {
+        _displaySnackBar(context, "Enter Correct Info");
+      }
+    } catch (e) {
+      print(e);
     }
+    return false;
+  }
+
+  _displaySnackBar(BuildContext context, String message) {
+    final snackBar = SnackBar(content: Text('أدخل معلومات صحيح' + message));
+    _scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
 //  Future<bool> loginAction() async {
@@ -50,194 +76,231 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: ListView(children: <Widget>[
-          Container(
-            height: MediaQuery
-                .of(context)
-                .size
-                .height,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-
-                /// Image
-                SizedBox(
-                  child: Image(
-                    image: widget.backgroundImage,
-                    fit: BoxFit.fill,
-                  ),
-                ),
-
-                /// AppName
-                Align(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SafeArea(
+        child: Scaffold(
+          key: _scaffoldKey,
+          body: Column(
+            children: <Widget>[
+              Expanded(
+                child: Align(
                   alignment: Alignment.topCenter,
-                  child: Text(
-                    ' هــبـة ',
-                    style: TextStyle(
-                      fontFamily: ArabicFonts.Cairo,
-                      fontSize: 32.0,
-                      letterSpacing: 5,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: CircleAvatar(
+                        radius: 60.0,
+                        backgroundColor: Colors.transparent,
+//                        backgroundImage:
+//                            AssetImage('assets/images/appicon.png'),
+                        child: Image.asset(
+                          'assets/images/appicon.png',
+                          scale: 2.0,
+                        )),
                   ),
                 ),
+              ),
+              UIHelper.verticalSpace(10),
 
-                /// Form
-                Flexible(
-                  flex: 4,
-                  child: FormUi(),
-                ),
-
-                /// login btn
-                Flexible(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 10.0),
-                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                    child: new Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        new Expanded(
-                          child: FlatButton(
-                              shape: new RoundedRectangleBorder(
-                                  borderRadius:
-                                  new BorderRadius.circular(30.0)),
-                              splashColor: Colors.grey,
-                              color: Colors.grey,
-                              child: new Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  Center(
-                                    child: new Padding(
-                                      padding:
-                                      const EdgeInsets.only(left: 20.0),
-                                      child: Text(
-                                        "LOGIN",
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                  Center(
-                                    child: Icon(
-                                      Icons.arrow_forward,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                ],
-                              ),
-                              onPressed: () {
-                                _LoginToTheApp();
-                              }),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                /// Register btn
-                Flexible(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 10.0),
-                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+              /// AppName
+//                  Align(
+//                    alignment: Alignment.topCenter,
+//                    child: Text(
+//                      ' هــبـة ',
+//                      style: TextStyle(
+//                        fontFamily: ArabicFonts.Cairo,
+//                        fontSize: 32.0,
+//                        letterSpacing: 5,
+//                        fontWeight: FontWeight.bold,
+//                        color: Colors.black45,
+//                      ),
+//                    ),
+//                  ),
+              /// Form
+              FormUi(),
+//                    UIHelper.verticalSpace(20),
+              /// Login btn
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                  child: FlatButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(30.0)),
+                    splashColor: Colors.white,
+                    color: Colors.teal,
                     child: new Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        new Expanded(
-                          child: FlatButton(
-                            shape: new RoundedRectangleBorder(
-                                borderRadius: new BorderRadius.circular(30.0)),
-                            color: Colors.transparent,
-                            child: Container(
-                              padding: const EdgeInsets.only(left: 20.0),
-                              alignment: Alignment.center,
-                              child: Text(
-                                "DON'T HAVE AN ACCOUNT?",
-                                style: TextStyle(color: Colors.blueAccent),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, SignupScreen.id);
-                            },
+                        Icon(
+                          FontAwesomeIcons.personBooth,
+                          color: Colors.white,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20.0),
+                          child: Text(
+                            "Login To Your Acount",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
                     ),
+                    onPressed: () async {
+                      await _LoginToTheApp()
+                          .then((_) {
+                        _scaffoldKey.currentState.showSnackBar(
+                          new SnackBar(
+                            duration: new Duration(seconds: 4),
+                            content: new Row(
+                              children: <Widget>[
+                                new CircularProgressIndicator(),
+                                new Text("  Signing-In...")
+                              ],
+                            ),
+                          ),
+                        );
+                      })
+                          .whenComplete(() {
+                        if (_LoginToTheApp() == true) {
+                          Navigator.of(context).pushNamed(HomeScreen.id);
+                        }
+                      });
+                    },
                   ),
                 ),
+              ),
 
-                /// facebook btn  + google btn
-//                Flexible(
-//                  child: Container(
-//                    margin: const EdgeInsets.only(top: 10.0),
-//                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-//                    child: Row(
-//                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                      children: <Widget>[
-//                        Expanded(
-//                          flex: 2,
-//                          child: FlatButton(
-//                            shape: new RoundedRectangleBorder(
-//                                borderRadius: new BorderRadius.circular(30.0)),
-//                            splashColor: Colors.white,
-//                            color: Color(0xff3B5998),
-//                            child: new Row(
-//                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                              children: <Widget>[
-//                                Icon(
-//                                  FontAwesomeIcons.facebookF,
-//                                  color: Colors.white,
-//                                ),
-//                                Padding(
-//                                  padding: const EdgeInsets.only(left: 2.0),
-//                                  child: Text(
-//                                    "FACEBOOK",
-//                                    style: TextStyle(color: Colors.white),
-//                                  ),
-//                                ),
-//                              ],
-//                            ),
-//                            onPressed: () => {},
-//                          ),
-//                        ),
-//                        UIHelper.horizontalSpace(10),
-//                        Expanded(
-//                          flex: 2,
-//                          child: FlatButton(
-//                            shape: new RoundedRectangleBorder(
-//                                borderRadius: new BorderRadius.circular(30.0)),
-//                            splashColor: Colors.red[200],
-//                            color: Colors.red,
-//                            child: Row(
-//                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                              children: <Widget>[
-//                                Icon(
-//                                  FontAwesomeIcons.google,
-//                                  color: Colors.white,
-//                                ),
-//                                Padding(
-//                                  padding: const EdgeInsets.only(left: 2.0),
-//                                  child: Text(
-//                                    "GOOGLE",
-//                                    style: TextStyle(color: Colors.white),
-//                                  ),
-//                                ),
-//                              ],
-//                            ),
-//                            onPressed: () => {},
-//                          ),
-//                        ),
-//                      ],
-//                    ),
-//                  ),
-//                ),
-              ],
-            ),
+              /// facebook btn  + google btn
+              Flexible(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10.0),
+                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Expanded(
+                        flex: 2,
+                        child: FlatButton(
+                          shape: new RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(30.0)),
+                          splashColor: Colors.white,
+                          color: Color(0xff3B5998),
+                          child: new Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              Icon(
+                                FontAwesomeIcons.facebookF,
+                                color: Colors.white,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 2.0),
+                                child: Text(
+                                  "FACEBOOK",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                          onPressed: () => {},
+                        ),
+                      ),
+                      UIHelper.horizontalSpace(10),
+                      Expanded(
+                        flex: 2,
+                        child: FlatButton(
+                          shape: new RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(30.0)),
+                          splashColor: Colors.red[200],
+                          color: Colors.red,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              Icon(
+                                FontAwesomeIcons.google,
+                                color: Colors.white,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 2.0),
+                                child: Text(
+                                  "GOOGLE",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                          onPressed: () => {},
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              /// Continue as Guest btn
+              Flexible(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10.0),
+                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                  child: new Row(
+                    children: <Widget>[
+                      new Expanded(
+                        child: FlatButton(
+                          shape: new RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(30.0)),
+                          color: Colors.transparent,
+                          child: Container(
+                            padding: const EdgeInsets.only(left: 20.0),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "Continue as Guest",
+                              style: TextStyle(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pushNamed(context, HomeScreen.id);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              /// Register btn
+              Flexible(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10.0),
+                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                  child: new Row(
+                    children: <Widget>[
+                      new Expanded(
+                        child: FlatButton(
+                          shape: new RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(30.0)),
+                          color: Colors.pink,
+                          child: Container(
+                            padding: const EdgeInsets.only(left: 20.0),
+                            alignment: Alignment.center,
+                            child: Text(
+                              " Create a New Account?",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pushNamed(context, SignupScreen.id);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ]),
+        ),
       ),
     );
   }
@@ -246,6 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Form(
       key: _formKey,
       child: ListView(
+        shrinkWrap: true,
         children: <Widget>[
 
           ///
@@ -283,16 +347,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: InputBorder.none,
                       hintText: 'Enter your email',
                     ),
-                    validator: (input) =>
-                    !input.contains('@')
-                        ? 'Please enter a valid email'
-                        : null,
+                    validator: (input) {
+                      log("$input");
+                      return !input.trim().contains('@')
+                          ? 'Please enter a valid email'
+                          : null;
+                    },
                     onSaved: (input) => _email = input,
                   ),
                 ),
               ],
             ),
           ),
+
+          ///
           Container(
             decoration: BoxDecoration(
               border: Border.all(
@@ -310,7 +378,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
                   child: Icon(
                     Icons.lock_open,
-                    color: Colors.grey,
+                    color: Colors.deepOrangeAccent,
                   ),
                 ),
                 Container(

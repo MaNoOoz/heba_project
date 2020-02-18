@@ -9,9 +9,9 @@ import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/Screens/search_screen.dart';
 import 'package:provider/provider.dart';
 
+import '../tester/exampleScreen.dart';
 import 'Create_post_screen.dart';
 import 'FeedScreen.dart';
-import 'activity_screen.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
           FeedScreen(currentUserId: currentUserId),
           SearchScreen(),
           CreatePostScreen(),
-          ActivityScreen(),
+          TestScreen(),
           ProfileScreen(
             currentUserId: currentUserId,
             userId: currentUserId,

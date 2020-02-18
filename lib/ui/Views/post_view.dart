@@ -90,7 +90,7 @@ class _PostViewState extends State<PostView> {
                   builder: (_) =>
                       ProfileScreen(
                         currentUserId: widget.currentUserId,
-                        userId: widget.post.id.toString(),
+                        userId: widget.post.authorId,
                       ),
                 ),
               ),
@@ -132,18 +132,21 @@ class _PostViewState extends State<PostView> {
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              Container(
-                height: MediaQuery
-                    .of(context)
-                    .size
-                    .width,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: CachedNetworkImageProvider(widget.post.profileImage),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
+
+              /// todo fix
+//              Container(
+//                height: MediaQuery
+//                    .of(context)
+//                    .size
+//                    .width,
+//                decoration: BoxDecoration(
+//                  image: DecorationImage(
+////                    image: CachedNetworkImageProvider(widget.post.profileImage?? '') ,
+////                    image: CachedNetworkImageProvider() ,
+//                    fit: BoxFit.cover,
+//                  ),
+//                ),
+//              ),
               _heartAnim
                   ? Animator(
                 duration: Duration(milliseconds: 300),

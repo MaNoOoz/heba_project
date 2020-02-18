@@ -20,9 +20,10 @@ dependencies:
   flutter:
     sdk: flutter
   firebase_core:
+  flutter_images_slider:
   firebase_analytics:
   image_picker:
-  cached_network_image:
+  cached_network_image: ^2.0.0-rc
   firebase_storage:
   flutter_image_compress:
   path_provider:

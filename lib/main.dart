@@ -26,10 +26,13 @@ class MyApp extends StatelessWidget {
     return StreamBuilder<FirebaseUser>(
       stream: FirebaseAuth.instance.onAuthStateChanged,
       builder: (BuildContext context, snapshot) {
-        if (snapshot.hasData) {
+//        todo make sure this is the right way to check user
+        if (!snapshot.hasData) {
+          var currentUserId =
           Provider
               .of<UserData>(context)
               .currentUserId = snapshot.data.uid;
+//          print(" currentUserId : ${currentUserId.toString()}");
           return HomeScreen();
         } else {
           return LoginScreen(
@@ -63,7 +66,9 @@ class MyApp extends StatelessWidget {
 //          HomeScreen.id: (context) => HomeScreen(),
           SignupScreen.id: (context) => SignupScreen(),
           CreatePostScreen.id: (context) => CreatePostScreen(),
-          FeedScreen.id: (context) => FeedScreen(),
+          FeedScreen.id: (context) {
+            return FeedScreen();
+          }
         },
       ),
     );

@@ -3,13 +3,13 @@ import 'dart:developer';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/service/database_service.dart';
+import 'package:heba_project/service/storage_service.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/shared/CommanUtils.dart';
 import 'package:heba_project/ui/shared/Dialogs.dart';
@@ -132,15 +132,15 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    IconButton(
-                      padding: EdgeInsets.only(left: 30.0),
-                      onPressed: () =>
-//                          Navigator.pushNamed(context, FeedScreen.id),
-                      Navigator.pop(context),
-                      icon: Icon(Icons.check),
-                      iconSize: 30.0,
-                      color: Colors.white,
-                    ),
+//                    IconButton(
+//                      padding: EdgeInsets.only(left: 30.0),
+//                      onPressed: () =>
+////                          Navigator.pushNamed(context, FeedScreen.id),
+//                          Navigator.pop(context),
+//                      icon: Icon(Icons.check),
+//                      iconSize: 30.0,
+//                      color: Colors.white,
+//                    ),
 //                  Image(
 //                    image: AssetImage('assets/images/myIcon.png'),
 //
@@ -171,7 +171,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //                  ),
                     IconButton(
                       padding: EdgeInsets.only(right: 16.0),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, HomeScreen.id),
                       icon: Icon(Icons.clear),
                       iconSize: 30.0,
                       color: Colors.white,
@@ -292,6 +293,26 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     CommanUtils.showAlert(context, connectionResult ? "OK" : "internet needed");
   }
 
+  showDialog(BuildContext context) {
+//    if (!_validateInputs() || imageUrl2 == null) {
+    return CustomDialog(
+      title: 'إضافة الإعلان',
+      buttonText: 'Yes',
+      description: 'ss',
+      image: Image.asset(
+        'assets/images/myIcon.png',
+      ),
+    );
+
+//    } else {
+//      return Container(
+//        child: Text("sasdasd"),
+//      );
+//    }
+  }
+
+  progress() {}
+
   /// Form
   Future<bool> _validateInputs() async {
     if (_formkey.currentState.validate()) {
@@ -351,7 +372,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   Future<dynamic> _listOfImageLinks() async {
     var listOfImageLinks = [];
     for (var imageFile in _readyToUploadImages) {
-      mSelectedImage = await editedImages(imageFile);
+      mSelectedImage = await StorageService.editedImages(imageFile);
       print(
           'From _listOfImageLinks() : image identifier is : ${imageFile
               .identifier}');
@@ -365,35 +386,120 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return listOfImageLinks;
   }
 
-//  Future UploadImageList() async {
-//
-//    // Todo Check if All Images are Uploaded
-////    if (readyToUploadImages.length == listOfImageLinks.length) {
-////      print(
-////          'FROM UploadImageList() : Upload Finished and the total images are : ${readyToUploadImages.length} image');
-////    } else {
-////      print('FROM UploadImageList() : Something Wrong With This metheod Bro');
-////    }
-////    Future.delayed(Duration(seconds: 1)).then((_) {
-////      Scaffold.of(context).showSnackBar(SnackBar(
-////          backgroundColor: Colors.teal,
-////          content: Text('Data Added  From Future')));
-////    });
-//
-//
-//  }
+  Future<Post2> _CreatePost() async {
+    Post2 post2;
+    print("_CreatePost Called");
 
-  /// Edit  Images before upload to Database
-  Future<String> editedImages(Asset imageFile) async {
-//    await imageFile.requestOriginal();
-    ByteData byteData = await imageFile.requestOriginal();
-    List<int> imageData = byteData.buffer.asUint8List();
-    String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-    StorageReference reference = FirebaseStorage.instance.ref().child(fileName);
-    StorageUploadTask uploadTask = reference.putData(imageData);
-    StorageTaskSnapshot storageTaskSnapshot = await uploadTask.onComplete;
-    String mDownloadUR = await storageTaskSnapshot.ref.getDownloadURL();
-    return mDownloadUR;
+//    var imageFile;
+
+    mImagesPath = await _listOfImageLinks();
+
+    /// private Post Object
+    post2 = Post2(
+        imageUrls: mImagesPath,
+        hName: _name,
+        hDesc: _desc,
+        hLocation: _location,
+        authorId: Provider
+            .of<UserData>(context, listen: false)
+            .currentUserId,
+        timestamp: Timestamp.fromDate(DateTime.now()));
+
+//    /// public Post Object
+//    post2 = Post2(
+//        imageUrls: mImagesPath,
+//        hName: _name,
+//        hDesc: _desc,
+//        hLocation: _location,
+//        authorId: Provider.of<UserData>(context).currentUserId,
+//        timestamp: Timestamp.fromDate(DateTime.now()));
+//    log("${post2.authorId}");
+
+    /// private posts
+    DatabaseService.createPost(post2);
+
+    /// public posts
+//    DatabaseService.createPublicPosts(post2);
+
+    log("after public posts ${post2.authorId}");
+    print("onPressed Triggerd \n"
+        "Post Object :  name : $_name desc : $_desc location: $_location \n"
+        " images pathes : ${mImagesPath.length} "
+        "Selected Images List : ${_readyToUploadImages.length} \n");
+//    _displaySnackBar(context);
+
+    setState(() {});
+//    } else {
+//      _displaySnackBar(context);
+//    }
+    return post2;
+  }
+
+  /// Reset data
+  Future<bool> _Resetdata() async {
+    var dateRested = true;
+    print("_Resetdata Called");
+
+    _textFieldControllerName.clear();
+    _textFieldControllerDesc.clear();
+    _textFieldControllerLoca.clear();
+    _readyToUploadImages.clear();
+    mImagesPath.clear();
+    setState(() {
+      _desc = '';
+      _location = '';
+      _name = '';
+//      readyToUploadImages.length = -1;
+//      listOfImageLinks.length = -1;
+    });
+    return dateRested;
+  }
+
+  /// Reset data
+  Future<bool> _SendToServer() async {
+    await Future.delayed(Duration(seconds: 4));
+    var dataUploaded = false;
+
+    /// Check Inputs
+    var dataChecked = await _validateInputs();
+    print('dataChecked $dataChecked');
+
+    /// Create New Post
+    var postCreated = await _CreatePost();
+    print(' postCreated $postCreated');
+    setState(() {
+      dataChecked = true;
+    });
+
+    /// Rest Fields
+    var fieldsRested = await _Resetdata();
+    print('fieldsRested $fieldsRested');
+
+    if (dataChecked == false || postCreated != null || fieldsRested == false) {
+      dataUploaded = false;
+      _displaySnackBar(context, " تم إضافة الهبة بنجاح");
+
+      print("fieldsRested $fieldsRested  \n " +
+          "dataChecked $dataChecked   \n    " +
+          "fieldsRested $fieldsRested  \n   ");
+    }
+//    Navigator.pop(context);
+
+    return dataUploaded;
+  }
+
+  /// Reset data
+  void _displaySnackBar(BuildContext context, var s) async {
+    print("_displaySnackBar Called");
+
+//    if (mImagesPath = null || _name.isEmpty) {
+    final snackBar = SnackBar(content: Text(s));
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+//    } else if (mImagesPath.length < mSelectedImage) {
+//      final snackBar = SnackBar(
+//        content: Text('جاري رفع الإعلان'),
+//      );
+//      _scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
   /// Widgets ==========================================================================================
@@ -549,20 +655,19 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               ],
             ),
             onPressed: () async {
-              var sdsd;
-              if (_name.isNotEmpty && !_loading) {
-//                CommanUtils.showAlertForConfirmAddData(context," ",sdsd);
+              var isFinish = false;
 
-                final action = await Dialogs.yesAbortDialog(
-                    context, ' Add Heba', 'Are You Sure U Wants To Add Heba');
+              if (_name.isNotEmpty && !_loading) {
+                final action = await Dialogs.yesAbortDialog(context,
+                    ' Add Heba', 'Are You Sure You Want To Add This Post');
                 if (action == DialogAction.yes) {
-                  sdsd = await _SendToServer();
+                  await _SendToServer();
                   setState(() => tappedYes = true);
                 } else {
                   setState(() => tappedYes = false);
                 }
               } else if (_name.isNotEmpty == false) {
-                _displaySnackBar(context, "ss");
+                _displaySnackBar(context, " أدخل إسم للهبة $_name");
               }
 
 //              showDialog();
@@ -572,15 +677,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //                  "Selected Images List : ${readyToUploadImages.length} \n");
 
               /// loding ??
-
-              if (!sdsd)
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => HomeScreen(),
-//                  fullscreenDialog: true,
-                  ),
-                );
             },
           ),
 
@@ -590,121 +686,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       ),
     );
   }
-
-  /// Functions ==========================================================================================
-
-  Future<Post2> _CreatePost() async {
-    Post2 post2;
-    print("_CreatePost Called");
-
-//    var imageFile;
-
-    mImagesPath = await _listOfImageLinks();
-
-    ///
-    post2 = Post2(
-        imageUrls: mImagesPath,
-        hName: _name,
-        hDesc: _desc,
-        hLocation: _location,
-        authorId: Provider
-            .of<UserData>(context)
-            .currentUserId,
-        timestamp: Timestamp.fromDate(DateTime.now()));
-    log("${post2.authorId}");
-
-    ///
-    DatabaseService.createPost2(post2);
-
-    print("onPressed Triggerd \n"
-        "Post Object :  name : $_name desc : $_desc location: $_location \n"
-        " images pathes : ${mImagesPath.length} "
-        "Selected Images List : ${_readyToUploadImages.length} \n");
-//    _displaySnackBar(context);
-
-    setState(() {});
-//    } else {
-//      _displaySnackBar(context);
-//    }
-    return post2;
-  }
-
-  /// Reset data
-  Future<bool> _Resetdata() async {
-    var dateRested = true;
-    print("_Resetdata Called");
-
-    _textFieldControllerName.clear();
-    _textFieldControllerDesc.clear();
-    _textFieldControllerLoca.clear();
-    _readyToUploadImages.clear();
-    mImagesPath.clear();
-    setState(() {
-      _desc = '';
-      _location = '';
-      _name = '';
-//      readyToUploadImages.length = -1;
-//      listOfImageLinks.length = -1;
-    });
-    return dateRested;
-  }
-
-  /// Reset data
-  Future<bool> _SendToServer() async {
-    await Future.delayed(Duration(seconds: 4));
-    var dateScented = false;
-
-    /// Check Inputs
-    var dateChecked = await _validateInputs();
-
-    /// Create post
-    var dateCreated = await _CreatePost();
-
-    /// RestData
-    var dateRested = await _Resetdata();
-    print('_SendToServer Ended');
-
-    if (dateChecked == false || dateCreated != null || dateRested == false) {
-      dateScented = false;
-      _displaySnackBar(context, "$dateRested" + "$dateChecked" + "$dateRested");
-    }
-    return dateScented;
-  }
-
-  /// Reset data
-  void _displaySnackBar(BuildContext context, var s) async {
-    print("_displaySnackBar Called");
-
-//    if (mImagesPath = null || _name.isEmpty) {
-    final snackBar = SnackBar(content: Text('أدخل إسم للهبة '));
-    _scaffoldKey.currentState.showSnackBar(snackBar);
-//    } else if (mImagesPath.length < mSelectedImage) {
-//      final snackBar = SnackBar(
-//        content: Text('جاري رفع الإعلان'),
-//      );
-//      _scaffoldKey.currentState.showSnackBar(snackBar);
-  }
 }
-
-showDialog(BuildContext context) {
-//    if (!_validateInputs() || imageUrl2 == null) {
-  return CustomDialog(
-    title: 'إضافة الإعلان',
-    buttonText: 'Yes',
-    description: 'ss',
-    image: Image.asset(
-      'assets/images/myIcon.png',
-    ),
-  );
-
-//    } else {
-//      return Container(
-//        child: Text("sasdasd"),
-//      );
-//    }
-}
-
-progress() {}
 
 //  final snackBar = SnackBar(content: Text('أكمل الحقول'));
 //  _scaffoldKey.currentState.showSnackBar(snackBar);

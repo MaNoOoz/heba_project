@@ -6,8 +6,6 @@ import 'dart:core';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
-
-//import 'package:timeago/timeago.dart' as timeago;
 //import 'package:meta/meta.dart';
 
 //const placeholderStories = <Story>[Story()];
@@ -39,7 +37,8 @@ import 'package:flutter/cupertino.dart';
 
 class Post2 {
   final String id;
-  final String profileImage;
+
+//  final String profileImage;
   List<dynamic> imageUrls;
   final String hName;
   final String hDesc;
@@ -53,15 +52,11 @@ class Post2 {
 //  final Timestamp postedAt;
 
   Post2({
-//    @required this.postedAt,
     this.id,
-    this.profileImage,
-    @required this.imageUrls,
+    this.imageUrls,
     @required this.hName,
     @required this.hDesc,
     this.hLocation,
-//    @required this.likes,
-//    @required this.comments,
     @required this.authorId,
     @required this.timestamp,
   });
@@ -70,23 +65,18 @@ class Post2 {
   factory Post2.fromDoc(DocumentSnapshot doc) {
     return Post2(
       id: doc.documentID,
-      profileImage: doc['profileImageUrl'],
       imageUrls: List.from(doc['imagesUrls']),
       hName: doc['hName'],
       hDesc: doc['hDesc'],
       hLocation: doc['hLocation'],
-//      likes: List.from(doc['likes']),
-//      comments: List.from(doc['comments']),
       authorId: doc['authorId'],
       timestamp: doc['timestamp'],
-//      postedAt: doc['timestamp'],
     );
   }
 
-
 //  String timeAgo() {
 //    final now = DateTime.now();
-//    return timeago.format(now.subtract(now.difference(postedAt)));
+//    return timeago.format(now.subtract(now.difference(timestamp)));
 //  }
 
 //  bool isLikedBy(User user) {

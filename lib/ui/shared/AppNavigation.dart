@@ -10,7 +10,7 @@ const String initialRoute = "login";
 class Router {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case '/':
+      case 'home_screen':
         return MaterialPageRoute(builder: (_) => HomeScreen());
       case 'login_screen':
         return MaterialPageRoute(builder: (_) => LoginScreen());

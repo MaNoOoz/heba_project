@@ -83,23 +83,28 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _scaffoldKey,
           body: Column(
             children: <Widget>[
-              Expanded(
+
+              /// Logo
+              Flexible(
+                flex: 4,
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 10),
                     child: CircleAvatar(
                         radius: 60.0,
+
                         backgroundColor: Colors.transparent,
 //                        backgroundImage:
 //                            AssetImage('assets/images/appicon.png'),
                         child: Image.asset(
                           'assets/images/appicon.png',
-                          scale: 2.0,
+
                         )),
                   ),
                 ),
               ),
+
               UIHelper.verticalSpace(10),
 
               /// AppName
@@ -270,7 +275,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
 
               /// Register btn
-              Flexible(
+              Padding(
+                padding: const EdgeInsets.all(8.0),
                 child: Container(
                   margin: const EdgeInsets.only(top: 10.0),
                   padding: const EdgeInsets.only(left: 20.0, right: 20.0),
@@ -330,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
                   child: Icon(
                     Icons.person_outline,
-                    color: Colors.grey,
+                    color: Colors.black45,
                   ),
                 ),
                 Container(
@@ -378,7 +384,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
                   child: Icon(
                     Icons.lock_open,
-                    color: Colors.deepOrangeAccent,
+                    color: Colors.black45,
                   ),
                 ),
                 Container(

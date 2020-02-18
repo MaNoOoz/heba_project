@@ -26,7 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _name = '';
   String _bio = '';
   bool _isLoading = false;
-
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   void initState() {
     super.initState();
@@ -78,9 +78,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           widget.user.profileImageUrl,
           _profileImage,
         );
-        Scaffold.of(context).showSnackBar(SnackBar(
-          content: Text('Profile Image Updated'),
-        ));
+        _displaySnackBar(context, 'Profile Image Updated');
+
       }
 
       User user = User(
@@ -99,6 +98,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -113,9 +113,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: <Widget>[
             _isLoading
                 ? LinearProgressIndicator(
-                    backgroundColor: Colors.blue[200],
-                    valueColor: AlwaysStoppedAnimation(Colors.blue),
-                  )
+              backgroundColor: Colors.blue[200],
+              valueColor: AlwaysStoppedAnimation(Colors.blue),
+            )
                 : SizedBox.shrink(),
             Padding(
               padding: EdgeInsets.all(30.0),
@@ -190,4 +190,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
   }
+
+  void _displaySnackBar(BuildContext context, String message) {
+    final snackBar = SnackBar(content: Text('أدخل معلومات صحيح' + message));
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
 }

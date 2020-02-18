@@ -5,8 +5,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
-
-import '../ui/shared/constants.dart';
+import 'package:heba_project/ui/shared/Constants.dart';
 
 class DatabaseService {
 
@@ -35,7 +34,7 @@ class DatabaseService {
 //  }
 
   /// ===============================================================================
-  static void createPost2(Post2 post) {
+  static void createPost(Post2 post) {
     postsRef.document(post.authorId).collection('userPosts').add({
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
@@ -46,15 +45,41 @@ class DatabaseService {
     });
   }
 
-  static Future<List<Post2>> getUserPosts2(String userId) async {
-    QuerySnapshot userPostsSnapshot = await postsRef
-        .document(userId)
-        .collection('userPosts')
+  /// Publish to Wall ===============================================================
+  static void createPublicPosts(Post2 post) {
+    publicpostsRef.add({
+      'imagesUrls': post.imageUrls,
+      'hName': post.hName,
+      'hDesc': post.hDesc,
+      'hLocation': post.hLocation,
+      'authorId': post.authorId,
+      'timestamp': post.timestamp,
+    });
+  }
+
+  ///
+  static Future<List<Post2>> getAllPosts() async {
+    QuerySnapshot feedSnapshot = await publicpostsRef
         .orderBy('timestamp', descending: true)
         .getDocuments();
-    List<Post2> posts =
-    userPostsSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
+
+    List<Post2> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc))
+        .toList();
     return posts;
+
+//    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
+  }
+
+  static Future<List<dynamic>> getAllPosts2() async {
+    QuerySnapshot feedSnapshot = await publicpostsRef
+        .orderBy('timestamp', descending: true)
+        .getDocuments();
+
+    List<dynamic> posts = feedSnapshot.documents.map((doc) =>
+        Post2.fromDoc(doc)).toList();
+    return posts;
+
+//    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
   }
 
   /// ===============================================================================
@@ -125,17 +150,7 @@ class DatabaseService {
     return followersSnapshot.documents.length;
   }
 
-//  static Future<List<Post>> getFeedPosts(String userId) async {
-//    QuerySnapshot feedSnapshot = await feedsRef
-//        .document(userId)
-//        .collection('userFeed')
-//        .orderBy('timestamp', descending: true)
-//        .getDocuments();
-//    List<Post> posts =
-//        feedSnapshot.documents.map((doc) => Post.fromDoc(doc)).toList();
-//    return posts;
-//  }
-  static Future<List<Post2>> getFeedPosts2(String userId) async {
+  static Future<List<Post2>> getFeedPrivatePosts(String userId) async {
     QuerySnapshot feedSnapshot = await feedsRef
         .document(userId)
         .collection('userFeed')

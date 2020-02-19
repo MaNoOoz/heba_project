@@ -8,7 +8,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/models/user_model.dart';
@@ -16,7 +15,7 @@ import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Views/FeedView.dart';
 import 'package:heba_project/ui/Views/post_view.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
-import 'package:heba_project/ui/shared/UI_Helpers.dart';
+import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:provider/provider.dart';
 
 class FeedScreen extends StatefulWidget {
@@ -32,10 +31,25 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-
   List<Post2> _hebatList = [];
   int _displayPosts = 0; // 0 - grid, 1 - column
   User _profileUser;
+  var _profileImage;
+
+  _buildProfileInfo(User user) {
+    var profileImageUrl = user.profileImageUrl;
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: CircleAvatar(
+        radius: 60.0,
+        backgroundColor: Colors.grey,
+        backgroundImage: user.profileImageUrl.isEmpty
+            ? AssetImage('assets/images/user_placeholder.jpg')
+            : CachedNetworkImageProvider(profileImageUrl),
+      ),
+    );
+  }
 
   _setupProfileUser() async {
     final String currentUserId = Provider
@@ -200,106 +214,94 @@ class _FeedScreenState extends State<FeedScreen> {
     });
   }
 
+  Widget mBody() {
+    return ListView(
+      children: <Widget>[
+        RefreshIndicator(
+          onRefresh: () {
+            print("_hebatList Size : ${_hebatList.length}");
+            print("${widget.currentUserId}");
+            printData();
+
+            return _setupFeed();
+          },
+          child: ListView(
+            shrinkWrap: true,
+            physics: ClampingScrollPhysics(),
+            children: <Widget>[
+              _buildDisplayPosts(),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: ClampingScrollPhysics(),
+                  itemCount: _hebatList.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    Post2 post = _hebatList[index];
+                    return FutureBuilder(
+                      future: DatabaseService.getAllPosts(),
+                      builder: (BuildContext context, AsyncSnapshot snapshot) {
+                        if (!snapshot.hasData) {
+                          return SizedBox.shrink();
+                        }
+                        User author = snapshot.data;
+                        return FeedView(
+                          post: post,
+                          author: author,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+//        FutureBuilder(
+//          future: usersRef.document(widget.currentUserId).get(),
+//          builder: (BuildContext context, AsyncSnapshot snapshot) {
+//            if (!snapshot.hasData) {
+//              print(
+//                  "snapshot : ${usersRef.getDocuments().then((QuerySnapshot snapshot) {
+//                snapshot.documents.forEach((f) => print('${f.exists}}'));
+//              })}");
+//              return Center(
+//                child: Column(
+//                  crossAxisAlignment: CrossAxisAlignment.center,
+//                  mainAxisAlignment: MainAxisAlignment.center,
+//                  children: <Widget>[
+//                    Padding(
+//                      padding: const EdgeInsets.all(8.0),
+//                      child: Center(child: CircularProgressIndicator()),
+//                    ),
+//                    Text("Loading ...")
+//                  ],
+//                ),
+//              );
+//            } else if (snapshot.hasError) {
+//              print('u have error in future');
+//            }
+//            User user = User.fromDoc(snapshot.data);
+//            return ListView(
+//              children: <Widget>[
+//                _buildProfileInfo(user),
+//
+////              Text("${_posts.length}"),
+//              ],
+//            );
+//          },
+//        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    String currentUserId = Provider
-        .of<UserData>(context)
-        .currentUserId;
-//    String postID = Provider.of<Post2>(context).authorId;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-            padding: EdgeInsets.only(left: 30.0),
-            onPressed: () => print('Menu'),
-            icon: Icon(Icons.menu),
-            iconSize: 30.0,
-            color: Colors.black45),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset(
-              'assets/images/appicon.png',
-              width: 32,
-              height: 32,
-              fit: BoxFit.scaleDown,
-              scale: 3.0,
-            ),
-            UIHelper.horizontalSpace(10),
-            Text(
-              'هبــة',
-              style: TextStyle(
-                  fontSize: 32,
-                  color: Colors.black45,
-                  fontFamily: ArabicFonts.Cairo),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-//          IconButton(
-//            padding: EdgeInsets.only(right: 10.0),
-//            onPressed: () => print('Search'),
-//            icon: Icon(Icons.more_vert),
-//            iconSize: 30.0,
-//            color: Colors.black,
-//          ),
-          GestureDetector(
-            onTap: () {
-              print('object');
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(
-                'assets/images/myIcon.png',
-                scale: 2.0,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () {
-          print("_hebatList Size : ${_hebatList.length}");
-          print("${widget.currentUserId}");
-          printData();
-
-          return _setupFeed();
-        },
-        child: ListView(
-          children: <Widget>[
-
-            _buildDisplayPosts(),
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: ClampingScrollPhysics(),
-                itemCount: _hebatList.length,
-                itemBuilder: (BuildContext context, int index) {
-                  Post2 post = _hebatList[index];
-                  return FutureBuilder(
-                    future: DatabaseService.getAllPosts(),
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      if (!snapshot.hasData) {
-                        return SizedBox.shrink();
-                      }
-                      User author = snapshot.data;
-                      return FeedView(
-                        post: post,
-                        author: author,
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+      appBar: CustomAppBar(
+        title: "Heba", isHome: true, color: Colors.white, isImageVisble: true,),
+      body: mBody(),
     );
   }
 
@@ -322,7 +324,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 backgroundColor: Colors.grey,
                 backgroundImage: post.imageUrls.isEmpty
                     ? AssetImage('assets/images/user_placeholder.jpg')
-                    : CachedNetworkImageProvider(post.imageUrls.toString()),
+                    : CachedNetworkImageProvider(post.imageUrls[0]),
               ),
 //              leading: Text("${post.imageUrls}"),
 //              subtitle: Text("${post.hName}"),
@@ -372,5 +374,4 @@ class _FeedScreenState extends State<FeedScreen> {
       return Column(children: postViews);
     }
   }
-
 }

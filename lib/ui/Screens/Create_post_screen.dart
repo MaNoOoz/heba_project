@@ -411,7 +411,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //        hName: _name,
 //        hDesc: _desc,
 //        hLocation: _location,
-//        authorId: Provider.of<UserData>(context).currentUserId,
+//        authorId: Provider.of<UserData>(context,listen: false).currentUserId,
 //        timestamp: Timestamp.fromDate(DateTime.now()));
 //    log("${post2.authorId}");
 

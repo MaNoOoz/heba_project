@@ -5,16 +5,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/user_data.dart';
+import 'package:heba_project/ui/Screens/chat_screen.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/Screens/search_screen.dart';
 import 'package:provider/provider.dart';
 
-import '../tester/exampleScreen.dart';
 import 'Create_post_screen.dart';
 import 'FeedScreen.dart';
 
 class HomeScreen extends StatefulWidget {
-
   static String id = "home_screen";
 
   @override
@@ -45,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
           FeedScreen(currentUserId: currentUserId),
           SearchScreen(),
           CreatePostScreen(),
-          TestScreen(),
+          ChatsScreen(),
           ProfileScreen(
             currentUserId: currentUserId,
             userId: currentUserId,
@@ -112,12 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             activeIcon: Icon(
-              Icons.notifications,
+              Icons.comment,
+
+//              FontAwesomeIcons.commentAlt,
               color: Colors.blue[800],
               size: 42.0,
             ),
             icon: Icon(
-              Icons.notifications,
+              Icons.comment,
               size: 32.0,
 //              color: Colors.blue,
             ),

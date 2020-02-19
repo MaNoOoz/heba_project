@@ -4,9 +4,11 @@
 
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
@@ -35,6 +37,9 @@ class _LoginScreenState extends State<LoginScreen> {
   String _email, _password;
   bool loading = false;
 
+  //google sign
+  GoogleSignIn googleauth = new GoogleSignIn();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -44,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Methods ================================================================================
 
-  Future <bool> _LoginToTheApp() async {
+  Future<bool> _LoginToTheApp() async {
     print('_LoginToTheApp : Called');
     try {
       if (_formKey.currentState.validate()) {
@@ -83,7 +88,6 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _scaffoldKey,
           body: Column(
             children: <Widget>[
-
               /// Logo
               Flexible(
                 flex: 4,
@@ -93,13 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.only(top: 10),
                     child: CircleAvatar(
                         radius: 60.0,
-
                         backgroundColor: Colors.transparent,
 //                        backgroundImage:
 //                            AssetImage('assets/images/appicon.png'),
                         child: Image.asset(
                           'assets/images/appicon.png',
-
                         )),
                   ),
                 ),
@@ -152,8 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     onPressed: () async {
-                      await _LoginToTheApp()
-                          .then((_) {
+                      await _LoginToTheApp().then((_) {
                         _scaffoldKey.currentState.showSnackBar(
                           new SnackBar(
                             duration: new Duration(seconds: 4),
@@ -165,11 +166,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         );
-                      })
-                          .whenComplete(() {
-                        if (_LoginToTheApp() == true) {
-                          Navigator.of(context).pushNamed(HomeScreen.id);
-                        }
+                      }).whenComplete(() {
+//                        Navigator.of(context).pushNamed(HomeScreen.id);
+                        print("${_email}");
                       });
                     },
                   ),
@@ -207,7 +206,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          onPressed: () => {},
+                          onPressed: () {
+                            print("Soon");
+                          },
                         ),
                       ),
                       UIHelper.horizontalSpace(10),
@@ -234,7 +235,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          onPressed: () => {},
+                          onPressed: () {
+                            return AuthService.signInWithGoogle()
+                                .whenComplete(() {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return HomeScreen();
+                                  },
+                                ),
+                              );
+                            });
+                          },
                         ),
                       ),
                     ],
@@ -317,7 +329,6 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ListView(
         shrinkWrap: true,
         children: <Widget>[
-
           ///
           Container(
             decoration: BoxDecoration(
@@ -416,4 +427,5 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
 }

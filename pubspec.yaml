@@ -32,7 +32,8 @@ dependencies:
   animator:
   cloud_firestore:
   multi_image_picker:
-  firebase_auth:
+  firebase_auth: ^0.15.4
+  popup_menu:
   google_sign_in:
   provider:
   flutter_spinkit:

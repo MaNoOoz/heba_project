@@ -115,9 +115,7 @@ class _SignupScreenState extends State<SignupScreen> {
       var errorMessage = 'This Email Already Registerd';
       if (e.toString().contains('EMAIL_ALREADY_IN_USE')) {
         _showErrorDialog("$errorMessage");
-      }
-
-      else if (e.toString().contains('INVALID_EMAIL')) {
+      } else if (e.toString().contains('INVALID_EMAIL')) {
         var errorMessage = 'إيميل خاطئ';
         _displaySnackBarError(context, "$errorMessage");
       }

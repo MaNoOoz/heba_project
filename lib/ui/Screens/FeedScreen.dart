@@ -271,7 +271,6 @@ class _FeedScreenState extends State<FeedScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-
             /// Left Side
             Container(
               child: Column(

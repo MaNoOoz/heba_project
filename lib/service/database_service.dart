@@ -18,7 +18,7 @@ class DatabaseService {
 
   static Future<QuerySnapshot> searchUsers(String name) {
     Future<QuerySnapshot> users =
-    usersRef.where('name', isGreaterThanOrEqualTo: name).getDocuments();
+        usersRef.where('name', isGreaterThanOrEqualTo: name).getDocuments();
     return users;
   }
 
@@ -61,7 +61,7 @@ class DatabaseService {
     var ref = publicpostsRef.orderBy('timestamp', descending: true);
 
     return ref.snapshots().map(
-            (list) => list.documents.map((doc) => Post2.fromDoc(doc)).toList());
+        (list) => list.documents.map((doc) => Post2.fromDoc(doc)).toList());
 
 //    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
   }
@@ -72,7 +72,7 @@ class DatabaseService {
         .getDocuments();
 
     List<dynamic> posts =
-    feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
+        feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
     return posts;
 
 //    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
@@ -154,7 +154,7 @@ class DatabaseService {
         .getDocuments();
 
     List<Post2> posts =
-    feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
+        feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
     return posts;
   }
 
@@ -165,7 +165,7 @@ class DatabaseService {
         .orderBy('timestamp', descending: true)
         .getDocuments();
     List<Post2> posts =
-    userPostsSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
+        userPostsSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
     return posts;
   }
 

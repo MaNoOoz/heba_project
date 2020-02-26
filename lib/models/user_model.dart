@@ -19,6 +19,15 @@ class User {
     this.bio,
   });
 
+  factory User.fromFirestore(DocumentSnapshot doc) {
+    Map data = doc.data;
+    return User(
+        id: doc.documentID,
+        name: data['name'],
+        email: data['email'],
+        bio: data['bio'],
+        profileImageUrl: data['profileImageUrl']);
+  }
   factory User.fromDoc(DocumentSnapshot doc) {
     return User(
       id: doc.documentID,
@@ -28,5 +37,4 @@ class User {
       bio: doc['bio'] ?? '',
     );
   }
-
 }

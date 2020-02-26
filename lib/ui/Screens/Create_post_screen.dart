@@ -404,22 +404,25 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             .of<UserData>(context, listen: false)
             .currentUserId,
         timestamp: Timestamp.fromDate(DateTime.now()));
+    log("private ${post2.authorId}");
 
 //    /// public Post Object
-//    post2 = Post2(
-//        imageUrls: mImagesPath,
-//        hName: _name,
-//        hDesc: _desc,
-//        hLocation: _location,
-//        authorId: Provider.of<UserData>(context,listen: false).currentUserId,
-//        timestamp: Timestamp.fromDate(DateTime.now()));
-//    log("${post2.authorId}");
+    post2 = Post2(
+        imageUrls: mImagesPath,
+        hName: _name,
+        hDesc: _desc,
+        hLocation: _location,
+        authorId: Provider
+            .of<UserData>(context, listen: false)
+            .currentUserId,
+        timestamp: Timestamp.fromDate(DateTime.now()));
+    log("public ${post2.authorId}");
 
     /// private posts
     DatabaseService.createPost(post2);
 
     /// public posts
-//    DatabaseService.createPublicPosts(post2);
+    DatabaseService.createPublicPosts(post2);
 
     log("after public posts ${post2.authorId}");
     print("onPressed Triggerd \n"

@@ -4,11 +4,13 @@
 
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
@@ -37,10 +39,102 @@ class _LoginScreenState extends State<LoginScreen> {
   String _email, _password;
   bool loading = false;
 
-  //google sign
-  GoogleSignIn googleauth = new GoogleSignIn();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// vars ==============================================
+  static final _firebase_Auth = FirebaseAuth.instance;
+  static final _firestore = Firestore.instance;
+  static final GoogleSignIn googleSignIn = GoogleSignIn();
+
+  Future<String> signInWithGoogle() async {
+    print("signInWithGoogle");
+
+    final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
+    final GoogleSignInAuthentication googleSignInAuthentication =
+    await googleSignInAccount.authentication;
+
+    final AuthCredential credential = GoogleAuthProvider.getCredential(
+      accessToken: googleSignInAuthentication.accessToken,
+      idToken: googleSignInAuthentication.idToken,
+    );
+
+    final AuthResult authResult =
+    await _firebase_Auth.signInWithCredential(credential);
+    final FirebaseUser user = authResult.user;
+
+    assert(!user.isAnonymous);
+    assert(await user.getIdToken() != null);
+
+    final FirebaseUser currentUser = await _firebase_Auth.currentUser();
+    assert(user.uid == currentUser.uid);
+    print("signed in " + user.displayName + "\n" + user.photoUrl);
+    var clonedUser = await saveDetailsFromGoogleAuth(user);
+//    var savedUser = await saveProfileDetails(user, user.photoUrl, user.email, user.email);
+
+    print("signed in " +
+        clonedUser.id +
+        clonedUser.name +
+        "\n" +
+//        savedUser.name +
+//        savedUser.id +
+        "\n" +
+        clonedUser.profileImageUrl);
+
+    return 'signInWithGoogle succeeded: $clonedUser';
+  }
+
+  /// saveDetailsFromGoogleAuth =================================================================
+  Future<User> saveDetailsFromGoogleAuth(FirebaseUser user) async {
+    print("saveDetailsFromGoogleAuth");
+
+    DocumentReference ref = _firestore.collection('/users').document(user
+        .uid); //reference of the user's document node in database/users. This node is created using uid
+    final bool userExists =
+    !await ref
+        .snapshots()
+        .isEmpty; // check if user exists or not
+    var data = {
+      //add details received from google auth
+      'profileImageUrl': user.photoUrl,
+      'email': user.email,
+      'name': user.displayName,
+    };
+    if (!userExists && user.photoUrl != null) {
+      // if user entry exists then we would not want to override the photo url with the one received from googel auth
+      data['profileImageUrl'] = user.photoUrl;
+    }
+    ref.setData(data, merge: true); // set the data
+    final DocumentSnapshot currentDocument =
+    await ref.get(); // get updated data reference
+
+    return User.fromFirestore(
+        currentDocument); // create a user object and return
+  }
+
+  Future<User> saveProfileDetails(FirebaseUser user, String profileImageUrl,
+      String email, String bio) async {
+    print("saveProfileDetails");
+
+    String uid = _firestore.document(user.uid).toString();
+    //get a reference to the map
+    DocumentReference mapReference = _firestore.document(user.uid);
+    var mapData = {'uid': uid};
+    //map the uid to the username
+    mapReference.setData(mapData);
+
+    DocumentReference ref = _firestore.document(
+        uid); //reference of the user's document node in database/users. This node is created using uid
+    var data = {
+      'photoUrl': profileImageUrl,
+      'email': email,
+      'bio': bio,
+    };
+    await ref.setData(data, merge: true); // set the photourl, age and username
+    final DocumentSnapshot currentDocument =
+    await ref.get(); // get updated data back from firestore
+    return User.fromFirestore(
+        currentDocument); // create a user object and return it
+  }
 
   @override
   void initState() {
@@ -69,7 +163,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final snackBar = SnackBar(content: Text('أدخل معلومات صحيح' + message));
     _scaffoldKey.currentState.showSnackBar(snackBar);
   }
-
 //  Future<bool> loginAction() async {
 //    //replace the below line of code with your login request
 //    // Logging in the user w/ Firebase
@@ -236,8 +329,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                           onPressed: () {
-                            return AuthService.signInWithGoogle()
-                                .whenComplete(() {
+                            return signInWithGoogle().whenComplete(() {
+                              print(AuthService
+                                  .googleSignIn.currentUser.displayName);
+
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) {
@@ -427,5 +522,5 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
 }
+/**/

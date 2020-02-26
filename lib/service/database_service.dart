@@ -8,7 +8,6 @@ import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 
 class DatabaseService {
-
   static void updateUser(User user) {
     usersRef.document(user.id).updateData({
       'name': user.name,
@@ -58,14 +57,11 @@ class DatabaseService {
   }
 
   ///
-  static Future<List<Post2>> getAllPosts() async {
-    QuerySnapshot feedSnapshot = await publicpostsRef
-        .orderBy('timestamp', descending: true)
-        .getDocuments();
+  static Stream<List<Post2>> getAllPosts() {
+    var ref = publicpostsRef.orderBy('timestamp', descending: true);
 
-    List<Post2> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc))
-        .toList();
-    return posts;
+    return ref.snapshots().map(
+            (list) => list.documents.map((doc) => Post2.fromDoc(doc)).toList());
 
 //    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
   }
@@ -75,8 +71,8 @@ class DatabaseService {
         .orderBy('timestamp', descending: true)
         .getDocuments();
 
-    List<dynamic> posts = feedSnapshot.documents.map((doc) =>
-        Post2.fromDoc(doc)).toList();
+    List<dynamic> posts =
+    feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList();
     return posts;
 
 //    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;

@@ -24,19 +24,16 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-
   Widget _getScreenId() {
     return StreamBuilder<FirebaseUser>(
       stream: FirebaseAuth.instance.onAuthStateChanged,
       builder: (BuildContext context, snapshot) {
 //        todo make sure this is the right way to check user
         if (!snapshot.hasData == false) {
-//          var cu =  AuthService().currentUser();
-
           var currentUserId = Provider
               .of<UserData>(context, listen: true)
               .currentUserId = snapshot.data.uid;
-          print("currentUserId  : ${currentUserId.toString()}");
+          print("_getScreenId : currentUserId  : ${currentUserId.toString()}");
           return HomeScreen();
         } else {
           return LoginScreen(
@@ -57,43 +54,33 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown,
     ]);
 
-    return ChangeNotifierProvider(
-      create: (context) => UserData(),
-      child: MaterialApp(
-        title: 'Heba Project',
-        debugShowCheckedModeBanner: false,
-        theme: buildThemeData(),
-        home: _getScreenId(),
-        onGenerateRoute: Router.generateRoute,
-        routes: {
-          LoginScreen.id: (context) => LoginScreen(),
-          ChatsScreen.id: (context) => ChatsScreen(),
-          HomeScreen.id: (context) => HomeScreen(),
-          ProfileScreen.id: (context) => ProfileScreen(),
-          SignupScreen.id: (context) => SignupScreen(),
-          CreatePostScreen.id: (context) => CreatePostScreen(),
-          FeedScreen.id: (context) {
-            return FeedScreen();
-          }
-        },
+//    todo
+    return MultiProvider(
+      child: ChangeNotifierProvider(
+        create: (context) => UserData(),
+        child: MaterialApp(
+          title: 'Heba Project + ${_getScreenId().toString()}',
+          debugShowCheckedModeBanner: false,
+          theme: buildThemeData(),
+          home: _getScreenId(),
+          onGenerateRoute: Router.generateRoute,
+          routes: {
+            LoginScreen.id: (context) => LoginScreen(),
+            ChatsScreen.id: (context) => ChatsScreen(),
+            HomeScreen.id: (context) => HomeScreen(),
+            ProfileScreen.id: (context) => ProfileScreen(),
+            SignupScreen.id: (context) => SignupScreen(),
+            CreatePostScreen.id: (context) => CreatePostScreen(),
+            FeedScreen.id: (context) {
+              return FeedScreen();
+            }
+          },
+        ),
       ),
+      providers: [
+        StreamProvider<FirebaseUser>.value(
+            value: FirebaseAuth.instance.onAuthStateChanged),
+      ],
     );
   }
-
-//  @override
-//  Widget build(BuildContext context) {
-//    return MultiProvider(
-//      providers: [
-//        StreamProvider<FirebaseUser>.value(
-//          value: FirebaseAuth.instance.onAuthStateChanged,
-//          child: MaterialApp(
-//            title: 'SSDASD',
-//            theme: ThemeData(),
-//            initialRoute: 'login',
-//            onGenerateRoute: Router.generateRoute,
-//          ),
-//        ),
-//      ],
-//    );
-//  }
 }

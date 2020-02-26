@@ -65,7 +65,10 @@ class Post2 {
   factory Post2.fromDoc(DocumentSnapshot doc) {
     return Post2(
       id: doc.documentID,
-      imageUrls: List.from(doc['imagesUrls']),
+      imageUrls: List.from(doc['imagesUrls'] ?? ["ss", "ss"]),
+//      imageUrls: doc["imageUrls"] == null
+//          ? null
+//          : List<String>.from(doc["imageUrls"].map((x) => x)),
       hName: doc['hName'],
       hDesc: doc['hDesc'],
       hLocation: doc['hLocation'],

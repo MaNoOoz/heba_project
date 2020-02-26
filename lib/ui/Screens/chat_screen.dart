@@ -23,8 +23,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
         isImageVisble: true,
       ),
       body: Center(
-        child: Text(
-          'Activity',
+        child: Text('Activity',
         ),
       ),
     );

@@ -34,6 +34,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _scaffoldState = GlobalKey<ScaffoldState>();
+
   String _name, _email, _password;
   String _imageUrl = "";
   File _profileImage;
@@ -79,6 +80,23 @@ class _SignupScreenState extends State<SignupScreen> {
 //    _setupProfileUser();
   }
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (_) =>
+          AlertDialog(
+            title: Text('An Error'),
+            content: Text(message),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text("Ok"),
+              )
+            ],
+          ),
+    );
+  }
+
   Future<bool> _CreateNewAcount() async {
     try {
       await new Future.delayed(Duration(seconds: 5));
@@ -92,11 +110,23 @@ class _SignupScreenState extends State<SignupScreen> {
         AuthService.signUpUser(context, _name, _email, _password, _imageUrl);
         _imageUrl = await StorageService.uploadUserProfileImageInSignUp(
             _imageUrl, _profileImage);
-      } else {
-        _displaySnackBar(context);
-      }
+      } else {}
     } catch (e) {
-      print(e);
+      var errorMessage = 'This Email Already Registerd';
+      if (e.toString().contains('EMAIL_ALREADY_IN_USE')) {
+        _showErrorDialog("$errorMessage");
+      }
+
+      else if (e.toString().contains('INVALID_EMAIL')) {
+        var errorMessage = 'إيميل خاطئ';
+        _displaySnackBarError(context, "$errorMessage");
+      }
+
+//      else if(e.toString().contains('WEAK_PASSWORD')){
+//        var errorMessage = 'Password Weak';
+//        _displaySnackBarError(context,"${errorMessage}");
+//      }
+
     }
     return true;
   }
@@ -206,22 +236,21 @@ class _SignupScreenState extends State<SignupScreen> {
                           ],
                         ),
                         onPressed: () async {
-                          _scaffoldState.currentState.showSnackBar(
-                            new SnackBar(
-                              duration: new Duration(seconds: 4),
-                              content: new Row(
-                                children: <Widget>[
-                                  new CircularProgressIndicator(),
-                                  new Text("  Signing-Up...")
-                                ],
-                              ),
-                            ),
+//                          _scaffoldState.currentState
+//                              .showSnackBar(snackBarLoading);
+                          _displayLoadingSnackBar(context, "Signing-Up...");
+                          await _CreateNewAcount().whenComplete(
+                                () {
+                              print("Acount Created With Name : ${_name}");
+                            },
+                          ).catchError(
+                                (onError) {
+                              _displaySnackBarError(
+                                  context, "${onError.toString()}");
+
+                              print("$onError");
+                            },
                           );
-                          await _CreateNewAcount().whenComplete(() {
-                            print("Acount Created With Name : ${_name}");
-                          }).catchError((onError) {
-                            print("$onError");
-                          });
                         },
                       ),
                     ),
@@ -264,9 +293,27 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  _displaySnackBar(BuildContext context) {
-    final snackBar = SnackBar(content: Text('U Can ?'));
-    _scaffoldState.currentState.showSnackBar(snackBar);
+  _displaySnackBarError(BuildContext context, String message) {
+    final snackBarError = SnackBar(
+      duration: new Duration(seconds: 4),
+      content: new Text("$message"),
+    );
+    _scaffoldState.currentState.removeCurrentSnackBar();
+    _scaffoldState.currentState.showSnackBar(snackBarError);
+  }
+
+  _displayLoadingSnackBar(BuildContext context, String message) {
+    final snackBarLoading = SnackBar(
+      duration: new Duration(seconds: 4),
+      content: new Row(
+        children: <Widget>[
+          new CircularProgressIndicator(),
+          new Text("$message")
+        ],
+      ),
+    );
+    _scaffoldState.currentState.removeCurrentSnackBar();
+    _scaffoldState.currentState.showSnackBar(snackBarLoading);
   }
 
   Widget FormUi(BuildContext context) {

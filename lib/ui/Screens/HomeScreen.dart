@@ -2,6 +2,7 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/user_data.dart';
@@ -12,6 +13,12 @@ import 'package:provider/provider.dart';
 
 import 'Create_post_screen.dart';
 import 'FeedScreen.dart';
+
+enum AuthStatus {
+  NOT_DETERMINED,
+  NOT_LOGGED_IN,
+  LOGGED_IN,
+}
 
 class HomeScreen extends StatefulWidget {
   static String id = "home_screen";
@@ -35,13 +42,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final String currentUserId = Provider
         .of<UserData>(context)
         .currentUserId;
-
+    final currentUser = Provider.of<FirebaseUser>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: PageView(
         controller: _pageController,
         children: <Widget>[
-          FeedScreen(currentUserId: currentUserId),
+          FeedScreen(
+            currentUserId: currentUserId,
+          ),
           SearchScreen(),
           CreatePostScreen(),
           ChatsScreen(),
@@ -53,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPageChanged: (int index) {
           setState(() {
             _currentTab = index;
+            print("_HomeScreenState : ${currentUser.displayName}");
           });
         },
       ),

@@ -22,7 +22,6 @@ import 'edit_profile_screen.dart';
 /// =================================================
 class ProfileScreen extends StatefulWidget {
   static String id = "profile_screen";
-
   final String currentUserId;
   final String userId;
 
@@ -82,7 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
-
                 /// image
                 Column(
                   children: <Widget>[
@@ -106,7 +104,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(
                       height: 16,
                     ),
-
                     Text(
                       user.name,
                       style: TextStyle(color: Colors.white, fontSize: 20),
@@ -124,8 +121,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     Text(
-
-                      ///todo
                       "${_posts.length}",
                       style: TextStyle(fontSize: 26, color: Colors.white),
                     )
@@ -235,7 +230,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            Divider(color: Colors.white,),
+            Divider(
+              color: Colors.white,
+            ),
             _buildToggleButtons(),
           ],
         ),
@@ -250,9 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         IconButton(
           icon: Icon(Icons.grid_on),
           iconSize: 30.0,
-          color: _displayPosts == 0
-              ? Colors.white
-              : Colors.grey[400],
+          color: _displayPosts == 0 ? Colors.white : Colors.grey[400],
           onPressed: () => setState(() {
             _displayPosts = 0;
           }),
@@ -260,9 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         IconButton(
           icon: Icon(Icons.list),
           iconSize: 30.0,
-          color: _displayPosts == 1
-              ? Colors.white
-              : Colors.grey[400],
+          color: _displayPosts == 1 ? Colors.white : Colors.grey[400],
           onPressed: () => setState(() {
             _displayPosts = 1;
           }),
@@ -530,8 +523,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
-        title: "Heba", isHome: true, color: Colors.white, isImageVisble: true,),
-
+        title: "Heba",
+        isHome: true,
+        color: Colors.white,
+        isImageVisble: true,
+      ),
       body: mBody(),
     );
   }

@@ -396,7 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: Colors.black45,
           ),
           onPressed: () async {
-            AuthService.logout();
+            FirestoreServiceAuth.logout();
             Navigator.pushNamed(context, LoginScreen.id);
 
             print("message");

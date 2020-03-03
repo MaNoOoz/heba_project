@@ -17,7 +17,6 @@ final followingRef = _firestore.collection('following');
 final feedsRef = _firestore.collection('feeds');
 final likesRef = _firestore.collection('likes');
 
-
 // Colors
 const Color lightBackgroundColor = Color(0xFFFFFFFF);
 const Color darkBackgroundColor = Color(0x0000000);
@@ -44,4 +43,3 @@ const double spaceS = 4.0;
 const double spaceM = 8.0;
 const double spaceL = 16.0;
 const double spaceXL = 32.0;
-

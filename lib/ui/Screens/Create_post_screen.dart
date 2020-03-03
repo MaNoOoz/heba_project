@@ -17,6 +17,7 @@ import 'package:heba_project/ui/shared/UtilsImporter.dart';
 import 'package:heba_project/ui/shared/ui_helpers.dart';
 import 'package:heba_project/ui/widgets/CustomDialog.dart';
 import 'package:heba_project/ui/widgets/circular_clipper.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -74,6 +75,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   String _desc;
   String _location;
   var color;
+  bool showSpinner = false;
 
   ///  ====================================================
 
@@ -82,6 +84,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     super.initState();
     _loading = false;
     _progressValue = 0.0;
+    print("initState : $userId");
 
 //
 //    /// ===========================
@@ -106,32 +109,34 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       key: _scaffoldKey,
 //      resizeToAvoidBottomPadding: false,
 
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: ListView(
-          children: <Widget>[
-            Stack(
-              children: <Widget>[
-                Container(
-                  transform: Matrix4.translationValues(0.0, -50.0, 0.0),
-                  child: Hero(
-                    tag: "widget.movie.imageUrl",
-                    child: ClipShadowPath(
-                      clipper: CircularClipper(),
-                      shadow: Shadow(blurRadius: 20.0),
-                      child: Image(
-                        height: 400.0,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        image: AssetImage("assets/images/addheba.gif"),
+      body: ModalProgressHUD(
+        inAsyncCall: showSpinner,
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: ListView(
+            children: <Widget>[
+              Stack(
+                children: <Widget>[
+                  Container(
+                    transform: Matrix4.translationValues(0.0, -50.0, 0.0),
+                    child: Hero(
+                      tag: "widget.movie.imageUrl",
+                      child: ClipShadowPath(
+                        clipper: CircularClipper(),
+                        shadow: Shadow(blurRadius: 20.0),
+                        child: Image(
+                          height: 400.0,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          image: AssetImage("assets/images/addheba.gif"),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
 //                    IconButton(
 //                      padding: EdgeInsets.only(left: 30.0),
 //                      onPressed: () =>
@@ -145,20 +150,20 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //                    image: AssetImage('assets/images/myIcon.png'),
 //
 //                  ),
-                    Expanded(
-                      child: Center(
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: Text(
-                            'هبة جديدة',
-                            style: TextStyle(
-                                fontSize: 32,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                      Expanded(
+                        child: Center(
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              'هبة جديدة',
+                              style: TextStyle(
+                                  fontSize: 32,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ),
-                    ),
 //                  Padding(
 //                    padding: const EdgeInsets.only(right: 20.0),
 //                    child: IconButton(
@@ -169,83 +174,83 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //                      color: Colors.black,
 //                    ),
 //                  ),
-                    IconButton(
-                      padding: EdgeInsets.only(right: 16.0),
-                      onPressed: () =>
-                          Navigator.pushNamed(context, HomeScreen.id),
-                      icon: Icon(Icons.clear),
-                      iconSize: 30.0,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            /// Form
-            Container(
-              margin: EdgeInsets.all(15.0),
-              child: Form(
-                key: _formkey,
-                autovalidate: _autoValidate,
-                child: FormUI(),
-              ),
-            ),
-            UIHelper.verticalSpaceWithGrayColor(1, Colors.teal),
-
-            /// Titles
-            Container(
-              margin: EdgeInsets.all(15.0),
-//            color: Colors.teal,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Center(
-                  child: Text(
-                    ' صور الهبة  ',
-                    style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black45,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-
-            /// Added Images
-            Card(
-              child: Center(
-                child: Container(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
                       IconButton(
-                        splashColor: Colors.teal,
-                        iconSize: 42.0,
-                        icon: _readyToUploadImages.length > 0
-                            ? Icon(
-                          Icons.edit,
-                          color: Colors.blueAccent,
-                        )
-                            : Icon(
-                          Icons.add_circle,
-                          color: Colors.blueAccent,
-                        ),
-                        onPressed: () {
-                          _loadAssets();
-                        },
+                        padding: EdgeInsets.only(right: 16.0),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, HomeScreen.id),
+                        icon: Icon(Icons.clear),
+                        iconSize: 30.0,
+                        color: Colors.white,
                       ),
-                      Text('أضف صورة')
                     ],
                   ),
+                ],
+              ),
+
+              /// Form
+              Container(
+                margin: EdgeInsets.all(15.0),
+                child: Form(
+                  key: _formkey,
+                  autovalidate: _autoValidate,
+                  child: FormUI(),
                 ),
               ),
-            ),
-            buildGridView(),
+              UIHelper.verticalSpaceWithGrayColor(1, Colors.teal),
 
-            UIHelper.verticalSpace(10),
+              /// Titles
+              Container(
+                margin: EdgeInsets.all(15.0),
+//            color: Colors.teal,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Center(
+                    child: Text(
+                      ' صور الهبة  ',
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black45,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
 
-            /// Buttons
-            _Buttons(),
+              /// Added Images
+              Card(
+                child: Center(
+                  child: Container(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        IconButton(
+                          splashColor: Colors.teal,
+                          iconSize: 42.0,
+                          icon: _readyToUploadImages.length > 0
+                              ? Icon(
+                            Icons.edit,
+                            color: Colors.blueAccent,
+                          )
+                              : Icon(
+                            Icons.add_circle,
+                            color: Colors.blueAccent,
+                          ),
+                          onPressed: () {
+                            _loadAssets();
+                          },
+                        ),
+                        Text('أضف صورة')
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              buildGridView(),
+
+              UIHelper.verticalSpace(10),
+
+              /// Buttons
+              _Buttons(),
 
 //          FutureBuilder<Post2>(
 //            future: _CreatePost,
@@ -263,9 +268,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //            },
 //          ),
 
-            UIHelper.verticalSpace(10),
+              UIHelper.verticalSpace(10),
 
-            /// Image
+              /// Image
 //          Padding(
 //            padding: const EdgeInsets.all(8.0),
 //            child: ClipRRect(
@@ -279,7 +284,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //              ),
 //            ),
 //          ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -302,6 +308,28 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       image: Image.asset(
         'assets/images/myIcon.png',
       ),
+    );
+
+//    } else {
+//      return Container(
+//        child: Text("sasdasd"),
+//      );
+//    }
+  }
+
+  showDialog2(BuildContext context) {
+//    if (!_validateInputs() || imageUrl2 == null) {
+    return AlertDialog(
+      title: Text('جاري رفع الإعلان'),
+      content: CircularProgressIndicator(),
+      actions: <Widget>[
+        FlatButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text('Yes'),
+        )
+      ],
     );
 
 //    } else {
@@ -460,6 +488,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   /// Reset data
   Future<bool> _SendToServer() async {
+    showSpinner = true;
+
     await Future.delayed(Duration(seconds: 4));
     var dataUploaded = false;
 
@@ -481,6 +511,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     if (dataChecked == false || postCreated != null || fieldsRested == false) {
       dataUploaded = false;
       _displaySnackBar(context, " تم إضافة الهبة بنجاح");
+      showSpinner = false;
 
       print("fieldsRested $fieldsRested  \n " +
           "dataChecked $dataChecked   \n    " +
@@ -658,28 +689,26 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               ],
             ),
             onPressed: () async {
-              var isFinish = false;
-
               if (_name.isNotEmpty && !_loading) {
                 final action = await Dialogs.yesAbortDialog(context,
-                    ' Add Heba', 'Are You Sure You Want To Add This Post');
+                    ' Add Heba', 'Are You Sure You Wpant To Add This Post');
                 if (action == DialogAction.yes) {
+                  showDialog2(context);
                   await _SendToServer();
-                  setState(() => tappedYes = true);
+                  setState(() {
+                    tappedYes = true;
+                  });
                 } else {
-                  setState(() => tappedYes = false);
+                  setState(
+                        () {
+                      tappedYes = false;
+                      showSpinner = false;
+                    },
+                  );
                 }
               } else if (_name.isNotEmpty == false) {
                 _displaySnackBar(context, " أدخل إسم للهبة $_name");
               }
-
-//              showDialog();
-//              print("onPressed Triggerd \n"
-//                  "Post Object :  name : $_name desc : $_desc location: $_location \n"
-//                  " images pathes : ${listOfImageLinks.length} "
-//                  "Selected Images List : ${readyToUploadImages.length} \n");
-
-              /// loding ??
             },
           ),
 

@@ -107,7 +107,8 @@ class _SignupScreenState extends State<SignupScreen> {
         _formKey.currentState.save();
 
         /// SignUp the User In Firebase
-        AuthService.signUpUser(context, _name, _email, _password, _imageUrl);
+        FirestoreServiceAuth.signUpUser(
+            context, _name, _email, _password, _imageUrl);
         _imageUrl = await StorageService.uploadUserProfileImageInSignUp(
             _imageUrl, _profileImage);
       } else {}

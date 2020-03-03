@@ -148,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       if (_formKey.currentState.validate()) {
         _formKey.currentState.save();
-        AuthService.login(_email, _password);
+        FirestoreServiceAuth.login(_email, _password);
         return true;
       } else {
         _displaySnackBar(context, "Enter Correct Info");
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           onPressed: () {
                             return signInWithGoogle().whenComplete(() {
-                              print(AuthService
+                              print(FirestoreServiceAuth
                                   .googleSignIn.currentUser.displayName);
 
                               Navigator.of(context).push(

@@ -2,7 +2,6 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/user_data.dart';
@@ -42,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final String currentUserId = Provider
         .of<UserData>(context)
         .currentUserId;
-    final currentUser = Provider.of<FirebaseUser>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: PageView(
@@ -62,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onPageChanged: (int index) {
           setState(() {
             _currentTab = index;
-            print("_HomeScreenState : ${currentUser.displayName}");
           });
         },
       ),

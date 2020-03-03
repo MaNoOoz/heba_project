@@ -58,6 +58,8 @@ dependencies:
   carousel_slider:
   font_awesome_flutter:
   connectivity:
+  url_launcher:
+  modal_progress_hud:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

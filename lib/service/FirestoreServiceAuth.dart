@@ -10,47 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:heba_project/models/user_model.dart';
 
-class AuthService {
+class FirestoreServiceAuth {
   /// vars ==============================================
   static final _firebase_Auth = FirebaseAuth.instance;
   static final _firestore = Firestore.instance;
   static final GoogleSignIn googleSignIn = GoogleSignIn();
-
-  /// signInWithGoogle =================================================================
-//   Future<String> signInWithGoogle() async {
-//    final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
-//    final GoogleSignInAuthentication googleSignInAuthentication =
-//        await googleSignInAccount.authentication;
-//
-//    final AuthCredential credential = GoogleAuthProvider.getCredential(
-//      accessToken: googleSignInAuthentication.accessToken,
-//      idToken: googleSignInAuthentication.idToken,
-//    );
-//
-//    final AuthResult authResult =
-//        await _firebase_Auth.signInWithCredential(credential);
-//    final FirebaseUser user = authResult.user;
-//
-//    assert(!user.isAnonymous);
-//    assert(await user.getIdToken() != null);
-//
-//    final FirebaseUser currentUser = await _firebase_Auth.currentUser();
-//    assert(user.uid == currentUser.uid);
-//    print("signed in " + user.displayName + "\n" + user.photoUrl);
-//    var clonedUser = await saveDetailsFromGoogleAuth(user);
-//    var savedUser =
-//        await saveProfileDetails(user, user.photoUrl, user.email, user.email);
-//
-//    print("signed in " +
-//        clonedUser.id +
-//        clonedUser.name +
-//        savedUser.name +
-//        savedUser.id +
-//        "\n" +
-//        clonedUser.profileImageUrl);
-//
-//    return 'signInWithGoogle succeeded: $savedUser';
-//  }
 
   /// signOutGoogle =================================================================
   static Future<String> signOutGoogle() async {
@@ -77,11 +41,6 @@ class AuthService {
           'name': name,
           'profileImageUrl': imageUrl,
         });
-//        todo
-//       var singedUserId = Provider
-//            .of<UserData>(context)
-//            .currentUserId = signedInUser.uid;
-//        print("User ID : $singedUserId");
         Navigator.pop(context);
       }
     } catch (e) {

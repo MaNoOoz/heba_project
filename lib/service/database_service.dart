@@ -37,6 +37,8 @@ class DatabaseService {
     postsRef.document(post.authorId).collection('userPosts').add({
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
+      'oName': post.oName,
+      'oImage': post.oImage,
       'hDesc': post.hDesc,
       'hLocation': post.hLocation,
       'authorId': post.authorId,
@@ -49,6 +51,8 @@ class DatabaseService {
     publicpostsRef.add({
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
+      'oName': post.oName,
+      'oImage': post.oImage,
       'hDesc': post.hDesc,
       'hLocation': post.hLocation,
       'authorId': post.authorId,

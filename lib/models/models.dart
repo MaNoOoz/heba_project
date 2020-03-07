@@ -37,11 +37,13 @@ class Post2 {
     return Post2(
       id: doc.documentID,
       imageUrls: List.from(doc['imagesUrls'] ?? ["ss", "ss"]),
-      hName: doc['hName'],
-      hDesc: doc['hDesc'],
-      hLocation: doc['hLocation'],
-      authorId: doc['authorId'],
-      timestamp: doc['timestamp'],
+      hName: doc['hName'] ?? "noName",
+      oName: doc['oName'] ?? "noName",
+      oImage: doc['oImage'] ?? "noImage",
+      hDesc: doc['hDesc'] ?? "noDesc",
+      hLocation: doc['hLocation'] ?? "noLocation",
+      authorId: doc['authorId'] ?? "noAuthorId",
+      timestamp: doc['timestamp' ?? "noDate"],
     );
   }
 }

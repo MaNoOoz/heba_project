@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,16 +39,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   /// CustomProgressBar ====================================================
   /// https://mrflutter.com/how-to-use-progress-indicators-in-flutter/
   bool _loading;
-  double _progressValue;
   bool tappedYes = false;
 
   /// CustomProgressBar ====================================================
-//  double _percentage;
-//  double _nextPercentage;
-//  Timer _timer;
-//  AnimationController _progressAnimationController;
-//  bool _progressDone;
-
   /// Multi Image Picker ====================================================
   List<Asset> _readyToUploadImages = List<Asset>();
   Stream<Asset> _readyToUploadImages2; // test
@@ -58,8 +52,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   /// My Posts ====================================================
   var userId;
+  var fuser;
+  var fuserImage;
 
-//  List<Asset> fakeList;
   String _error = 'No Error Dectected';
 
   /// Form ====================================================
@@ -83,17 +78,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   void initState() {
     super.initState();
     _loading = false;
-    _progressValue = 0.0;
-    print("initState : $userId");
-
-//
-//    /// ===========================
-//    _percentage = 0.0;
-//    _nextPercentage = 0.0;
-//    _timer = null;
-//    _progressDone = false;
-//
-//    /// ============================
 
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
@@ -105,10 +89,15 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   @override
   Widget build(BuildContext context) {
+    fuser = Provider
+        .of<FirebaseUser>(context)
+        .displayName;
+    fuserImage = Provider
+        .of<FirebaseUser>(context)
+        .photoUrl;
+
     return Scaffold(
       key: _scaffoldKey,
-//      resizeToAvoidBottomPadding: false,
-
       body: ModalProgressHUD(
         inAsyncCall: showSpinner,
         child: GestureDetector(
@@ -252,22 +241,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               /// Buttons
               _Buttons(),
 
-//          FutureBuilder<Post2>(
-//            future: _CreatePost,
-//            builder: (BuildContext context, AsyncSnapshot snapshot) {
-//              if (snapshot.connectionState == ConnectionState.done) {
-//                return Center(child: Text('HI'));
-//              }
-//              if (snapshot.hasError) {
-//                return Center(child: Text('مشكلة في إنشاء الهبة '));
-//              } else if (snapshot.hasData) {
-//                return Center(child: Text('تم إنشاء الهبة بنجاح🤣 '));
-//              } else {
-//                return Center(child: Text('No Value'));
-//              }
-//            },
-//          ),
-
               UIHelper.verticalSpace(10),
 
               /// Image
@@ -300,7 +273,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   showDialog(BuildContext context) {
-//    if (!_validateInputs() || imageUrl2 == null) {
     return CustomDialog(
       title: 'إضافة الإعلان',
       buttonText: 'Yes',
@@ -309,12 +281,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         'assets/images/myIcon.png',
       ),
     );
-
-//    } else {
-//      return Container(
-//        child: Text("sasdasd"),
-//      );
-//    }
   }
 
   showDialog2(BuildContext context) {
@@ -423,19 +389,19 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     mImagesPath = await _listOfImageLinks();
 
     /// private Post Object
-    post2 = Post2(
-        imageUrls: mImagesPath,
-        hName: _name,
-        hDesc: _desc,
-        hLocation: _location,
-        authorId: Provider
-            .of<UserData>(context, listen: false)
-            .currentUserId,
-        timestamp: Timestamp.fromDate(DateTime.now()));
-    log("private ${post2.authorId}");
+//    post2 = Post2(
+//        imageUrls: mImagesPath,
+//        hName: _name,
+//        hDesc: _desc,
+//        hLocation: _location,
+//        authorId: Provider.of<UserData>(context, listen: false).currentUserId,
+//        timestamp: Timestamp.fromDate(DateTime.now()));
+//    log("private ${post2.authorId}");
 
 //    /// public Post Object
     post2 = Post2(
+        oName: fuser,
+        oImage: fuserImage,
         imageUrls: mImagesPath,
         hName: _name,
         hDesc: _desc,
@@ -444,7 +410,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             .of<UserData>(context, listen: false)
             .currentUserId,
         timestamp: Timestamp.fromDate(DateTime.now()));
-    log("public ${post2.authorId}");
+    log("public ${post2.oName}");
 
     /// private posts
     DatabaseService.createPost(post2);
@@ -694,7 +660,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                     ' Add Heba', 'Are You Sure You Wpant To Add This Post');
                 if (action == DialogAction.yes) {
                   showDialog2(context);
-                  await _SendToServer();
+                  await _CreatePost();
                   setState(() {
                     tappedYes = true;
                   });

@@ -77,7 +77,6 @@ class _SearchScreenState extends State<SearchScreen> {
             icon: Icon(
               CupertinoIcons.clear,
               size: 30.0,
-
             ),
             onPressed: _clearSearch,
           ),
@@ -97,20 +96,21 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
         appBar: CustomAppBar(
           isImageVisble: false,
-          isHome: false,
+          IsBack: false,
           title: "Search ",
           color: Colors.white,
-      ),
+        ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
 //          SearchBar(),
             searchFun(),
-            Divider(height: 10,),
+            Divider(
+              height: 10,
+            ),
             mBody(),
           ],
-        )
-    );
+        ));
   }
 
   Widget mBody() {

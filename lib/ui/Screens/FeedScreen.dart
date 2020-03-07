@@ -2,18 +2,22 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
+import 'package:heba_project/ui/Screens/HebaDetails.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
+import 'package:heba_project/ui/shared/UI_Helpers.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
+import 'package:provider/provider.dart';
 
 class FeedScreen extends StatefulWidget {
   /// todo  FIX HEBA LIST EMPTY
@@ -28,13 +32,14 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  /// =========================================================
+  /// ==============================================================
   var _hebatList = [];
-  int _displayPosts = 0; // 0 - grid, 1 - column
-  User _profileUser;
+  var _displayPosts = 0; // 0 - grid, 1 - column
+  var _profileUser;
   var _profileImage;
+  var slids;
 
-  /// Methods =========================================================
+  ///  ========================= Methods ================================
   /// getImagesUrls
   List<dynamic> _getListOfImagesFromUser(Post2 post2) {
     dynamic list = post2.imageUrls;
@@ -50,69 +55,9 @@ class _FeedScreenState extends State<FeedScreen> {
     return result;
   }
 
-  /// Widgets =========================================================
+  ///  =====================   Widgets ========================
 
-  StreamBuilder<QuerySnapshot> CardView(BuildContext context, Post2 post2) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: publicpostsRef.snapshots(),
-      builder: (BuildContext context, snapshot) {
-        if (!snapshot.hasData) {
-          return mLoading();
-        }
-        return ListView(
-          children: <Widget>[
-            Divider(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Text(
-                  "    الهبات    ${_hebatList.length}",
-                  style: TextStyle(
-                      color: Colors.black45,
-                      fontSize: 24,
-                      fontWeight: FontWeight.normal),
-                ),
-              ),
-            ),
-            Divider(),
-            new ListView.builder(
-              physics: NeverScrollableScrollPhysics(),
-              scrollDirection: Axis.vertical,
-              shrinkWrap: true,
-              itemCount: snapshot.data.documents.length,
-              padding: EdgeInsets.only(top: 15.0),
-              itemBuilder: (context, index) {
-                DocumentSnapshot ds = snapshot.data.documents[index];
-                post2 = Post2.fromDoc(ds);
-                _hebatList.add(post2);
-                return rowView(post2);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Center mLoading() {
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          Text("Loading ... ")
-        ],
-      ),
-    );
-  }
-
-  StreamBuilder<QuerySnapshot> mPostViewPublicData(BuildContext context,
-      Post2 post) {
+  Widget mPostViewPublicData(BuildContext context, Post2 post) {
     return StreamBuilder(
       stream: postsRef.snapshots(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -142,134 +87,166 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget rowView(Post2 post) {
-//    var profileImageUrl = post2.imageUrls[0] ?? [];
-    /// fetch the list
-    var listFromFirebase =
-    _getListOfImagesFromUser(post).cast<String>().toList();
-    int _current = 0;
+//  Widget mPostViewPublicData2(BuildContext context, Post2 post) {
+//    return StreamBuilder(
+//      stream: slids,
+//      initialData: [],
+//      builder: (BuildContext context, AsyncSnapshot snapshot) {
+//        if (snapshot.hasData) {
+//          List slidList = snapshot.data.toList();
+//          print("${slidList.length}");
+//          return SingleChildScrollView(
+//            physics: ScrollPhysics(),
+//            child: Column(
+//              children: <Widget>[
+//                new ListView.builder(
+//                    physics: NeverScrollableScrollPhysics(),
+//                    scrollDirection: Axis.vertical,
+//                    shrinkWrap: true,
+//                    itemCount: snapshot.data.documents.length,
+//                    padding: const EdgeInsets.only(top: 15.0),
+//                    itemBuilder: (context, index) {
+//                      DocumentSnapshot ds = snapshot.data.documents[index];
+//                      Post2 post2 = Post2.fromDoc(ds);
+//                      return rowView(post2);
+//                    }),
+//              ],
+//            ),
+//          );
+//        } else {
+//          return CircularProgressIndicator();
+//        }
+//      },
+//    );
+//  }
 
-    return Column(
-      children: <Widget>[
-        FutureBuilder(
-          future: usersRef.document(widget.currentUserId).get(),
-          builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-            User user = User.fromDoc(snapshot.data);
-            return Card(
-              color: Colors.white,
-              elevation: 4,
-              child: Column(
+  Stream querDb({String tag = "s"}) {
+    Query query = publicpostsRef.where('hName');
+    slids =
+        query.snapshots().map((list) => list.documents.map((doc) => doc.data));
+  }
+
+  /// rowView Content ================================================
+
+  Widget feedView(BuildContext context, Post2 post2, User user) {
+    var name = Provider
+        .of<FirebaseUser>(context)
+        .displayName;
+    return StreamBuilder<QuerySnapshot>(
+      stream: publicpostsRef.snapshots(),
+      builder: (BuildContext context, snapshot) {
+        if (!snapshot.hasData) {
+          return mLoading();
+        }
+        return ListView(
+          children: <Widget>[
+//            Padding(
+//              padding: const EdgeInsets.all(16.0),
+//              child: Directionality(
+//                textDirection: TextDirection.rtl,
+//                child: Text(
+//                  "  الهبات",
+//                  style: TextStyle(
+//                      color: Colors.black87,
+//                      fontSize: 24,
+//                      fontWeight: FontWeight.normal),
+//                ),
+//              ),
+//            ),
+
+            /// Filter Card
+            Card(
+              elevation: 5,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text("   من   ${user.name}")),
-                  Divider(
-                    color: Colors.black26,
-                  ),
                   Row(
                     children: <Widget>[
-
-                      /// Left Side
-                      Container(
-                        child: Container(
-                          height: 150,
-                          width: 150,
-                          child: listFromFirebase.isEmpty
-                              ? Center(child: Text("No Image Bro"))
-                              : ImagesSlider(
-                            items:
-                            map<Widget>(listFromFirebase, (index, i) {
-                              print(
-                                  "listFromFirebase ${listFromFirebase
-                                      .length}");
-                              return Container(
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                      image: post.imageUrls.isEmpty
-                                          ? Image.asset(
-                                          'assets/images/user_placeholder.jpg')
-                                          : NetworkImage(i),
-                                      fit: BoxFit.cover),
-                                ),
-                              );
-                            }),
-                            autoPlay: false,
-                            viewportFraction: 1.0,
-                            aspectRatio: 2.0,
-                            distortion: false,
-                            align: IndicatorAlign.bottom,
-                            indicatorWidth: 5,
-                            updateCallback: (index) {
-                              setState(
-                                    () {
-                                  _current = index;
-                                },
-                              );
-                            },
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Text(
+                            "تصفية",
+                            style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal),
                           ),
                         ),
                       ),
-
-                      /// Right Side
-                      Expanded(
-                        flex: 2,
-                        child: Container(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: <Widget>[
-                              Container(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    post.hName,
-                                    style: new TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    post.hDesc,
-                                    style: new TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    post.hLocation,
-                                    style: new TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  new GestureDetector(
-                                    child: new Padding(
-                                      padding: new EdgeInsets.all(5.0),
-                                      child: buildButtonColumn(Icons.bookmark),
-                                    ),
-                                    onTap: () {},
-                                  ),
-                                  new GestureDetector(
-                                    child: new Padding(
-                                        padding: new EdgeInsets.symmetric(
-                                            vertical: 10.0, horizontal: 5.0),
-                                        child: buildButtonColumn(Icons.share)),
-                                    onTap: () {},
-                                  ),
-                                ],
-                              ),
-                            ],
+                      Container(
+                        child: Center(
+                          child: IconButton(
+                            onPressed: () {},
+                            icon: Icon(
+                              FontAwesomeIcons.filter,
+                              size: 14,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  UIHelper.horizontalSpaceWithGrayColor(1, Colors.black54),
+                  Row(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Text(
+                            " ترتيب",
+                            style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        child: Center(
+                          child: IconButton(
+                            onPressed: () {},
+                            icon: Icon(
+                              FontAwesomeIcons.sort,
+                              size: 14,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  UIHelper.horizontalSpaceWithGrayColor(1, Colors.black54),
+                  Row(
+                    children: <Widget>[
+//                      Padding(
+//                        padding: const EdgeInsets.all(6.0),
+//                        child: Directionality(
+//                          textDirection: TextDirection.rtl,
+//                          child: Text(
+//                            " ترتيب",
+//                            style: TextStyle(
+//                                color: Colors.black87,
+//                                fontSize: 14,
+//                                fontWeight: FontWeight.normal),
+//                          ),
+//                        ),
+//                      ),
+                      Container(
+                        child: Center(
+                          child: IconButton(
+                            onPressed: () {
+                              /// todo
+                            },
+                            icon: Icon(
+//                              FontAwesomeIcons.th,
+                              FontAwesomeIcons.gripLines,
+                              size: 14,
+                              color: Colors.black45,
+                            ),
                           ),
                         ),
                       ),
@@ -277,58 +254,272 @@ class _FeedScreenState extends State<FeedScreen> {
                   ),
                 ],
               ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _profileInfo(User user) {
-    print("_userData Called");
-    var profileImageUrl = user.profileImageUrl;
-    return Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                radius: 20.0,
-                backgroundColor: Colors.white,
-                backgroundImage: user.profileImageUrl.isEmpty
-                    ? AssetImage('assets/images/user_placeholder.jpg')
-                    : CachedNetworkImageProvider(profileImageUrl),
-              ),
             ),
-            Column(
-              children: <Widget>[
-                Text(
-                  "${user.name}",
-                  style: TextStyle(fontSize: 12),
-                ),
-                Text(
-                  "${user.email}",
-                  style: TextStyle(fontSize: 12),
-                ),
-              ],
+//            Image.network(post2.oImage),
+            new ListView.builder(
+              physics: NeverScrollableScrollPhysics(),
+              scrollDirection: Axis.vertical,
+              shrinkWrap: true,
+              itemCount: snapshot.data.documents.length,
+              padding: EdgeInsets.only(top: 15.0),
+              itemBuilder: (context, index) {
+                DocumentSnapshot ds = snapshot.data.documents[index];
+                post2 = Post2.fromDoc(ds);
+                _hebatList.add(post2);
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HebaDetails(_hebatList[index]),
+                      ),
+                    );
+                  },
+                  child: rowView(post2),
+                );
+              },
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget mLoading() {
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          Text("Loading ... ")
+        ],
+      ),
+    );
+  }
+
+  Widget rowView(Post2 post) {
+//    var profileImageUrl = post2.imageUrls[0] ?? [];
+    var fUser = Provider
+        .of<FirebaseUser>(context)
+        .displayName;
+    var fImage = Provider
+        .of<FirebaseUser>(context)
+        .photoUrl;
+
+    /// fetch the list
+    var listFromFirebase =
+    _getListOfImagesFromUser(post).cast<String>().toList();
+    int _current = 0;
+
+    return content(fUser, fImage, listFromFirebase, post, _current);
+  }
+
+  Widget content(String fUser, String fImage, List<String> listFromFirebase,
+      Post2 post, int _current) {
+    return Container(
+      color: Colors.black12,
+//      height: 200,
+      margin: EdgeInsets.all(0),
+//      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.zero,
+              bottomRight: Radius.circular(10),
+              topLeft: Radius.zero,
+              topRight: Radius.circular(10),
+            ),
+          ),
+          color: Colors.white,
+          elevation: 4,
+          child: Column(
+            children: <Widget>[
+              body(listFromFirebase, post, _current),
+              Divider(
+                color: Colors.black26,
+              ),
+              footer(fUser, fImage),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget body(List<String> listFromFirebase, Post2 post, int _current) {
+    return Row(
+      children: <Widget>[
+
+        /// Image Side
+        ImageSide(listFromFirebase, post, _current),
+
+        /// Content Side
+        ContentSide(post),
+      ],
+    );
+  }
+
+  Widget footer(String fUser, String fImage) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      children: <Widget>[
+        GestureDetector(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Container(
+              height: 30.0,
+              width: 30.0,
+              child: Icon(
+                FontAwesomeIcons.bookmark,
+                color: Colors.black38,
+              ),
+            ),
+          ),
+          onTap: () {},
+        ),
+        GestureDetector(
+          child: Container(
+            height: 30.0,
+            width: 30.0,
+            child: Icon(
+              FontAwesomeIcons.share,
+              color: Colors.black38,
+            ),
+          ),
+          onTap: () {},
+        ),
+        GestureDetector(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Container(
+              height: 30.0,
+              width: 30.0,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15.0),
+                image: DecorationImage(
+                  image: fImage.isEmpty
+                      ? Image.asset('assets/images/user_placeholder.jpg')
+                      : NetworkImage(fImage),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+//            child: Image.network(_googleSignIn.currentUser.photoUrl),
         ),
       ],
     );
   }
 
-  Column buildButtonColumn(IconData icon) {
-    Color color = Theme
-        .of(context)
-        .primaryColor;
+  Widget ImageSide(List<String> listFromFirebase, Post2 post, int _current) {
+    return Container(
+      height: 100,
+      width: 100,
+      child: listFromFirebase.isEmpty
+          ? Center(child: Text("No Image Bro"))
+          : ImagesSlider(
+        items: map<Widget>(listFromFirebase, (index, i) {
+          print("listFromFirebase ${listFromFirebase.length}");
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.zero,
+                bottomRight: Radius.circular(10),
+                topLeft: Radius.zero,
+                topRight: Radius.circular(10),
+              ),
+              image: DecorationImage(
+                  image: post.imageUrls.isEmpty
+                      ? Image.asset('assets/images/user_placeholder.jpg')
+                      : NetworkImage(i),
+                  fit: BoxFit.cover),
+            ),
+          );
+        }),
+        autoPlay: false,
+        viewportFraction: 1.0,
+        indicatorColor: Colors.grey,
+        aspectRatio: 1.0,
+        distortion: true,
+        align: IndicatorAlign.bottom,
+        indicatorWidth: 1,
+        indicatorBackColor: Colors.black38,
+        updateCallback: (index) {
+          setState(
+                () {
+              _current = index;
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget ContentSide(Post2 post) {
+    return Container(
+      height: 100,
+      width: MediaQuery
+          .of(context)
+          .size
+          .width - 130,
+//      color: Colors.cyan,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            post.hName,
+            overflow: TextOverflow.ellipsis,
+            style: new TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          Text(
+            post.hDesc,
+            overflow: TextOverflow.ellipsis,
+            style: new TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          Text(
+            post.hLocation,
+            overflow: TextOverflow.ellipsis,
+            style: new TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget icons(IconData icon) {
+    Color color = Colors.black45;
     return new Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         new Icon(icon, color: color),
       ],
+    );
+  }
+
+  Widget EmptyView() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Image(
+        image: AssetImage('assets/images/user_placeholder.jpg'),
+      ),
     );
   }
 
@@ -340,26 +531,17 @@ class _FeedScreenState extends State<FeedScreen> {
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
         title: "heba",
-        isHome: true,
+        IsBack: false,
         color: Colors.white,
         isImageVisble: true,
       ),
-      body: CardView(context, post),
+      body: feedView(context, post, user),
     );
   }
 
   @override
   void initState() {
     super.initState();
-  }
-
-  Widget EmptyView() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Image(
-        image: AssetImage('assets/images/user_placeholder.jpg'),
-      ),
-    );
   }
 }
 

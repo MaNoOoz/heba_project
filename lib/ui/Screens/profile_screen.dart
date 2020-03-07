@@ -524,7 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
         title: "Heba",
-        isHome: true,
+        IsBack: false,
         color: Colors.white,
         isImageVisble: true,
       ),

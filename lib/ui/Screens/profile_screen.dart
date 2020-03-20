@@ -7,9 +7,7 @@ import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
-import 'package:heba_project/service/FirestoreServiceAuth.dart';
 import 'package:heba_project/service/database_service.dart';
-import 'package:heba_project/ui/Screens/LoginScreen.dart';
 import 'package:heba_project/ui/Views/post_view.dart';
 import 'package:heba_project/ui/shared/MyClipper.dart';
 import 'package:heba_project/ui/shared/constants.dart';
@@ -94,8 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             image: DecorationImage(
                               fit: BoxFit.cover,
                               image: user.profileImageUrl.isEmpty
-                                  ? AssetImage(
-                                  'assets/images/user_placeholder.jpg')
+                                  ? Image.asset("assets/images/building.gif")
                                   : CachedNetworkImageProvider(
                                   user.profileImageUrl),
                             )),
@@ -127,72 +124,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 SizedBox(width: 1), // give it width
-
-//                Column(
-//                  children: <Widget>[
-//                    Text(
-//                      "Events",
-//                      style: TextStyle(color: Colors.white),
-//                    ),
-//                    Text(
-//                      "12",
-//                      style: TextStyle(fontSize: 26, color: Colors.white),
-//                    )
-//                  ],
-//                ),
-//                Column(
-//                  children: <Widget>[
-//                    Text(
-//                      "Routines",
-//                      style: TextStyle(color: Colors.white),
-//                    ),
-//                    Text(
-//                      "4",
-//                      style: TextStyle(fontSize: 26, color: Colors.white),
-//                    )
-//                  ],
-//                ),
               ],
             ),
-//            Row(
-//              mainAxisAlignment: MainAxisAlignment.end,
-//              children: <Widget>[
-//
-//                Column(
-//                  children: <Widget>[
-//                    Text("Savings", style: TextStyle(
-//                        color: Colors.white
-//                    ),),
-//                    Text("20K", style: TextStyle(
-//                        color: Colors.white,
-//                        fontSize: 24
-//                    ),)
-//                  ],
-//                ),
-//
-//                SizedBox(width: 32,),
-//
-//                Column(
-//                  children: <Widget>[
-//                    Text("July Goals",
-//                      style: TextStyle(
-//                          color: Colors.white
-//                      ),),
-//                    Text("50K", style: TextStyle(
-//                        color: Colors.white,
-//                        fontSize: 24
-//                    ))
-//                  ],
-//                ),
-//
-//                SizedBox(width: 16,)
-//
-//              ],
-//            ),
-//            SizedBox(
-//              height: 8,
-//            ),
-
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Align(
@@ -352,57 +285,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 //          )
         ],
       ),
-    );
-  }
-
-  Widget mAppBar() {
-    return AppBar(
-      centerTitle: true,
-      backgroundColor: Colors.white,
-      leading: Center(
-        child: IconButton(
-            padding: EdgeInsets.only(left: 30.0),
-            onPressed: () => print('Menu'),
-            icon: Icon(Icons.menu),
-            iconSize: 30.0,
-            color: Colors.black45),
-      ),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Image.asset(
-              'assets/images/appicon.png',
-              width: 32,
-              height: 32,
-              fit: BoxFit.scaleDown,
-              scale: 3.0,
-            ),
-          ),
-          Text(
-            'هبــة',
-            style: TextStyle(
-              fontSize: 32,
-              color: Colors.black45,
-            ),
-          ),
-        ],
-      ),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(
-            Icons.exit_to_app,
-            color: Colors.black45,
-          ),
-          onPressed: () async {
-            FirestoreServiceAuth.logout();
-            Navigator.pushNamed(context, LoginScreen.id);
-
-            print("message");
-          },
-        ),
-      ],
     );
   }
 

@@ -122,7 +122,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
               fillColor: Colors.white,
               border: new OutlineInputBorder(
-                borderRadius: new BorderRadius.circular(25.0),
+                borderRadius: new BorderRadius.circular(5.0),
                 borderSide: new BorderSide(),
               ),
               //fillColor: Colors.green
@@ -179,7 +179,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                         mainAxisAlignment:
                                         MainAxisAlignment.center,
                                         children: <Widget>[
-
                                           /// Icons
                                           Container(
                                             width: 30,

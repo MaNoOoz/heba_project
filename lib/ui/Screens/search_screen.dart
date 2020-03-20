@@ -9,8 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
+import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
-import 'package:heba_project/ui/shared/utils.dart';
+import 'package:heba_project/ui/widgets/SearchBarIOS.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -103,7 +104,10 @@ class _SearchScreenState extends State<SearchScreen> {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-//          SearchBar(),
+            SearchBar(
+              focusNode: null,
+              controller: _searchController,
+            ),
             searchFun(),
             Divider(
               height: 10,

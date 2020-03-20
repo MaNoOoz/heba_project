@@ -10,6 +10,7 @@ import 'package:heba_project/ui/Screens/Create_post_screen.dart';
 import 'package:heba_project/ui/Screens/FeedScreen.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
+import 'package:heba_project/ui/Screens/MapScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
 import 'package:heba_project/ui/Screens/chat_screen.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
@@ -71,6 +72,7 @@ class MyApp extends StatelessWidget {
             ProfileScreen.id: (context) => ProfileScreen(),
             SignupScreen.id: (context) => SignupScreen(),
             CreatePostScreen.id: (context) => CreatePostScreen(),
+            MapScreen.id: (context) => MapScreen(),
             FeedScreen.id: (context) {
               return FeedScreen();
             }

@@ -25,8 +25,10 @@ dependencies:
   image_picker:
   cached_network_image: ^2.0.0-rc
   firebase_storage:
+  google_maps_flutter:
+  geoflutterfire:
+  location:
   flutter_image_compress:
-  path_provider:
   uuid:
   image_cropper:
   animator:
@@ -59,6 +61,9 @@ dependencies:
   font_awesome_flutter:
   connectivity:
   sticky_headers:
+  sqflite:
+  path_provider:
+
   url_launcher:
   modal_progress_hud:
 

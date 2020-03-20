@@ -183,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
             children: <Widget>[
               /// Logo
               Flexible(
-                flex: 4,
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: Padding(
@@ -221,6 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
 //                    UIHelper.verticalSpace(20),
               /// Login btn
               Flexible(
+                flex: 1,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 20.0, right: 20.0),
                   child: FlatButton(
@@ -382,32 +382,35 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
 
               /// Register btn
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  margin: const EdgeInsets.only(top: 10.0),
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: new Row(
-                    children: <Widget>[
-                      new Expanded(
-                        child: FlatButton(
-                          shape: new RoundedRectangleBorder(
-                              borderRadius: new BorderRadius.circular(30.0)),
-                          color: Colors.pink,
-                          child: Container(
-                            padding: const EdgeInsets.only(left: 20.0),
-                            alignment: Alignment.center,
-                            child: Text(
-                              " Create a New Account?",
-                              style: TextStyle(color: Colors.white),
+              Flexible(
+                flex: 1,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    height: 30,
+                    margin: const EdgeInsets.only(top: 10.0),
+                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: new Row(
+                      children: <Widget>[
+                        new Expanded(
+                          child: FlatButton(
+                            shape: new RoundedRectangleBorder(
+                                borderRadius: new BorderRadius.circular(10.0)),
+                            color: Colors.pink,
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: Text(
+                                " Create a New Account?",
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
+                            onPressed: () {
+                              Navigator.pushNamed(context, SignupScreen.id);
+                            },
                           ),
-                          onPressed: () {
-                            Navigator.pushNamed(context, SignupScreen.id);
-                          },
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

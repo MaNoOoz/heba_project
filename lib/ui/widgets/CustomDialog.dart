@@ -2,7 +2,7 @@
  * Copyright (c) 2020.  Made With Love By Yaman Al-khateeb
  */
 import 'package:flutter/material.dart';
-import 'package:heba_project/ui/shared/Consts.dart';
+import 'package:heba_project/ui/shared/Constants.dart';
 
 class CustomDialog extends StatelessWidget {
   final String title, description, buttonText;
@@ -33,16 +33,16 @@ class CustomDialog extends StatelessWidget {
         //...bottom card part,
         Container(
           padding: EdgeInsets.only(
-            top: Consts.avatarRadius + Consts.padding,
-            bottom: Consts.padding,
-            left: Consts.padding,
-            right: Consts.padding,
+            top: avatarRadius + padding,
+            bottom: padding,
+            left: padding,
+            right: padding,
           ),
-          margin: EdgeInsets.only(top: Consts.avatarRadius),
+          margin: EdgeInsets.only(top: avatarRadius),
           decoration: new BoxDecoration(
             color: Colors.white,
             shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(Consts.padding),
+            borderRadius: BorderRadius.circular(padding),
             boxShadow: [
               BoxShadow(
                 color: Colors.black26,
@@ -84,11 +84,11 @@ class CustomDialog extends StatelessWidget {
         ),
         //...top circlular image part,
         Positioned(
-          left: Consts.padding,
-          right: Consts.padding,
+          left: padding,
+          right: padding,
           child: CircleAvatar(
             backgroundColor: Colors.blueAccent,
-            radius: Consts.avatarRadius,
+            radius: avatarRadius,
           ),
         ),
       ],

@@ -36,7 +36,8 @@ const double marginS = 4.0;
 const double marginM = 8.0;
 const double marginL = 16.0;
 const double marginXL = 32.0;
-
+const double padding = 16.0;
+const double avatarRadius = 66.0;
 // Spacing
 const double spaceXS = 2.0;
 const double spaceS = 4.0;

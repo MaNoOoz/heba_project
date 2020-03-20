@@ -22,6 +22,11 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:provider/provider.dart';
 
+/// todo imlenting firestore pickup location :
+///todo  1- add location filed to model class ??? WHICH DATA TYPE ???
+///todo  2- add PICKUP location BUTTON to THIS "CreatePostScreen" class
+///todo  3- Display   location in Map screen With marker and deatils
+///
 class CreatePostScreen extends StatefulWidget {
   static final String id = 'CreatePostScreen';
   Key key;
@@ -391,6 +396,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     /// private Post Object
 //    post2 = Post2(
 //        imageUrls: mImagesPath,
+//        oName: fuser,
+//        oImage: fuserImage,
+//        isFeatured: false,
+////        category: Category.home,
 //        hName: _name,
 //        hDesc: _desc,
 //        hLocation: _location,
@@ -402,6 +411,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     post2 = Post2(
         oName: fuser,
         oImage: fuserImage,
+        isFeatured: false,
+//        category: Category.home,
         imageUrls: mImagesPath,
         hName: _name,
         hDesc: _desc,
@@ -413,7 +424,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     log("public ${post2.oName}");
 
     /// private posts
-    DatabaseService.createPost(post2);
+//    DatabaseService.createPost(post2);
 
     /// public posts
     DatabaseService.createPublicPosts(post2);
@@ -424,6 +435,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         " images pathes : ${mImagesPath.length} "
         "Selected Images List : ${_readyToUploadImages.length} \n");
 //    _displaySnackBar(context);
+
+//    localData data;
+//    await data.addItem(post2);
 
     setState(() {});
 //    } else {
@@ -464,8 +478,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     print('dataChecked $dataChecked');
 
     /// Create New Post
-    var postCreated = await _CreatePost();
-    print(' postCreated $postCreated');
+    var postCreated = await _CreatePost().then((value) {
+      print(' postCreated ${value.hName}');
+    }, onError: (errorMesage) {
+      print(' postCreated == false Error is : ${errorMesage}');
+    });
+//    print(' postCreated $postCreated');
     setState(() {
       dataChecked = true;
     });
@@ -474,10 +492,11 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     var fieldsRested = await _Resetdata();
     print('fieldsRested $fieldsRested');
 
-    if (dataChecked == false || postCreated != null || fieldsRested == false) {
+    if (dataChecked == false || postCreated != null || fieldsRested == true) {
       dataUploaded = false;
-      _displaySnackBar(context, " تم إضافة الهبة بنجاح");
+
       showSpinner = false;
+      _displaySnackBar(context, " تم إضافة الهبة بنجاح");
 
       print("fieldsRested $fieldsRested  \n " +
           "dataChecked $dataChecked   \n    " +
@@ -660,7 +679,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                     ' Add Heba', 'Are You Sure You Wpant To Add This Post');
                 if (action == DialogAction.yes) {
                   showDialog2(context);
-                  await _CreatePost();
+                  await _SendToServer();
                   setState(() {
                     tappedYes = true;
                   });

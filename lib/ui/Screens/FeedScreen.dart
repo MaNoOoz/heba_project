@@ -15,9 +15,15 @@ import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/HebaDetails.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
-import 'package:heba_project/ui/shared/UI_Helpers.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:provider/provider.dart';
+
+import 'MapScreen.dart';
+
+enum _FooterLayout {
+  footer,
+  body,
+}
 
 class FeedScreen extends StatefulWidget {
   /// todo  FIX HEBA LIST EMPTY
@@ -25,24 +31,82 @@ class FeedScreen extends StatefulWidget {
   static final String id = 'feed_screen';
   final String currentUserId;
 
+  Post2 post2;
+
+//  final User user;
+
+//  FeedScreen({this.currentUserId, this.post2, this.user});
   FeedScreen({this.currentUserId});
 
   @override
   _FeedScreenState createState() => _FeedScreenState();
 }
 
-class _FeedScreenState extends State<FeedScreen> {
+class _FeedScreenState extends State<FeedScreen>
+    with SingleTickerProviderStateMixin {
   /// ==============================================================
-  var _hebatList = [];
+  List<Post2> _docsList = [];
+  Post2 postFromFuture;
   var _displayPosts = 0; // 0 - grid, 1 - column
-  var _profileUser;
-  var _profileImage;
   var slids;
+  var stream;
+
+  /// Bottom Sheet
+  var _selectedItemBtnSheet;
+  TabController _tabController;
+
+  /// Filtering Values :  0 = Filter [showBtnSheetForFiltiring] , 1 = Sort  [showBtnSheetForSorting]
+  var mBottomSheetForFiltiring;
+
+  /// Sorting Database based on This [_selected]  :  Sorting Values : 0 =  popular "Default" , 1 = low to high , 2 = high to low
+  int _selected = 0;
+  QuerySnapshot qn;
 
   ///  ========================= Methods ================================
-  /// getImagesUrls
+
+  /// Query DATABASE Based On [_selected]
+
+//  int queryDbBy(String tag){
+//int selected = 0;
+//    switch(_selected){
+//      case 0 :
+//        tag ="isFeatured";
+//        break;
+//      case 1:
+//        tag ="timestamp";
+//        break;
+//      case 2 :
+//        tag ="timestamp";
+//        break;
+//
+//    }
+//
+//
+//  }
+  Stream querDbWith({String tag}) {
+    Query query = publicpostsRef.where(tag);
+    query.snapshots();
+//    slids = query.snapshots().map((docsList) {
+//      docsList.documents.map((doc) {
+//        return doc.data;
+//      });
+//    }).toList();
+//    return slids;
+  }
+
+//  Stream convertQuerySnapshotToStream() async* {
+//    Stream stream;
+//    var q = await _getQueryPosts(postFromFuture).then((s) {
+//      print("convertQuerySnapshotToStream  ${s.documents.toList().length}");
+//
+//      return s;
+//    });
+////    stream = q.asStream();
+//    yield stream;
+//  }
+
   List<dynamic> _getListOfImagesFromUser(Post2 post2) {
-    dynamic list = post2.imageUrls;
+    dynamic list = postFromFuture.imageUrls;
     return list;
   }
 
@@ -55,235 +119,190 @@ class _FeedScreenState extends State<FeedScreen> {
     return result;
   }
 
-  ///  =====================   Widgets ========================
+  Future<List<Post2>> _getPosts() async {
+    List<Post2> list = [];
+    QuerySnapshot qn = await publicpostsRef.getDocuments();
+    List<DocumentSnapshot> documents = qn.documents;
+    documents.forEach((DocumentSnapshot doc) {
+      Post2 post = new Post2.fromDoc(doc);
+      list.add(post);
+    });
 
-  Widget mPostViewPublicData(BuildContext context, Post2 post) {
-    return StreamBuilder(
-      stream: postsRef.snapshots(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          return SingleChildScrollView(
-            physics: ScrollPhysics(),
-            child: Column(
-              children: <Widget>[
-                new ListView.builder(
-                    physics: NeverScrollableScrollPhysics(),
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true,
-                    itemCount: snapshot.data.documents.length,
-                    padding: const EdgeInsets.only(top: 15.0),
-                    itemBuilder: (context, index) {
-                      DocumentSnapshot ds = snapshot.data.documents[index];
-                      Post2 post2 = Post2.fromDoc(ds);
-                      return rowView(post2);
-                    }),
-              ],
-            ),
-          );
-        } else {
-          return CircularProgressIndicator();
-        }
-      },
-    );
+    return list;
   }
 
-//  Widget mPostViewPublicData2(BuildContext context, Post2 post) {
-//    return StreamBuilder(
-//      stream: slids,
-//      initialData: [],
-//      builder: (BuildContext context, AsyncSnapshot snapshot) {
-//        if (snapshot.hasData) {
-//          List slidList = snapshot.data.toList();
-//          print("${slidList.length}");
-//          return SingleChildScrollView(
-//            physics: ScrollPhysics(),
-//            child: Column(
-//              children: <Widget>[
-//                new ListView.builder(
-//                    physics: NeverScrollableScrollPhysics(),
-//                    scrollDirection: Axis.vertical,
-//                    shrinkWrap: true,
-//                    itemCount: snapshot.data.documents.length,
-//                    padding: const EdgeInsets.only(top: 15.0),
-//                    itemBuilder: (context, index) {
-//                      DocumentSnapshot ds = snapshot.data.documents[index];
-//                      Post2 post2 = Post2.fromDoc(ds);
-//                      return rowView(post2);
-//                    }),
-//              ],
-//            ),
-//          );
-//        } else {
-//          return CircularProgressIndicator();
-//        }
-//      },
-//    );
+  _getAllPosts(Post2 postModel) async {
+//    List<Post2> posts = await DatabaseService.getAllPosts2();
+    List<Post2> posts = [];
+    QuerySnapshot qn = await publicpostsRef.getDocuments();
+
+    List<DocumentSnapshot> documents = qn.documents;
+    documents.forEach((DocumentSnapshot doc) {
+      postFromFuture = new Post2.fromDoc(doc);
+      postModel = postFromFuture;
+      posts.add(postModel);
+    });
+
+    ///todo
+    setState(() {
+      _docsList = posts;
+    });
+    print("_setupPosts  ${_docsList[0].hName}");
+    print("_setupPosts  ${postModel.hName}");
+    print("_setupPosts  ${_docsList.length}");
+  }
+
+  Future<QuerySnapshot> _getQueryPosts(Post2 postModel) async {
+//    List<Post2> posts = await DatabaseService.getAllPosts2();
+    List<Post2> posts = [];
+    switch (_selected) {
+      case 0:
+        qn = await publicpostsRef
+            .where("${postFromFuture.isFeatured.toString()}", isEqualTo: false)
+            .getDocuments();
+        return qn;
+
+        break;
+      case 1:
+        qn = await publicpostsRef
+            .where("${postFromFuture.timestamp.toString()}")
+            .orderBy(postFromFuture.timestamp.toString(), descending: false)
+            .getDocuments();
+        return qn;
+
+        break;
+      case 2:
+        qn = await publicpostsRef
+            .where("${postFromFuture.timestamp.toString()}")
+            .orderBy(postFromFuture.timestamp.toString(), descending: true)
+            .getDocuments();
+        return qn;
+        break;
+    }
+
+    List<DocumentSnapshot> documents = qn.documents;
+    documents.forEach((DocumentSnapshot doc) {
+      postFromFuture = new Post2.fromDoc(doc);
+      postModel = postFromFuture;
+      posts.add(postModel);
+    });
+
+    ///todo
+    setState(() {
+      _docsList = posts;
+    });
+    print("_getQueryPosts  ${_docsList[0].hName}");
+    print("_getQueryPosts  ${postModel.hName}");
+    print("_getQueryPosts  ${_docsList.length}");
+    return qn;
+  }
+
+//  _getQueryPosts(Post2 postModel) async {
+////    List<Post2> posts = await DatabaseService.getAllPosts2();
+//    List<Post2> posts = [];
+//    switch (_selected) {
+//      case 0:
+//        qn = await publicpostsRef
+//            .where("${postFromFuture.isFeatured.toString()}", isEqualTo: false)
+//            .getDocuments();
+//        break;
+//      case 1:
+//        qn = await publicpostsRef
+//            .where("${postFromFuture.timestamp.toString()}")
+//            .orderBy(postFromFuture.timestamp.toString(), descending: false)
+//            .getDocuments();
+//        break;
+//      case 2:
+//        qn = await publicpostsRef
+//            .where("${postFromFuture.timestamp.toString()}")
+//            .orderBy(postFromFuture.timestamp.toString(), descending: true)
+//            .getDocuments();
+//        break;
+//    }
+//
+//    List<DocumentSnapshot> documents = qn.documents;
+//    documents.forEach((DocumentSnapshot doc) {
+//      postFromFuture = new Post2.fromDoc(doc);
+//      postModel = postFromFuture;
+//      posts.add(postModel);
+//    });
+//
+//    ///todo
+//    setState(() {
+//      _docsList = posts;
+//    });
+//    print("_setupPosts  ${_docsList[0].hName}");
+//    print("_setupPosts  ${postModel.hName}");
+//    print("_setupPosts  ${_docsList.length}");
 //  }
 
-  Stream querDb({String tag = "s"}) {
-    Query query = publicpostsRef.where('hName');
-    slids =
-        query.snapshots().map((list) => list.documents.map((doc) => doc.data));
+  /// Bottom Sheet
+  void _selectItem(String name) {
+    Navigator.pop(context);
+    setState(() {
+      _selectedItemBtnSheet = name;
+    });
+  }
+
+  _selctedMethod(int selected) {
+    Navigator.of(context).pop();
+    setState(() {
+      _selected = selected;
+      print("$_selected");
+    });
   }
 
   /// rowView Content ================================================
 
-  Widget feedView(BuildContext context, Post2 post2, User user) {
-    var name = Provider
-        .of<FirebaseUser>(context)
-        .displayName;
-    return StreamBuilder<QuerySnapshot>(
-      stream: publicpostsRef.snapshots(),
-      builder: (BuildContext context, snapshot) {
-        if (!snapshot.hasData) {
-          return mLoading();
-        }
-        return ListView(
-          children: <Widget>[
-//            Padding(
-//              padding: const EdgeInsets.all(16.0),
-//              child: Directionality(
-//                textDirection: TextDirection.rtl,
-//                child: Text(
-//                  "  الهبات",
-//                  style: TextStyle(
-//                      color: Colors.black87,
-//                      fontSize: 24,
-//                      fontWeight: FontWeight.normal),
-//                ),
-//              ),
-//            ),
-
-            /// Filter Card
-            Card(
-              elevation: 5,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Text(
-                            "تصفية",
-                            style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 14,
-                                fontWeight: FontWeight.normal),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        child: Center(
-                          child: IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              FontAwesomeIcons.filter,
-                              size: 14,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  UIHelper.horizontalSpaceWithGrayColor(1, Colors.black54),
-                  Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Text(
-                            " ترتيب",
-                            style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 14,
-                                fontWeight: FontWeight.normal),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        child: Center(
-                          child: IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              FontAwesomeIcons.sort,
-                              size: 14,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  UIHelper.horizontalSpaceWithGrayColor(1, Colors.black54),
-                  Row(
-                    children: <Widget>[
-//                      Padding(
-//                        padding: const EdgeInsets.all(6.0),
-//                        child: Directionality(
-//                          textDirection: TextDirection.rtl,
-//                          child: Text(
-//                            " ترتيب",
-//                            style: TextStyle(
-//                                color: Colors.black87,
-//                                fontSize: 14,
-//                                fontWeight: FontWeight.normal),
-//                          ),
-//                        ),
-//                      ),
-                      Container(
-                        child: Center(
-                          child: IconButton(
-                            onPressed: () {
-                              /// todo
-                            },
-                            icon: Icon(
-//                              FontAwesomeIcons.th,
-                              FontAwesomeIcons.gripLines,
-                              size: 14,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-//            Image.network(post2.oImage),
-            new ListView.builder(
-              physics: NeverScrollableScrollPhysics(),
-              scrollDirection: Axis.vertical,
-              shrinkWrap: true,
-              itemCount: snapshot.data.documents.length,
-              padding: EdgeInsets.only(top: 15.0),
-              itemBuilder: (context, index) {
-                DocumentSnapshot ds = snapshot.data.documents[index];
-                post2 = Post2.fromDoc(ds);
-                _hebatList.add(post2);
-                return InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HebaDetails(_hebatList[index]),
-                      ),
-                    );
-                  },
-                  child: rowView(post2),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+//  Widget feedView(Post2 post, User user) {
+//    return Container(
+//      height: 100,
+//      color: Colors.blueAccent,
+//      child: ListView.builder(
+//        shrinkWrap: true,
+//        itemCount: _docsList.length,
+//        itemBuilder: (context, index) {
+//          return FutureBuilder<QuerySnapshot>(
+//            future: publicpostsRef.getDocuments(),
+//            builder: (BuildContext context, snapshot) {
+//              switch (snapshot.connectionState) {
+//                case ConnectionState.waiting:
+//                  return Center(child: CircularProgressIndicator());
+//                  break;
+//                case ConnectionState.active:
+//                  break;
+//                case ConnectionState.done:
+//                  break;
+//                case ConnectionState.none:
+//                  break;
+//              }
+//
+//              if (snapshot.hasData) {
+//                print("${querDb()}");
+//                Text("${post.hName}");
+//                Text("${user.name}");
+//              } else if (snapshot.hasError) {
+//                print("${snapshot.error}");
+//              }
+//              return Text("${post.id}");
+//
+//////                return postsList(
+//////                    postList: _docsList,
+//////                    onSelected: () {
+//////                      print("object");
+//////                    });
+//////                return Text("${post.id}");
+////
+////                return RowView(
+////                  context: context,
+////                  post: post,
+////                );
+//            },
+//          );
+//        },
+//      ),
+//    );
+//  }
 
   Widget mLoading() {
     return Center(
@@ -301,8 +320,36 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
+//  Widget viewType(Post2 post, User user) {
+//    if (_displayPosts == 0) {
+//      // Grid
+//      List<GridTile> tiles = [];
+//      _docsList.forEach(
+//        (post) => tiles.add(gridView(post)),
+//      );
+//      return GridView.count(
+//        crossAxisCount: 2,
+//        childAspectRatio: 1.0,
+//        mainAxisSpacing: 2.0,
+//        crossAxisSpacing: 2.0,
+//        shrinkWrap: true,
+//        physics: NeverScrollableScrollPhysics(),
+//        children: tiles,
+//      );
+//    } else {
+//      return rowView(post);
+//    }
+//  }
+  Widget viewType(Post2 post, User user) {
+    if (_displayPosts == 0) {
+      // Grid
+      return gridView(post);
+    } else {
+      return rowView(post);
+    }
+  }
+
   Widget rowView(Post2 post) {
-//    var profileImageUrl = post2.imageUrls[0] ?? [];
     var fUser = Provider
         .of<FirebaseUser>(context)
         .displayName;
@@ -315,36 +362,185 @@ class _FeedScreenState extends State<FeedScreen> {
     _getListOfImagesFromUser(post).cast<String>().toList();
     int _current = 0;
 
-    return content(fUser, fImage, listFromFirebase, post, _current);
+    return contentRow(fUser, fImage, listFromFirebase, post, _current);
   }
 
-  Widget content(String fUser, String fImage, List<String> listFromFirebase,
+  Widget gridView(Post2 post) {
+//    var fUser = Provider.of<FirebaseUser>(context).displayName;
+//    var fImage = Provider.of<FirebaseUser>(context).photoUrl;
+    /// fetch the list
+    var listFromFirebase =
+    _getListOfImagesFromUser(post).cast<String>().toList();
+    int _current = 0;
+    return contentGrid(listFromFirebase, post, _current);
+  }
+
+  Widget contentGrid(List<String> listFromFirebase, Post2 post, int _current) {
+    var child = GridTile(
+      child: Stack(
+        children: [
+          SizedBox(
+            height: 400,
+            child: Card(
+              semanticContainer: true,
+              elevation: 5,
+              clipBehavior: Clip.antiAliasWithSaveLayer,
+              child: Column(
+                children: <Widget>[
+
+                  /// image
+                  Flexible(
+                    child: listFromFirebase.isEmpty
+                        ? Center(child: Text("No Image Bro"))
+                        : ImagesSlider(
+                      items: map<Widget>(listFromFirebase, (index, i) {
+//                print("listFromFirebase ${listFromFirebase.length}");
+                        return Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.zero,
+                              bottomRight: Radius.circular(0),
+                              topLeft: Radius.zero,
+                              topRight: Radius.circular(0),
+                            ),
+                            image: DecorationImage(
+                                image: post.imageUrls.isEmpty
+                                    ? Image.asset(
+                                    'assets/images/user_placeholder.jpg')
+                                    : NetworkImage(i),
+                                fit: BoxFit.cover),
+                          ),
+                        );
+                      }),
+                      autoPlay: false,
+                      viewportFraction: 1.0,
+                      indicatorColor: Colors.grey,
+                      aspectRatio: 1.0,
+                      distortion: true,
+                      align: IndicatorAlign.bottom,
+                      indicatorWidth: 1,
+                      indicatorBackColor: Colors.black38,
+                      updateCallback: (index) {
+                        setState(
+                              () {
+                            _current = index;
+                          },
+                        );
+                      },
+                    ),
+                  ),
+
+                  /// texts
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      post.hName,
+                      textDirection: TextDirection.rtl,
+                      maxLines: 1,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      post.hLocation,
+                      textDirection: TextDirection.rtl,
+                      maxLines: 1,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      post.hDesc,
+                      textDirection: TextDirection.rtl,
+                      maxLines: 1,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+//          Padding(
+//            padding: const EdgeInsets.all(8.0),
+//            child: Card(
+//              child: ListView(
+//                children: <Widget>[
+//                  Padding(
+//                    padding: const EdgeInsets.all(8.0),
+//                    child: Text(post.hName),
+//                  ),
+//                  Padding(
+//                    padding: const EdgeInsets.all(8.0),
+//                    child: Text(post.hLocation),
+//                  ),
+//                  Padding(
+//                    padding: const EdgeInsets.all(8.0),
+//                    child: Text(post.hDesc),
+//                  ),
+//                  Padding(
+//                    padding: const EdgeInsets.all(8.0),
+//                    child: CachedNetworkImage(
+//                      imageUrl: post.imageUrls[0],
+//                    ),
+//                  ),
+//                ],
+//              ),
+//            ),
+//          )
+        ],
+      ),
+    );
+
+    List<GridTile> tiles = [];
+    tiles.add(child);
+
+    return GridView.count(
+      crossAxisCount: 2,
+      childAspectRatio: 1.0,
+      mainAxisSpacing: 2.0,
+      crossAxisSpacing: 2.0,
+      shrinkWrap: true,
+      physics: BouncingScrollPhysics(),
+      children: tiles,
+    );
+  }
+
+  Widget contentRow(String fUser, String fImage, List<String> listFromFirebase,
       Post2 post, int _current) {
     return Container(
-      color: Colors.black12,
+      color: Colors.white30,
 //      height: 200,
       margin: EdgeInsets.all(0),
 //      width: double.infinity,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(1.0),
         child: Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.zero,
-              bottomRight: Radius.circular(10),
-              topLeft: Radius.zero,
-              topRight: Radius.circular(10),
+              bottomLeft: Radius.circular(0),
+              bottomRight: Radius.circular(0),
+              topLeft: Radius.circular(0),
+              topRight: Radius.circular(0),
             ),
           ),
           color: Colors.white,
-          elevation: 4,
+          elevation: 1,
           child: Column(
             children: <Widget>[
-              body(listFromFirebase, post, _current),
+              rowBody(listFromFirebase, post, _current),
               Divider(
-                color: Colors.black26,
+                color: Colors.transparent,
               ),
-              footer(fUser, fImage),
+              rowFooter(fUser, fImage),
             ],
           ),
         ),
@@ -352,74 +548,100 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget body(List<String> listFromFirebase, Post2 post, int _current) {
+  Widget rowBody(List<String> listFromFirebase, Post2 post, int _current) {
     return Row(
       children: <Widget>[
-
         /// Image Side
-        ImageSide(listFromFirebase, post, _current),
+        rowImageSide(listFromFirebase, post, _current),
 
         /// Content Side
-        ContentSide(post),
+        rowContentSide(post),
       ],
     );
   }
 
-  Widget footer(String fUser, String fImage) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: <Widget>[
-        GestureDetector(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8.0),
+  Widget rowFooter(String fUser, String fImage) {
+    return Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: <Widget>[
+          Expanded(
+            flex: 3,
             child: Container(
-              height: 30.0,
-              width: 30.0,
-              child: Icon(
-                FontAwesomeIcons.bookmark,
-                color: Colors.black38,
+              child: GestureDetector(
+                child: Padding(
+                  padding: const EdgeInsets.all(0),
+                  child: Container(
+                    color: Colors.white,
+                    height: 30.0,
+                    child: Center(
+                      child: Icon(
+                        FontAwesomeIcons.bookmark,
+                        color: Colors.black38,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                onTap: () {},
               ),
             ),
           ),
-          onTap: () {},
-        ),
-        GestureDetector(
-          child: Container(
-            height: 30.0,
-            width: 30.0,
-            child: Icon(
-              FontAwesomeIcons.share,
-              color: Colors.black38,
-            ),
-          ),
-          onTap: () {},
-        ),
-        GestureDetector(
-          child: Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Container(
-              height: 30.0,
-              width: 30.0,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15.0),
-                image: DecorationImage(
-                  image: fImage.isEmpty
-                      ? Image.asset('assets/images/user_placeholder.jpg')
-                      : NetworkImage(fImage),
-                  fit: BoxFit.cover,
+          Expanded(
+            flex: 1,
+            child: GestureDetector(
+              child: Align(
+                alignment: Alignment.center,
+                child: Center(
+                  child: Container(
+                    height: 30.0,
+                    color: Colors.white,
+                    child: Icon(
+                      FontAwesomeIcons.share,
+                      color: Colors.black38,
+                      size: 16,
+                    ),
+                  ),
                 ),
               ),
+              onTap: () {},
             ),
           ),
+          Expanded(
+              flex: 4,
+              child: Divider(
+                color: Colors.white,
+              )),
+          Expanded(
+            flex: 1,
+            child: GestureDetector(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Container(
+                  height: 30.0,
+                  width: 30.0,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15.0),
+                    image: DecorationImage(
+                      image: fImage.isEmpty
+                          ? Image.asset('assets/images/user_placeholder.jpg')
+                          : NetworkImage(fImage),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
 //            child: Image.network(_googleSignIn.currentUser.photoUrl),
-        ),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget ImageSide(List<String> listFromFirebase, Post2 post, int _current) {
+  Widget rowImageSide(List<String> listFromFirebase, Post2 post, int _current) {
     return Container(
       height: 100,
       width: 100,
@@ -427,7 +649,7 @@ class _FeedScreenState extends State<FeedScreen> {
           ? Center(child: Text("No Image Bro"))
           : ImagesSlider(
         items: map<Widget>(listFromFirebase, (index, i) {
-          print("listFromFirebase ${listFromFirebase.length}");
+//                print("listFromFirebase ${listFromFirebase.length}");
           return Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.only(
@@ -463,7 +685,7 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget ContentSide(Post2 post) {
+  Widget rowContentSide(Post2 post) {
     return Container(
       height: 100,
       width: MediaQuery
@@ -503,46 +725,569 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget icons(IconData icon) {
-    Color color = Colors.black45;
-    return new Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        new Icon(icon, color: color),
-      ],
-    );
-  }
-
   Widget EmptyView() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Image(
-        image: AssetImage('assets/images/user_placeholder.jpg'),
+        image: AssetImage('assets/images/uph.jpg'),
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Post2 post;
-    User user;
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: CustomAppBar(
-        title: "heba",
-        IsBack: false,
-        color: Colors.white,
-        isImageVisble: true,
-      ),
-      body: feedView(context, post, user),
     );
   }
 
   @override
   void initState() {
     super.initState();
+    _tabController = new TabController(length: 3, vsync: this);
+    _getAllPosts(widget.post2);
+//    _getQueryPosts(widget.post2);
+//    convertQuerySnapshotToStream();
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _tabController.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    User user;
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        child: Icon(FontAwesomeIcons.map),
+        onPressed: () {
+          Navigator.pushNamed(context, MapScreen.id);
+//          showBtnSheetForFiltiring(context, _tabController);
+        },
+      ),
+      backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(130),
+        child: Column(
+          children: <Widget>[
+            CustomAppBar(
+              title: "heba $_selected",
+              IsBack: false,
+              color: Colors.white,
+              isImageVisble: true,
+              flexSpace: 50,
+              flexColor: Colors.black12,
+            ),
+            Divider(),
+            FilterCard(context),
+          ],
+        ),
+      ),
+      body: ListView(
+        shrinkWrap: true,
+        children: <Widget>[
+          Center(
+            child: Visibility(
+
+              /// todo
+              visible: true,
+              child: Container(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Align(
+                      alignment: AlignmentDirectional.topCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text("النتائج")),
+                          Text("  ${_docsList.length}"),
+                        ],
+                      ),
+                    ),
+                  ),
+                  height: 40,
+                  color: Colors.white),
+            ),
+          ),
+          mPostViewPublicData(context, postFromFuture, user),
+        ],
+      ),
+    );
+  }
+
+  Widget mPostViewPublicData(BuildContext context, Post2 post, User user) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: publicpostsRef.snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasData) {
+//          final names = snapshot.data.documents;
+//          List<Text> messagesWidgets = [];
+//          for (var name in names) {
+//            final txt = name.data['hName'];
+//            final from = name.data['oName'];
+//            final uiTxt = Text("$txt from $from");
+////            List<DocumentSnapshot> documents = snapshot.data.documents;
+//            names.forEach((docObject) {
+//              postFromFuture = new Post2.fromDoc(docObject);
+////              post = postFromFuture;
+////              _docsList.clear();
+//
+////              print("${_docsList[index].hName}  + ${postFromFuture.oName}+ ${postFromFuture.hLocation}");
+////             final uiTxt =   Text("${_docsList[0].hName} + ${postFromFuture.hLocation}");
+////              messagesWidgets.add(uiTxt);
+//            }
+//            );
+//          }
+          return SingleChildScrollView(
+            physics: ScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+
+                /// todo Fix GridView
+                new ListView.builder(
+                    physics: NeverScrollableScrollPhysics(),
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    itemCount: snapshot.data.documents.length,
+                    padding: const EdgeInsets.only(top: 15.0),
+                    itemBuilder: (context, index) {
+                      DocumentSnapshot ds = snapshot.data.documents[index];
+//                      Post2 post2 = Post2.fromDoc(ds);
+                      postFromFuture = Post2.fromDoc(ds);
+                      return GestureDetector(
+                          onTap: () {
+                            print("${index} ");
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    HebaDetails(_docsList[index], ds),
+                              ),
+                            );
+                          },
+                          child: viewType(postFromFuture, user));
+                    }),
+              ],
+            ),
+          );
+        } else {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
+    );
+  }
+
+  Widget FilterCard(BuildContext context) {
+    return Container(
+      width: MediaQuery
+          .of(context)
+          .size
+          .width,
+      child: Card(
+        elevation: 2,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+
+            /// Filter
+            Padding(
+              padding: const EdgeInsets.only(left: 18.0),
+              child: GestureDetector(
+                onTap: () {
+                  print("object");
+                  return showBtnSheetForFiltiring(context, _tabController);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Container(
+                    height: 40,
+                    child: Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Text(
+                              "تصفية",
+                              style: TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          child: Center(
+                            child: Icon(
+                              FontAwesomeIcons.filter,
+                              size: 14,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            /// Sort
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                onTap: () {
+//                  todo
+//                  return showBtnSheetForSorting(context, _tabController);
+                },
+                child: Container(
+                  height: 40,
+                  child: Row(
+                    children: <Widget>[
+                      Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Text(
+                          " ترتيب",
+                          style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 14,
+                              fontWeight: FontWeight.normal),
+                        ),
+                      ),
+                      Container(
+                        child: Center(
+                          child: Icon(
+                            FontAwesomeIcons.sort,
+                            size: 14,
+                            color: Colors.black45,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            /// View
+            Padding(
+              padding: const EdgeInsets.only(right: 18.0),
+              child: Container(
+                height: 40,
+                child: Row(
+                  children: <Widget>[
+                    Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Text(
+                        " عرض",
+                        style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Container(
+                        child: Center(
+                            child: _displayPosts == 0
+                                ? IconButton(
+                              icon: Icon(
+                                FontAwesomeIcons.thLarge,
+                                size: 14,
+                                color: _displayPosts == 0
+                                    ? Colors.blueAccent
+                                    : Colors.grey[400],
+                              ),
+                              onPressed: () {
+                                print("${_displayPosts}");
+                                setState(() {
+                                  _displayPosts = 1;
+                                });
+                              },
+                            )
+                                : IconButton(
+                              icon: Icon(
+                                FontAwesomeIcons.list,
+                                size: 14,
+                                color: _displayPosts == 1
+                                    ? Colors.blueAccent
+                                    : Colors.grey[400],
+                              ),
+                              onPressed: () {
+                                print("${_displayPosts}");
+                                setState(() {
+                                  _displayPosts = 0;
+                                });
+                              },
+                            )),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget showBtnSheetForFiltiring(BuildContext context,
+      TabController _tabController) {
+    var w = MediaQuery
+        .of(context)
+        .size
+        .width * 0.1;
+    var h = MediaQuery
+        .of(context)
+        .size
+        .height * 0.2;
+    mBottomSheetForFiltiring = showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          /// close icon
+          return Stack(
+            children: <Widget>[
+              Container(
+                color: Colors.transparent,
+                padding: EdgeInsets.only(top: 20),
+                child: Container(
+                  height: h + 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(10),
+                        topRight: Radius.circular(10)),
+                  ),
+                  child: Stack(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 18.0),
+                        child: Align(
+                          alignment: AlignmentDirectional.bottomCenter,
+                          child: Container(
+                            height: h,
+                            child: Container(
+                              child: Column(
+                                children: <Widget>[
+
+                                  /// popular
+                                  Flexible(
+                                    child: RadioListTile(
+                                      value: 0,
+                                      groupValue: _selected,
+                                      onChanged: _selctedMethod,
+                                      title: Directionality(
+                                        child: Text(
+                                          "الأكثر رواجا",
+                                          style: TextStyle(
+                                              fontWeight: _selected == 0
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal),
+                                        ),
+                                        textDirection: TextDirection.rtl,
+                                      ),
+                                    ),
+                                  ),
+
+                                  ///low to  hight
+                                  Flexible(
+                                    child: RadioListTile(
+                                      value: 1,
+                                      groupValue: _selected,
+                                      onChanged: _selctedMethod,
+                                      title: Directionality(
+                                        textDirection: TextDirection.rtl,
+                                        child: Text(
+                                          'بالسعر: من الأقل إلى الأكثر',
+                                          style: TextStyle(
+                                              fontWeight: _selected == 1
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  /// hight to low
+                                  Flexible(
+                                    child: RadioListTile(
+                                      value: 2,
+                                      groupValue: _selected,
+                                      onChanged: _selctedMethod,
+                                      title: Directionality(
+                                        textDirection: TextDirection.rtl,
+                                        child: Text(
+                                          'بالسعر: من الأكثر  إلى الأقل',
+                                          style: TextStyle(
+                                              fontWeight: _selected == 2
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                left: 10,
+                child: RawMaterialButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Icon(
+                    Icons.clear,
+                    color: Colors.black38,
+                    size: 26.0,
+                  ),
+                  shape: CircleBorder(),
+                  elevation: 0.0,
+                  fillColor: Colors.white,
+                  padding: const EdgeInsets.all(8.0),
+                ),
+              ),
+            ],
+          );
+        });
+
+    return mBottomSheetForFiltiring;
+  }
+
+//  Widget showBtnSheetForSorting(
+//      BuildContext context, TabController _tabController) {
+//    var w = MediaQuery.of(context).size.width * 0.1;
+//    var h = MediaQuery.of(context).size.height * 0.2;
+//    mBottomSheetForFiltiring = showModalBottomSheet(
+//        context: context,
+//        backgroundColor: Colors.transparent,
+//        builder: (context) {
+//          /// close icon
+//          return Stack(
+//            children: <Widget>[
+//              Container(
+//                color: Colors.transparent,
+//                padding: EdgeInsets.only(top: 20),
+//                child: Container(
+//                  height: h + 50,
+//                  decoration: BoxDecoration(
+//                    color: Colors.white,
+//                    borderRadius: BorderRadius.only(
+//                        topLeft: Radius.circular(10),
+//                        topRight: Radius.circular(10)),
+//                  ),
+//                  child: Stack(
+//                    children: <Widget>[
+//                      Padding(
+//                        padding: const EdgeInsets.only(top: 18.0),
+//                        child: Align(
+//                          alignment: AlignmentDirectional.bottomCenter,
+//                          child: Container(
+//                            height: h,
+//                            child: Container(
+//                              child: Column(
+//                                children: <Widget>[
+//                                  Flexible(
+//                                    child: ListTile(
+//                                      leading: Radio(
+//                                          value: 1,
+//                                          groupValue: _selected,
+//                                          onChanged: (value) {
+//                                            print(value);
+//                                            setState(() {
+//                                              _selected = value;
+//                                            });
+//                                          }),
+//                                      title: Directionality(
+//                                          textDirection: TextDirection.rtl,
+//                                          child: Text(
+//                                            'بالسعر: من الأقل إلى الأكثر',
+//                                            style: TextStyle(
+//                                                decoration:
+//                                                    TextDecoration.lineThrough),
+//                                          )),
+//                                    ),
+//                                  ),
+//                                  Flexible(
+//                                    child: ListTile(
+//                                        leading: Radio(
+//                                            value: 2,
+//                                            groupValue: _selected,
+//                                            onChanged: (value) {
+//                                              print(value);
+//                                              setState(() {
+//                                                _selected = value;
+//                                              });
+//                                            }),
+//                                        title: Directionality(
+//                                            textDirection: TextDirection.rtl,
+//                                            child: Text(
+//                                                'بالسعر: من الأكثر إلى الأقل')),
+//                                        onTap: () => {print("object")}),
+//                                  ),
+//                                  Flexible(
+//                                    child: ListTile(
+//                                        leading: Radio(
+//                                            value: 3,
+//                                            groupValue: _selected,
+//                                            onChanged: (value) {
+//                                              print(value);
+//                                              setState(() {
+//                                                _selected = value;
+//                                              });
+//                                            }),
+//                                        title: Directionality(
+//                                            textDirection: TextDirection.rtl,
+//                                            child: Text(' الأكثر رواجا')),
+//                                        onTap: () => {print("object")}),
+//                                  ),
+//                                ],
+//                              ),
+//                            ),
+//                          ),
+//                        ),
+//                      ),
+//                    ],
+//                  ),
+//                ),
+//              ),
+//              Positioned(
+//                top: 0,
+//                left: 10,
+//                child: RawMaterialButton(
+//                  onPressed: () {
+//                    Navigator.of(context).pop();
+//                  },
+//                  child: Icon(
+//                    Icons.clear,
+//                    color: Colors.black38,
+//                    size: 26.0,
+//                  ),
+//                  shape: CircleBorder(),
+//                  elevation: 0.0,
+//                  fillColor: Colors.white,
+//                  padding: const EdgeInsets.all(8.0),
+//                ),
+//              ),
+//            ],
+//          );
+//        });
+//
+//    return mBottomSheetForFiltiring;
+//  }
 }
 
 //  Widget _buildDisplayPosts() {
@@ -922,3 +1667,138 @@ class _FeedScreenState extends State<FeedScreen> {
 ////      ),
 //    );
 //  }
+//Widget icons(IconData icon) {
+//  Color color = Colors.black45;
+//  return new Column(
+//    mainAxisSize: MainAxisSize.min,
+//    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//    children: [
+//      new Icon(icon, color: color),
+//    ],
+//  );
+//}
+
+///  =====================   Widgets ========================
+
+//  Widget mPostViewPublicData(BuildContext context, Post2 post) {
+//    return StreamBuilder(
+//      stream: postsRef.snapshots(),
+//      builder: (BuildContext context, AsyncSnapshot snapshot) {
+//        if (snapshot.hasData) {
+//          return SingleChildScrollView(
+//            physics: ScrollPhysics(),
+//            child: Column(
+//              children: <Widget>[
+//                new ListView.builder(
+//                    physics: NeverScrollableScrollPhysics(),
+//                    scrollDirection: Axis.vertical,
+//                    shrinkWrap: true,
+//                    itemCount: snapshot.data.documents.length,
+//                    padding: const EdgeInsets.only(top: 15.0),
+//                    itemBuilder: (context, index) {
+//                      DocumentSnapshot ds = snapshot.data.documents[index];
+//                      Post2 post2 = Post2.fromDoc(ds);
+//                      return rowView(post2);
+//                    }),
+//              ],
+//            ),
+//          );
+//        } else {
+//          return CircularProgressIndicator();
+//        }
+//      },
+//    );
+//  }
+
+//  Widget mPostViewPublicData2(BuildContext context, Post2 post) {
+//    return StreamBuilder(
+//      stream: slids,
+//      initialData: [],
+//      builder: (BuildContext context, AsyncSnapshot snapshot) {
+//        if (snapshot.hasData) {
+//          List slidList = snapshot.data.toList();
+//          print("${slidList.length}");
+//          return SingleChildScrollView(
+//            physics: ScrollPhysics(),
+//            child: Column(
+//              children: <Widget>[
+//                new ListView.builder(
+//                    physics: NeverScrollableScrollPhysics(),
+//                    scrollDirection: Axis.vertical,
+//                    shrinkWrap: true,
+//                    itemCount: snapshot.data.documents.length,
+//                    padding: const EdgeInsets.only(top: 15.0),
+//                    itemBuilder: (context, index) {
+//                      DocumentSnapshot ds = snapshot.data.documents[index];
+//                      Post2 post2 = Post2.fromDoc(ds);
+//                      return rowView(post2);
+//                    }),
+//              ],
+//            ),
+//          );
+//        } else {
+//          return CircularProgressIndicator();
+//        }
+//      },
+//    );
+//  }
+
+//
+//
+//Widget feedView(Post2 post, User user) {
+////    var name = Provider.of<FirebaseUser>(context).displayName;
+////    post = postFromFuture;
+////    _docsList.add(post);
+////    print("feedView ${name}");
+////    return ListView.builder(
+////      physics: NeverScrollableScrollPhysics(),
+////      scrollDirection: Axis.vertical,
+////      shrinkWrap: true,
+////      itemCount: _docsList.length,
+////      padding: EdgeInsets.only(top: 15.0),
+////      itemBuilder: (context, index) {
+////        return Container(
+////          color: Colors.red,
+////          height: 50,
+////          width: 100,
+//////          child: Text('${_docsList[index]}'),
+////          child: Text('${post.hName}'),
+////        );
+////      },
+////    );
+//  post = postFromFuture;
+//  return SingleChildScrollView(
+//    child: StreamBuilder(
+//      stream: publicpostsRef.snapshots(),
+//      builder: (BuildContext context, snapshot) {
+//        print("${_docsList.length}");
+//
+//        if (!snapshot.hasData) {
+//          return mLoading();
+////
+//        }
+//        return ListView.builder(
+//          physics: NeverScrollableScrollPhysics(),
+//          scrollDirection: Axis.vertical,
+//          shrinkWrap: true,
+//          itemCount: 10,
+//          padding: EdgeInsets.only(top: 15.0),
+//          itemBuilder: (context, index) {
+//            _docsList.add(post);
+//
+//            print("${_docsList.length}");
+//            return Container(
+//                color: Colors.red,
+//                height: 50,
+//                width: 100,
+//                child: RowView(
+//                  post: _docsList[index],
+//                  onSelected: () => print("sss"),
+//                  postList: _docsList,
+//                ));
+//          },
+//        );
+//      },
+//    ),
+//  );
+//}

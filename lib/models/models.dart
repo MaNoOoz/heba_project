@@ -8,6 +8,8 @@ import 'dart:core';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 
+import 'Location_data.dart';
+
 // https://github.com/googlecodelabs/flutter-cupertino-store/blob/master/step-06/lib/model/product.dart
 enum Category {
   all,
@@ -31,6 +33,7 @@ class Post2 {
   final Timestamp timestamp;
   final Category category;
   final bool isFeatured;
+  final UserLocation location;
 
   const Post2({
     this.id,
@@ -41,6 +44,7 @@ class Post2 {
     this.category,
     @required this.hName,
     @required this.hDesc,
+    this.location,
     this.hLocation,
     @required this.authorId,
     this.timestamp,

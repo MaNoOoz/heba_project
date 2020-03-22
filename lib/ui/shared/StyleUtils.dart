@@ -15,7 +15,7 @@ const subHeaderStyle = TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500);
 
 class StyleUtils {
   /// ========================================================================================================
-  InputDecoration textFieldDecorationSquer({String hint, String lable}) {
+  InputDecoration textFieldDecorationSquere({String hint, String lable}) {
     return InputDecoration(
       contentPadding: EdgeInsets.all(16),
       prefixIcon: Icon(Icons.card_giftcard),
@@ -42,9 +42,12 @@ class StyleUtils {
   }
 
   /// ========================================================================================================
-  InputDecoration textFieldDecorationCircle({String hint, String lable, Icon icon}) {
+  InputDecoration textFieldDecorationCircle(
+      {String hint, String lable, Icon icon}) {
     return InputDecoration(
+//      prefixIcon: icon,
       icon: icon,
+//      suffixIcon: icon,
       contentPadding: EdgeInsets.all(16),
       hintText: hint,
       labelText: lable,
@@ -106,12 +109,11 @@ class StyleUtils {
     accentColor: Colors.blueAccent[500],
     fontFamily: ArabicFonts.Cairo,
     textTheme: TextTheme(
-        display1: TextStyle(fontSize: 14
-            , wordSpacing: 2, fontFamily: ArabicFonts.Cairo)),
+        display1: TextStyle(
+            fontSize: 14, wordSpacing: 2, fontFamily: ArabicFonts.Cairo)),
   );
 
 /// ========================================================================================================
-
 
 /// ========================================================================================================
 

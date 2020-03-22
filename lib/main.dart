@@ -6,9 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:heba_project/models/Location_data.dart';
+import 'package:heba_project/service/LocationService.dart';
 import 'package:heba_project/ui/Screens/Create_post_screen.dart';
 import 'package:heba_project/ui/Screens/FeedScreen.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
+import 'package:heba_project/ui/Screens/Location_Pickup.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
 import 'package:heba_project/ui/Screens/MapScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
@@ -73,6 +76,7 @@ class MyApp extends StatelessWidget {
             SignupScreen.id: (context) => SignupScreen(),
             CreatePostScreen.id: (context) => CreatePostScreen(),
             MapScreen.id: (context) => MapScreen(),
+            Location_Pickup.id: (context) => Location_Pickup(),
             FeedScreen.id: (context) {
               return FeedScreen();
             }
@@ -82,6 +86,8 @@ class MyApp extends StatelessWidget {
       providers: [
         StreamProvider<FirebaseUser>.value(
             value: FirebaseAuth.instance.onAuthStateChanged),
+        StreamProvider<UserLocation>.value(
+            value: LocationService().locationStream),
       ],
     );
   }

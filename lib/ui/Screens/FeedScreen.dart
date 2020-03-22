@@ -5,20 +5,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/HebaDetails.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
+import 'package:location/location.dart';
 import 'package:provider/provider.dart';
-
-import 'MapScreen.dart';
 
 enum _FooterLayout {
   footer,
@@ -50,6 +52,11 @@ class _FeedScreenState extends State<FeedScreen>
   var _displayPosts = 0; // 0 - grid, 1 - column
   var slids;
   var stream;
+
+  /// map
+  GoogleMapController mapController;
+  Location location = new Location();
+  var _ViewModeCode = 0;
 
   /// Bottom Sheet
   var _selectedItemBtnSheet;
@@ -387,7 +394,6 @@ class _FeedScreenState extends State<FeedScreen>
               clipBehavior: Clip.antiAliasWithSaveLayer,
               child: Column(
                 children: <Widget>[
-
                   /// image
                   Flexible(
                     child: listFromFirebase.isEmpty
@@ -749,14 +755,34 @@ class _FeedScreenState extends State<FeedScreen>
     _tabController.dispose();
   }
 
+  ViewMode() {
+    User user;
+    if (_ViewModeCode == 0) {
+      return mPostViewPublicData(context, postFromFuture, user);
+    } else {
+      return mMapView(context, postFromFuture, user);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     User user;
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        child: Icon(FontAwesomeIcons.map),
+        child: _ViewModeCode == 0
+            ? Icon(FontAwesomeIcons.map)
+            : Icon(FontAwesomeIcons.list),
         onPressed: () {
-          Navigator.pushNamed(context, MapScreen.id);
+          if (_ViewModeCode == 1) {
+            setState(() {
+              _ViewModeCode = 0;
+            });
+          } else {
+            setState(() {
+              _ViewModeCode = 1;
+            });
+          }
+
 //          showBtnSheetForFiltiring(context, _tabController);
         },
       ),
@@ -781,7 +807,8 @@ class _FeedScreenState extends State<FeedScreen>
       body: ListView(
         shrinkWrap: true,
         children: <Widget>[
-          Center(
+          _ViewModeCode == 0
+              ? Center(
             child: Visibility(
 
               /// todo
@@ -805,8 +832,11 @@ class _FeedScreenState extends State<FeedScreen>
                   height: 40,
                   color: Colors.white),
             ),
-          ),
-          mPostViewPublicData(context, postFromFuture, user),
+          )
+              : Container(),
+          _ViewModeCode == 0
+              ? mPostViewPublicData(context, postFromFuture, user)
+              : Container(child: mMapView(context, postFromFuture, user)),
         ],
       ),
     );
@@ -817,6 +847,7 @@ class _FeedScreenState extends State<FeedScreen>
       stream: publicpostsRef.snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
+          return mHebatList(context, snapshot, user);
 //          final names = snapshot.data.documents;
 //          List<Text> messagesWidgets = [];
 //          for (var name in names) {
@@ -835,46 +866,51 @@ class _FeedScreenState extends State<FeedScreen>
 //            }
 //            );
 //          }
-          return SingleChildScrollView(
-            physics: ScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
 
-                /// todo Fix GridView
-                new ListView.builder(
-                    physics: NeverScrollableScrollPhysics(),
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true,
-                    itemCount: snapshot.data.documents.length,
-                    padding: const EdgeInsets.only(top: 15.0),
-                    itemBuilder: (context, index) {
-                      DocumentSnapshot ds = snapshot.data.documents[index];
-//                      Post2 post2 = Post2.fromDoc(ds);
-                      postFromFuture = Post2.fromDoc(ds);
-                      return GestureDetector(
-                          onTap: () {
-                            print("${index} ");
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    HebaDetails(_docsList[index], ds),
-                              ),
-                            );
-                          },
-                          child: viewType(postFromFuture, user));
-                    }),
-              ],
-            ),
-          );
         } else {
           return Center(
             child: CircularProgressIndicator(),
           );
         }
       },
+    );
+  }
+
+  Widget mHebatList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot,
+      User user) {
+    return SingleChildScrollView(
+      physics: ScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+
+          /// todo Fix GridView
+          new ListView.builder(
+              physics: NeverScrollableScrollPhysics(),
+              scrollDirection: Axis.vertical,
+              shrinkWrap: true,
+              itemCount: snapshot.data.documents.length,
+              padding: const EdgeInsets.only(top: 15.0),
+              itemBuilder: (context, index) {
+                DocumentSnapshot ds = snapshot.data.documents[index];
+//                      Post2 post2 = Post2.fromDoc(ds);
+                postFromFuture = Post2.fromDoc(ds);
+                return GestureDetector(
+                    onTap: () {
+                      print("${index} ");
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              HebaDetails(_docsList[index], ds),
+                        ),
+                      );
+                    },
+                    child: viewType(postFromFuture, user));
+              }),
+        ],
+      ),
     );
   }
 
@@ -891,7 +927,6 @@ class _FeedScreenState extends State<FeedScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-
             /// Filter
             Padding(
               padding: const EdgeInsets.only(left: 18.0),
@@ -1075,7 +1110,6 @@ class _FeedScreenState extends State<FeedScreen>
                             child: Container(
                               child: Column(
                                 children: <Widget>[
-
                                   /// popular
                                   Flexible(
                                     child: RadioListTile(
@@ -1167,6 +1201,91 @@ class _FeedScreenState extends State<FeedScreen>
     return mBottomSheetForFiltiring;
   }
 
+  Widget mMapView(BuildContext context, Post2 postFromFuture, User user) {
+    var h = MediaQuery
+        .of(context)
+        .size
+        .height / 1.5;
+    return Container(
+      height: h,
+      child: Stack(
+        children: [
+          GoogleMap(
+              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                new Factory<OneSequenceGestureRecognizer>(
+                      () => new EagerGestureRecognizer(),
+                ),
+              ].toSet(),
+              initialCameraPosition:
+              CameraPosition(target: LatLng(24.72, 46.7), zoom: 10),
+              onMapCreated: _onMapCreated,
+              myLocationEnabled: true,
+              // Add little blue dot for device location, requires permission from user
+              mapType: MapType.hybrid,
+//              markers: , // todo
+              myLocationButtonEnabled: true),
+//      Text("sss"),
+          Positioned(
+            bottom: 50,
+            left: 10,
+            child: Column(
+              children: <Widget>[
+                RawMaterialButton(
+                  child: Icon(
+                    CupertinoIcons.location_solid,
+                    color: Colors.black38,
+                    size: 26.0,
+                  ),
+                  shape: CircleBorder(),
+                  elevation: 0.0,
+                  fillColor: Colors.white,
+                  padding: const EdgeInsets.all(8.0),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                RawMaterialButton(
+                  child: Icon(
+                    Icons.list,
+                    color: Colors.black38,
+                    size: 26.0,
+                  ),
+                  shape: CircleBorder(),
+                  elevation: 0.0,
+                  fillColor: Colors.white,
+                  padding: const EdgeInsets.all(8.0),
+                  onPressed: () {
+//                  Navigator.of(context).pop();
+//                  _animateToUser();
+                  },
+                ),
+                RawMaterialButton(
+                  child: Icon(
+                    Icons.list,
+                    color: Colors.black38,
+                    size: 26.0,
+                  ),
+                  shape: CircleBorder(),
+                  elevation: 0.0,
+                  fillColor: Colors.white,
+                  padding: const EdgeInsets.all(8.0),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    setState(() {
+      mapController = controller;
+    });
+  }
 //  Widget showBtnSheetForSorting(
 //      BuildContext context, TabController _tabController) {
 //    var w = MediaQuery.of(context).size.width * 0.1;

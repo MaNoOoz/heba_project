@@ -2,9 +2,7 @@
   ~ Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="manoz.com.heba_project"
-    android:versionCode="1"
-    android:versionName="testing">
+    package="manoz.com.heba_project">
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
          In most cases you can leave this as-is, but you if you want to provide
@@ -22,7 +20,7 @@
         android:icon="@mipmap/ic_launcher">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDRMvVRVlma0gjFhELTtESq53WsVqvllGw" />
+            android:value="AIzaSyBPuVwOi13Cc-fAjGRVQjg-90zAz-kJqmo" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

@@ -5,8 +5,13 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:heba_project/models/Location_data.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/service/database_service.dart';
@@ -23,8 +28,8 @@ import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:provider/provider.dart';
 
 /// todo imlenting firestore pickup location :
-///todo  1- add location filed to model class ??? WHICH DATA TYPE ???
-///todo  2- add PICKUP location BUTTON to THIS "CreatePostScreen" class
+///todo  1- add location filed to model class ??? WHICH DATA TYPE ??? check
+///todo  2- add PICKUP location BUTTON to THIS "CreatePostScreen" class check
 ///todo  3- Display   location in Map screen With marker and deatils
 ///
 class CreatePostScreen extends StatefulWidget {
@@ -68,14 +73,21 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   TextEditingController _textFieldControllerName;
   TextEditingController _textFieldControllerDesc;
   TextEditingController _textFieldControllerLoca;
+  TextEditingController _textFieldControllerLoca2;
 
-//  String _currentName;
   bool _autoValidate = false;
   String _name;
   String _desc;
   String _location;
+  var locationString;
   var color;
   bool showSpinner = false;
+  var longitude;
+  var latitude;
+  var current_locationAddress;
+  UserLocation current_location;
+  var mBottomSheetForFiltiring;
+  Completer<GoogleMapController> _controller = Completer();
 
   ///  ====================================================
 
@@ -87,9 +99,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
     _textFieldControllerLoca = TextEditingController();
+    _textFieldControllerLoca2 = TextEditingController();
     this._name = _textFieldControllerName.text;
     this._desc = _textFieldControllerDesc.text;
     this._location = _textFieldControllerLoca.text;
+//    this.locationString = longitude + "," + latitude;
+
+    this.locationString = _textFieldControllerLoca2.text;
   }
 
   @override
@@ -100,7 +116,11 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     fuserImage = Provider
         .of<FirebaseUser>(context)
         .photoUrl;
-
+    current_location = Provider.of<UserLocation>(context);
+    current_locationAddress = Provider
+        .of<UserLocation>(context)
+        .address;
+    current_locationAddress = locationString;
     return Scaffold(
       key: _scaffoldKey,
       body: ModalProgressHUD(
@@ -187,7 +207,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 child: Form(
                   key: _formkey,
                   autovalidate: _autoValidate,
-                  child: FormUI(),
+                  child: FormUI(current_location),
                 ),
               ),
               UIHelper.verticalSpaceWithGrayColor(1, Colors.teal),
@@ -244,7 +264,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               UIHelper.verticalSpace(10),
 
               /// Buttons
-              _Buttons(),
+              _Buttons(current_location),
 
               UIHelper.verticalSpace(10),
 
@@ -318,7 +338,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //    If all data are correct then save data to out variables
       _formkey.currentState.save();
       print(
-          "From _validateInputs :  name $_name desc $_desc location $_location  ");
+          "From _validateInputs :  name $_name desc $_desc location $_location + Userlocation $locationString");
       return true;
     } else {
       return false;
@@ -412,7 +432,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         oName: fuser,
         oImage: fuserImage,
         isFeatured: false,
-//        category: Category.home,
+        location:
+        UserLocation(longitude: 123.2323, latitude: 52.2322, address: "SS"),
         imageUrls: mImagesPath,
         hName: _name,
         hDesc: _desc,
@@ -421,7 +442,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             .of<UserData>(context, listen: false)
             .currentUserId,
         timestamp: Timestamp.fromDate(DateTime.now()));
-    log("public ${post2.oName}");
+    log("public ${post2.location.address}");
 
     /// private posts
 //    DatabaseService.createPost(post2);
@@ -431,7 +452,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
     log("after public posts ${post2.authorId}");
     print("onPressed Triggerd \n"
-        "Post Object :  name : $_name desc : $_desc location: $_location \n"
+        "Post Object :  name : $_name desc : $_desc location: $locationString \n"
         " images pathes : ${mImagesPath.length} "
         "Selected Images List : ${_readyToUploadImages.length} \n");
 //    _displaySnackBar(context);
@@ -446,6 +467,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return post2;
   }
 
+//  Future<UserLocation> _GetUserLocation() async {
+//    print("_GetUserLocation Called");
+//    log("public ${locationString}");
+//    return current_location;
+//  }
+
   /// Reset data
   Future<bool> _Resetdata() async {
     var dateRested = true;
@@ -454,12 +481,15 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     _textFieldControllerName.clear();
     _textFieldControllerDesc.clear();
     _textFieldControllerLoca.clear();
+    _textFieldControllerLoca2.clear();
     _readyToUploadImages.clear();
     mImagesPath.clear();
     setState(() {
       _desc = '';
       _location = '';
       _name = '';
+      locationString = '';
+
 //      readyToUploadImages.length = -1;
 //      listOfImageLinks.length = -1;
     });
@@ -476,6 +506,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     /// Check Inputs
     var dataChecked = await _validateInputs();
     print('dataChecked $dataChecked');
+
+//    var userLocationCreated = await _GetUserLocation().then((locationData) {
+//      print(' userLocationCreated ${locationData.address}');
+//    }, onError: (errorMesage) {
+//      print(' userLocationCreated == false Error is : ${errorMesage}');
+//    });
 
     /// Create New Post
     var postCreated = await _CreatePost().then((value) {
@@ -522,7 +558,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   /// Widgets ==========================================================================================
-  Widget FormUI() {
+  Widget FormUI(UserLocation userLocation) {
     return Column(
       children: <Widget>[
         /// Name OF Heba
@@ -571,30 +607,203 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           ),
         ),
 
-        /// Location todo add pick up functions
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextFormField(
-            maxLength: 32,
-            controller: _textFieldControllerLoca,
-            maxLines: 1,
-            style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
-            decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
-              hint: UtilsImporter().uStringUtils.hintLocation,
-              lable: UtilsImporter().uStringUtils.lableFullname3,
-              icon: Icon(Icons.not_listed_location),
+//        /// Location todo add pick up functions
+//        Padding(
+//          padding: const EdgeInsets.all(8.0),
+//          child: TextFormField(
+//            maxLength: 32,
+//            controller: _textFieldControllerLoca,
+//            maxLines: 1,
+//            style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
+//            decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
+//                  hint: UtilsImporter().uStringUtils.hintLocation,
+//                  lable: UtilsImporter().uStringUtils.lableFullname3,
+//                  icon: Icon(Icons.not_listed_location),
+//                ),
+//            textDirection: TextDirection.rtl,
+//            validator: UtilsImporter().uCommanUtils.validateLocation,
+//            onSaved: (String val) {
+//              _location = val;
+//            },
+//            onChanged: (val) => setState(() => _location = val),
+//          ),
+//        ),
+
+        /// Location
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Container(
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width - 100,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: TextFormField(
+                    enabled: true,
+                    maxLength: 32,
+                    controller: _textFieldControllerLoca2,
+                    maxLines: 1,
+                    style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
+                    decoration: UtilsImporter()
+                        .uStyleUtils
+                        .textFieldDecorationCircle(
+                      hint: UtilsImporter().uStringUtils.hintLocation,
+                      lable: UtilsImporter().uStringUtils.lableFullname3,
+                    ),
+                    textDirection: TextDirection.rtl,
+                    validator: UtilsImporter().uCommanUtils.validateLocation,
+                    onSaved: (String val) {
+                      locationString = val;
+                    },
+                    onChanged: (val) => setState(() => locationString = val),
+                  ),
+                ),
+              ),
             ),
-            textDirection: TextDirection.rtl,
-            validator: UtilsImporter().uCommanUtils.validateLocation,
-            onSaved: (String val) {
-              _location = val;
-            },
-            onChanged: (val) => setState(() => _location = val),
-          ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: IconButton(
+                  icon: Icon(Icons.location_on),
+                  onPressed: () {
+                    showBtnSheetForMap(context);
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        SizedBox(
+          height: 10,
         ),
       ],
     );
   }
+
+  final Map<String, Marker> _markers = {};
+
+  Widget showBtnSheetForMap(BuildContext context) {
+    var h = MediaQuery
+        .of(context)
+        .size
+        .height / 2;
+
+    mBottomSheetForFiltiring = showModalBottomSheet(
+        backgroundColor: Colors.transparent,
+        context: context,
+        builder: (context) {
+          return Stack(
+            children: <Widget>[
+              Container(
+                color: Colors.transparent,
+                padding: EdgeInsets.only(top: 20),
+                child: Container(
+                  height: h + 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(50),
+                      topRight: Radius.circular(50),
+                    ),
+                  ),
+                  child: Stack(
+                    children: <Widget>[
+                      Container(
+                        child: GoogleMap(
+                          gestureRecognizers:
+                          <Factory<OneSequenceGestureRecognizer>>[
+                            new Factory<OneSequenceGestureRecognizer>(
+                                  () => new EagerGestureRecognizer(),
+                            ),
+                          ].toSet(),
+                          onMapCreated: (GoogleMapController controller) {
+                            _controller.complete(controller);
+                          },
+                          mapType: MapType.normal,
+                          initialCameraPosition: CameraPosition(
+                            target: LatLng(40.688841, -74.044015),
+                            zoom: 11,
+                          ),
+                          markers: _markers.values.toSet(),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 50,
+                        right: 10,
+                        child: Column(
+                          children: <Widget>[
+                            RawMaterialButton(
+                              child: Icon(
+                                CupertinoIcons.location_solid,
+                                color: Colors.black38,
+                                size: 26.0,
+                              ),
+                              shape: CircleBorder(),
+                              elevation: 0.0,
+                              fillColor: Colors.white,
+                              padding: const EdgeInsets.all(8.0),
+                              onPressed: () async {
+//                                Navigator.of(context).pop();
+                                _getLocationAndGoToIt();
+                              },
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).then((value) {
+      _getLocationAndGoToIt();
+    });
+    return mBottomSheetForFiltiring;
+  }
+
+//  Future<void> _goToTheLake() async {
+//    final GoogleMapController controller = await _controller.future;
+//    controller.animateCamera(CameraUpdate.newCameraPosition(_kLake));
+//  }
+
+  Future<void> _getLocationAndGoToIt() async {
+    /// CurrentLocation
+    var currentLocation = await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+
+    /// CameraPosition
+    var currentPosition = CameraPosition(
+        bearing: 192.8334901395799,
+        target: LatLng(currentLocation.latitude, currentLocation.longitude),
+        tilt: 59.440717697143555,
+        zoom: 19.151926040649414);
+
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(currentPosition));
+
+    setState(() {
+      _markers.clear();
+      final marker = Marker(
+        markerId: MarkerId("curr_loc"),
+        position: LatLng(currentLocation.latitude, currentLocation.longitude),
+        infoWindow: InfoWindow(title: 'Your Location'),
+      );
+      _markers["Current Location"] = marker;
+    });
+    print("AA");
+  }
+
+//  void _setLocation(LocationData locData) {
+//    _formData['location'] = locData;
+//  }
 
   ///  ImagesLook
   Widget buildGridView() {
@@ -618,7 +827,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   ///  Buttons
-  _Buttons() {
+  _Buttons(UserLocation userLocation) {
+//    print('Location From _Buttons : Lat  ${userLocation?.latitude}, Long: ${userLocation?.longitude}');
+
     return Padding(
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
@@ -643,59 +854,39 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
           ///  Submit Btn
           OutlineButton(
-            shape: new RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(10.0)),
-            splashColor: Colors.lightGreen,
-            color: Colors.green,
-            child: new Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Center(
-                  child: new Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: Center(
-                      child: Text(
-                        "إضافة الإعلان",
-                        style: TextStyle(
-                            fontSize: 22.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black45),
+              shape: new RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(10.0)),
+              splashColor: Colors.lightGreen,
+              color: Colors.green,
+              child: new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Center(
+                    child: new Padding(
+                      padding: const EdgeInsets.only(left: 20.0),
+                      child: Center(
+                        child: Text(
+                          "إضافة الإعلان",
+                          style: TextStyle(
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black45),
+                        ),
                       ),
                     ),
                   ),
-                ),
 //                Center(
 //                  child: Icon(
 //                    Icons.image,
 //                    color: Colors.black,
 //                  ),
 //                )
-              ],
-            ),
-            onPressed: () async {
-              if (_name.isNotEmpty && !_loading) {
-                final action = await Dialogs.yesAbortDialog(context,
-                    ' Add Heba', 'Are You Sure You Wpant To Add This Post');
-                if (action == DialogAction.yes) {
-                  showDialog2(context);
-                  await _SendToServer();
-                  setState(() {
-                    tappedYes = true;
-                  });
-                } else {
-                  setState(
-                        () {
-                      tappedYes = false;
-                      showSpinner = false;
-                    },
-                  );
-                }
-              } else if (_name.isNotEmpty == false) {
-                _displaySnackBar(context, " أدخل إسم للهبة $_name");
-              }
-            },
-          ),
+                ],
+              ),
+              onPressed: () async {
+                return submit(userLocation);
+              }),
 
           UIHelper.verticalSpace(10),
           UIHelper.verticalSpace(10),
@@ -703,13 +894,30 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       ),
     );
   }
-}
 
-//  final snackBar = SnackBar(content: Text('أكمل الحقول'));
-//  _scaffoldKey.currentState.showSnackBar(snackBar);
-//
-//  final snackBar = SnackBar(content: Text('جاري رفع الإعلان'));
-//  _scaffoldKey.currentState.showSnackBar(snackBar);
+  submit(UserLocation userLocation) async {
+    if (_name.isNotEmpty && !_loading) {
+      final action = await Dialogs.yesAbortDialog(
+          context, ' Add Heba', 'Are You Sure You Wpant To Add This Post');
+      if (action == DialogAction.yes) {
+        showDialog2(context);
+        await _SendToServer();
+        setState(() {
+          tappedYes = true;
+        });
+      } else {
+        setState(
+              () {
+            tappedYes = false;
+            showSpinner = false;
+          },
+        );
+      }
+    } else if (_name.isNotEmpty == false) {
+      _displaySnackBar(context, " أدخل إسم للهبة $_name");
+    }
+  }
+}
 
 /// =======================================================================================
 

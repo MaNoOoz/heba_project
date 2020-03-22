@@ -48,6 +48,8 @@ dependencies:
   dashed_container:
   logger:
   http:
+  json_serializable:
+
   get_it:  # add this line
   rxdart:  # add this line
   flutter_emoji:
@@ -63,15 +65,18 @@ dependencies:
   sticky_headers:
   sqflite:
   path_provider:
-
+  google_maps_place_picker:
   url_launcher:
   modal_progress_hud:
-
+  geolocator:
+  tuple:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
 
 dev_dependencies:
+  pedantic: ^1.4.0
+  build_runner: ^1.2.7
   flutter_test:
     sdk: flutter
 

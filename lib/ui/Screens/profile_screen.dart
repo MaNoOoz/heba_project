@@ -12,6 +12,7 @@ import 'package:heba_project/ui/Views/post_view.dart';
 import 'package:heba_project/ui/shared/MyClipper.dart';
 import 'package:heba_project/ui/shared/constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
+import 'package:heba_project/ui/widgets/mWidgets.dart';
 
 import 'edit_profile_screen.dart';
 
@@ -355,30 +356,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget mBody() {
     return FutureBuilder(
       future: usersRef.document(widget.currentUserId).get(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (!snapshot.hasData) {
-          print(
-              "snapshot : ${usersRef.getDocuments().then((
-                  QuerySnapshot snapshot) {
-                snapshot.documents.forEach((f) => print('${f.exists}}'));
-              })}");
+      builder: (BuildContext context, AsyncSnapshot map) {
+        if (!map.hasData) {
+          print("map : ${usersRef.getDocuments().then((QuerySnapshot map) {
+            map.documents.forEach((f) => print('${f.exists}}'));
+          })}");
           return Center(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                Text("Loading ...")
+                mStatlessWidgets().mLoading(),
               ],
             ),
           );
-        } else if (snapshot.hasError) {
+        } else if (map.hasError) {
           print('u have error in future');
         }
-        User user = User.fromDoc(snapshot.data);
+        User user = User.fromDoc(map.data);
         return ListView(
           children: <Widget>[
             _buildProfileInfo(user),
@@ -730,13 +725,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 //      ),
 //      body: FutureBuilder(
 //        future: usersRef.document(widget.userId).get(),
-//        builder: (BuildContext context, AsyncSnapshot snapshot) {
-//          if (!snapshot.hasData) {
+//        builder: (BuildContext context, AsyncSnapshot map) {
+//          if (!map.hasData) {
 //            return Center(
 //              child: CircularProgressIndicator(),
 //            );
 //          }
-//          User user = User.fromDoc(snapshot.data);
+//          User user = User.fromDoc(map.data);
 //          return ListView(
 //            children: <Widget>[
 //              _buildProfileInfo(user),

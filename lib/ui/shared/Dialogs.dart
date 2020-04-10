@@ -8,7 +8,7 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 enum DialogAction { yes, abort }
 
 class Dialogs {
-  static Future<DialogAction> yesAbortDialog(
+  static Future<DialogAction> addNewHebaDialog(
     BuildContext context,
     String title,
     String body,
@@ -56,4 +56,5 @@ class Dialogs {
     );
     return (action != null) ? action : DialogAction.abort;
   }
+
 }

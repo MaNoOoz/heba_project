@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:heba_project/models/Location_data.dart';
 import 'package:heba_project/service/LocationService.dart';
 import 'package:heba_project/ui/Screens/Create_post_screen.dart';
 import 'package:heba_project/ui/Screens/FeedScreen.dart';
@@ -21,6 +20,7 @@ import 'package:heba_project/ui/shared/AppNavigation.dart';
 import 'package:heba_project/ui/shared/theme.dart';
 import 'package:provider/provider.dart';
 
+import 'models/models.dart';
 import 'models/user_data.dart';
 
 void main() {
@@ -31,12 +31,13 @@ class MyApp extends StatelessWidget {
   Widget _getScreenId() {
     return StreamBuilder<FirebaseUser>(
       stream: FirebaseAuth.instance.onAuthStateChanged,
-      builder: (BuildContext context, snapshot) {
+      builder: (BuildContext context, map) {
 //        todo make sure this is the right way to check user
-        if (!snapshot.hasData == false) {
+        if (!map.hasData == false) {
           var currentUserId = Provider
               .of<UserData>(context, listen: true)
-              .currentUserId = snapshot.data.uid;
+              .currentUserId = map.data.uid;
+
           print("_getScreenId : currentUserId  : ${currentUserId.toString()}");
           return HomeScreen();
         } else {
@@ -88,6 +89,7 @@ class MyApp extends StatelessWidget {
             value: FirebaseAuth.instance.onAuthStateChanged),
         StreamProvider<UserLocation>.value(
             value: LocationService().locationStream),
+//        StreamProvider<Post2>.value(value: DatabaseService().PostsStream), // Not Working
       ],
     );
   }

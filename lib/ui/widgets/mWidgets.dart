@@ -3,8 +3,9 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:heba_project/service/FirestoreServiceAuth.dart';
 
-class mWidgets {
+class mStatlessWidgets {
   Widget mAppBar() {
     return AppBar(
       centerTitle: true,
@@ -46,13 +47,54 @@ class mWidgets {
             color: Colors.black45,
           ),
           onPressed: () async {
-//            FirestoreServiceAuth.logout();
+            FirestoreServiceAuth.logout();
 //            Navigator.pushNamed(context, LoginScreen.id);
 
             print("message");
           },
         ),
       ],
+    );
+  }
+
+  Widget mLoading() {
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          Text("Loading ... ")
+        ],
+      ),
+    );
+  }
+}
+
+class mLables extends StatelessWidget {
+  Color mColor;
+  BuildContext context;
+  String mTitle;
+  double mWidth;
+  TextStyle mStyle;
+
+  mLables({this.context, this.mColor, this.mTitle, this.mWidth, this.mStyle});
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Container(
+      color: mColor,
+      width: mWidth,
+      child: Center(
+        child: Text(
+          mTitle,
+          style: mStyle,
+        ),
+      ),
     );
   }
 }

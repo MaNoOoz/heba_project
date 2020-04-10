@@ -4,8 +4,8 @@ admin.initializeApp();
 
 exports.onFollowUser = functions.firestore
   .document('/followers/{userId}/userFollowers/{followerId}')
-  .onCreate(async (snapshot, context) => {
-    console.log(snapshot.data());
+  .onCreate(async (map, context) => {
+    console.log(map.data());
     const userId = context.params.userId;
     const followerId = context.params.followerId;
     const followedUserPostsRef = admin
@@ -28,7 +28,7 @@ exports.onFollowUser = functions.firestore
 
 exports.onUnfollowUser = functions.firestore
   .document('/followers/{userId}/userFollowers/{followerId}')
-  .onDelete(async (snapshot, context) => {
+  .onDelete(async (map, context) => {
     const userId = context.params.userId;
     const followerId = context.params.followerId;
     const userFeedRef = admin
@@ -47,8 +47,8 @@ exports.onUnfollowUser = functions.firestore
 
 exports.onUploadPost = functions.firestore
   .document('/posts/{userId}/userPosts/{postId}')
-  .onCreate(async (snapshot, context) => {
-    console.log(snapshot.data());
+  .onCreate(async (map, context) => {
+    console.log(map.data());
     const userId = context.params.userId;
     const postId = context.params.postId;
     const userFollowersRef = admin
@@ -64,16 +64,16 @@ exports.onUploadPost = functions.firestore
         .doc(doc.id)
         .collection('userFeed')
         .doc(postId)
-        .set(snapshot.data());
+        .set(map.data());
     });
   });
 
 exports.onUpdatePost = functions.firestore
   .document('/posts/{userId}/userPosts/{postId}')
-  .onUpdate(async (snapshot, context) => {
+  .onUpdate(async (map, context) => {
     const userId = context.params.userId;
     const postId = context.params.postId;
-    const newPostData = snapshot.after.data();
+    const newPostData = map.after.data();
     console.log(newPostData);
     const userFollowersRef = admin
       .firestore()

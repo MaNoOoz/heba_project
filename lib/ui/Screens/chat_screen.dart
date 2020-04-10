@@ -35,10 +35,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
     var screenSize = MediaQuery
         .of(context)
         .size;
+    var user = Provider.of<FirebaseUser>(context);
 
     var _searchController = TextEditingController;
     return Scaffold(
       appBar: CustomAppBar(
+        currentUserName: user.displayName,
         title: "المحادثات",
         IsBack: true,
         color: Colors.white,

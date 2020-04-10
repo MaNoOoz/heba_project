@@ -110,7 +110,7 @@ class _FeedViewState extends State<FeedView> {
                               right: 6.0,
                             ),
                             child: Text(
-                              widget.post.hLocation,
+                              widget.post.location.address,
                               style: TextStyle(
                                 fontSize: 12.0,
                                 fontWeight: FontWeight.bold,

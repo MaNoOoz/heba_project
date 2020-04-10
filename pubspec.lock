@@ -22,6 +22,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0+5"
+  ansicolor:
+    dependency: "direct main"
+    description:
+      name: ansicolor
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.2"
   archive:
     dependency: transitive
     description:
@@ -405,6 +412,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.1.1+1"
+  flutter_staggered_grid_view:
+    dependency: "direct main"
+    description:
+      name: flutter_staggered_grid_view
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -484,7 +498,7 @@ packages:
       name: google_maps_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.24+1"
+    version: "0.5.25"
   google_maps_place_picker:
     dependency: "direct main"
     description:
@@ -584,7 +598,7 @@ packages:
     source: hosted
     version: "0.6.3+1"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
       url: "https://pub.dartlang.org"
@@ -944,7 +958,7 @@ packages:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.11"
+    version: "0.2.15"
   timeago:
     dependency: "direct main"
     description:

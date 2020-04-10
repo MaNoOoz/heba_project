@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,34 +10,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:heba_project/models/Location_data.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
+import 'package:heba_project/service/LocationService.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/service/storage_service.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
-import 'package:heba_project/ui/shared/CommanUtils.dart';
 import 'package:heba_project/ui/shared/Dialogs.dart';
 import 'package:heba_project/ui/shared/UtilsImporter.dart';
 import 'package:heba_project/ui/shared/ui_helpers.dart';
 import 'package:heba_project/ui/widgets/CustomDialog.dart';
 import 'package:heba_project/ui/widgets/circular_clipper.dart';
+import 'package:heba_project/ui/widgets/mWidgets.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:provider/provider.dart';
 
-/// todo imlenting firestore pickup location :
-///todo  1- add location filed to model class ??? WHICH DATA TYPE ??? check
-///todo  2- add PICKUP location BUTTON to THIS "CreatePostScreen" class check
-///todo  3- Display   location in Map screen With marker and deatils
-///
 class CreatePostScreen extends StatefulWidget {
   static final String id = 'CreatePostScreen';
+  final String currentUserId;
   Key key;
+  Post2 post;
 
-//  const CreatePostScreen(
-//      {Key key, this.primaryColor, this.backgroundColor, this.backgroundImage})
-//      : super(key: key);
+  CreatePostScreen({Key key, this.currentUserId}) : super(key: key);
 
   @override
   _CreatePostScreenState createState() => _CreatePostScreenState();
@@ -46,66 +40,84 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen>
     with SingleTickerProviderStateMixin {
-  /// CustomProgressBar ====================================================
   /// https://mrflutter.com/how-to-use-progress-indicators-in-flutter/
   bool _loading;
   bool tappedYes = false;
 
-  /// CustomProgressBar ====================================================
-  /// Multi Image Picker ====================================================
+  /// Multi Image Picker ====================================
   List<Asset> _readyToUploadImages = List<Asset>();
-  Stream<Asset> _readyToUploadImages2; // test
   var imageUrl2;
   var uploadingState;
   var mSelectedImage;
   var mImagesPath;
+  String _error = 'No Error Dectected';
 
-  /// My Posts ====================================================
+  /// Post ===================================================
   var userId;
   var fuser;
   var fuserImage;
-
-  String _error = 'No Error Dectected';
+  var currentUserId;
+  var isMine;
+  var mCar;
+  UserLocation fetchedLocation;
 
   /// Form ====================================================
   GlobalKey<FormState> _formkey = GlobalKey();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _textFieldControllerName;
   TextEditingController _textFieldControllerDesc;
-  TextEditingController _textFieldControllerLoca;
-  TextEditingController _textFieldControllerLoca2;
 
+//  TextEditingController _textFieldControllerLoca;
+//  TextEditingController _textFieldControllerLoca2;
   bool _autoValidate = false;
   String _name;
   String _desc;
-  String _location;
-  var locationString;
-  var color;
   bool showSpinner = false;
-  var longitude;
-  var latitude;
-  var current_locationAddress;
+
+  /// Map ====================================================
+  String mCl;
+  Color color;
   UserLocation current_location;
-  var mBottomSheetForFiltiring;
+  Future<BottomSheet> mBottomSheetForFiltiring;
+
+//  final Map<String, Marker> _markers = {};
+  final Set<Marker> _markers = {};
   Completer<GoogleMapController> _controller = Completer();
+  static const LatLng _center = const LatLng(26.0055512, 44.169235);
+  LatLng _lastMapPosition = _center;
+  MapType _currentMapType = MapType.normal;
+
+  String city = "";
 
   ///  ====================================================
+  _LocationFromFuture() async {
+    UserLocation ll;
+    try {
+      ll = await LocationService().getLocation();
+      print("_LocationFromFuture : ${ll.address}");
+      return ll;
+    } on Exception catch (e) {
+      print('Could not get location: ${e.toString()}');
+    } finally {
+      print("_LocationFromFuture Done");
+    }
+    return ll;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loading = false;
 
+    _loading = false;
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
-    _textFieldControllerLoca = TextEditingController();
-    _textFieldControllerLoca2 = TextEditingController();
     this._name = _textFieldControllerName.text;
     this._desc = _textFieldControllerDesc.text;
-    this._location = _textFieldControllerLoca.text;
-//    this.locationString = longitude + "," + latitude;
 
-    this.locationString = _textFieldControllerLoca2.text;
+//    _textFieldControllerLoca = TextEditingController();
+//    this._location = _textFieldControllerLoca.text;
+//    this.locationString = longitude + "," + latitude;
+//    this.locationString = _textFieldControllerLoca2.text;
   }
 
   @override
@@ -117,10 +129,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         .of<FirebaseUser>(context)
         .photoUrl;
     current_location = Provider.of<UserLocation>(context);
-    current_locationAddress = Provider
-        .of<UserLocation>(context)
-        .address;
-    current_locationAddress = locationString;
+
     return Scaffold(
       key: _scaffoldKey,
       body: ModalProgressHUD(
@@ -134,7 +143,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   Container(
                     transform: Matrix4.translationValues(0.0, -50.0, 0.0),
                     child: Hero(
-                      tag: "widget.movie.imageUrl",
+                      tag: "s",
                       child: ClipShadowPath(
                         clipper: CircularClipper(),
                         shadow: Shadow(blurRadius: 20.0),
@@ -202,14 +211,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               ),
 
               /// Form
-              Container(
-                margin: EdgeInsets.all(15.0),
-                child: Form(
-                  key: _formkey,
-                  autovalidate: _autoValidate,
-                  child: FormUI(current_location),
-                ),
-              ),
+              FormUi(context),
               UIHelper.verticalSpaceWithGrayColor(1, Colors.teal),
 
               /// Titles
@@ -229,6 +231,22 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   ),
                 ),
               ),
+//              Container(
+//                margin: EdgeInsets.all(15.0),
+////            color: Colors.teal,
+//                child: Padding(
+//                  padding: const EdgeInsets.all(8.0),
+//                  child: Center(
+//                    child: Text(
+//                      's',
+//                      style: TextStyle(
+//                          fontSize: 16,
+//                          color: Colors.black45,
+//                          fontWeight: FontWeight.bold),
+//                    ),
+//                  ),
+//                ),
+//              ),
 
               /// Added Images
               Card(
@@ -264,7 +282,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               UIHelper.verticalSpace(10),
 
               /// Buttons
-              _Buttons(current_location),
+              _Buttons(),
 
               UIHelper.verticalSpace(10),
 
@@ -291,13 +309,120 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //
   }
 
-  /// Methods ==========================================================================================
-  _checkConnection() async {
-    bool connectionResult = await CommanUtils.checkConnection();
-    CommanUtils.showAlert(context, connectionResult ? "OK" : "internet needed");
+  Container FormUi(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.all(15.0),
+      child: Form(
+        key: _formkey,
+        autovalidate: _autoValidate,
+        child: Column(
+          children: <Widget>[
+
+            /// Name OF Heba
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                maxLength: 32,
+                keyboardType: TextInputType.text,
+                controller: _textFieldControllerName,
+                maxLines: 1,
+                style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
+                decoration:
+                UtilsImporter().uStyleUtils.textFieldDecorationCircle(
+                  hint: UtilsImporter().uStringUtils.hintName,
+                  lable: UtilsImporter().uStringUtils.lableFullname1,
+                  icon: Icon(Icons.card_giftcard),
+                ),
+                textDirection: TextDirection.rtl,
+                validator: UtilsImporter().uCommanUtils.validateName,
+                onSaved: (String val) {
+                  _name = val;
+                },
+                onChanged: (val) => setState(() => _name = val),
+              ),
+            ),
+
+            /// Desc OF Heba
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                maxLength: 64,
+                keyboardType: TextInputType.text,
+                controller: _textFieldControllerDesc,
+                maxLines: 1,
+                style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
+                decoration:
+                UtilsImporter().uStyleUtils.textFieldDecorationCircle(
+                  hint: UtilsImporter().uStringUtils.hintDesc,
+                  lable: UtilsImporter().uStringUtils.lableFullname2,
+                  icon: Icon(Icons.description),
+                ),
+                textDirection: TextDirection.rtl,
+                validator: UtilsImporter().uCommanUtils.validateDesc,
+                onSaved: (String val) {
+                  _desc = val;
+                },
+                onChanged: (val) => setState(() => _desc = val),
+              ),
+            ),
+
+            /// Location
+            Container(
+              width: double.infinity,
+              child: FlatButton(
+                splashColor: Colors.black12,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: new BorderRadius.circular(5.0),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  textDirection: TextDirection.rtl,
+                  children: <Widget>[
+                    Text(
+                      "${city}",
+                      style: TextStyle(
+                          color: Colors.blueAccent,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: Text(
+                          "تحديد الموقع",
+                          style: TextStyle(
+                              color: Colors.black38,
+                              fontWeight: FontWeight.bold),
+                        )),
+                    const Icon(
+                      Icons.location_on,
+                      color: Colors.blueAccent,
+                    ),
+                  ],
+                ),
+                onPressed: () async {
+                  fetchedLocation = await _GetUserLocation().then((value) {
+                    city = value.address;
+                    print(
+                        " Create _post_Screen :FormUi: onPressed currentLocation.address = ${value
+                            .address}");
+                  });
+                },
+              ),
+            ),
+
+            SizedBox(
+              height: 10,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  showDialog(BuildContext context) {
+  /// Methods ==========================================================================================
+
+  showAddHebaDialog(BuildContext context) {
     return CustomDialog(
       title: 'إضافة الإعلان',
       buttonText: 'Yes',
@@ -308,7 +433,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  showDialog2(BuildContext context) {
+  showLoadingDialog(BuildContext context) {
 //    if (!_validateInputs() || imageUrl2 == null) {
     return AlertDialog(
       title: Text('جاري رفع الإعلان'),
@@ -330,15 +455,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //    }
   }
 
-  progress() {}
-
   /// Form
   Future<bool> _validateInputs() async {
     if (_formkey.currentState.validate()) {
 //    If all data are correct then save data to out variables
       _formkey.currentState.save();
       print(
-          "From _validateInputs :  name $_name desc $_desc location $_location + Userlocation $locationString");
+          "From _validateInputs :  name $_name desc $_desc  Userlocation : $fetchedLocation");
       return true;
     } else {
       return false;
@@ -352,7 +475,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     }
   }
 
-  /// Multi Image Picker
+  /// Multi Image Picker ======================================================
+
   /// Selected Images
   Future<void> _loadAssets() async {
     List<Asset> resultList = List<Asset>();
@@ -365,7 +489,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         selectedAssets: _readyToUploadImages,
         cupertinoOptions: CupertinoOptions(takePhotoIcon: "chat"),
         materialOptions: MaterialOptions(
-          actionBarColor: "#abcdef",
+          actionBarColor: "#a"
+              "bcdef",
           actionBarTitle: "Example App",
           allViewTitle: "All Photos",
           useDetailsView: false,
@@ -406,11 +531,24 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   Future<Post2> _CreatePost() async {
-    Post2 post2;
     print("_CreatePost Called");
+    Post2 post2;
 
-//    var imageFile;
-
+//    setState(() {
+//      var mLocation = cl;
+//    });
+//
+////    print(" _CreatePost :_GetUserCar  Called ${mCar.id}");
+//    Map<String, dynamic> sd = {
+//      'lat': 12.0,
+//      'long': 12.9,
+//    };
+//    mCar = Car(id: "from 548");
+//    print("car before map ${mCar.id}  ${mCar.drive()}");
+//    mCar = Car.fromJson(sd);
+//    var ts = Timestamp.fromDate(DateTime.now());
+//    print("car after map ${mCar.id} ${sd['id']} ${mCar.drive().toString()}");
+//
     mImagesPath = await _listOfImageLinks();
 
     /// private Post Object
@@ -428,33 +566,47 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //    log("private ${post2.authorId}");
 
 //    /// public Post Object
+
+//    current_location = post2.location;
+    var currentUserId2 =
+        Provider
+            .of<UserData>(context, listen: false)
+            .currentUserId;
+
+    isMine = widget.currentUserId == currentUserId2;
+//    isMine = widget.currentUserId;
+    var ts = Timestamp.fromDate(DateTime.now());
+
     post2 = Post2(
         oName: fuser,
         oImage: fuserImage,
         isFeatured: false,
-        location:
-        UserLocation(longitude: 123.2323, latitude: 52.2322, address: "SS"),
+        isMine: isMine,
+//        car: mCar,
+//        location: fetchedLocation,
         imageUrls: mImagesPath,
         hName: _name,
         hDesc: _desc,
-        hLocation: _location,
-        authorId: Provider
-            .of<UserData>(context, listen: false)
-            .currentUserId,
-        timestamp: Timestamp.fromDate(DateTime.now()));
-    log("public ${post2.location.address}");
+//        hLocation: _location,
+        authorId: widget.currentUserId,
+        timestamp: ts);
+//    log("public ${post2.location.address}");
 
     /// private posts
 //    DatabaseService.createPost(post2);
 
     /// public posts
+//    var s = await DatabaseService.createPublicPosts2(post2).then((value) {
+//      log("after public posts ${post2.authorId}");
+//      print("onPressed Triggerd \n"
+//          "Post Object :  name : $_name desc : $_desc location: $locationString \n"
+//          " images pathes : ${mImagesPath.length} "
+//          "Selected Images List : ${_readyToUploadImages.length} \n");
+//    });
+//    log("s ${s.toString()}");
+
     DatabaseService.createPublicPosts(post2);
 
-    log("after public posts ${post2.authorId}");
-    print("onPressed Triggerd \n"
-        "Post Object :  name : $_name desc : $_desc location: $locationString \n"
-        " images pathes : ${mImagesPath.length} "
-        "Selected Images List : ${_readyToUploadImages.length} \n");
 //    _displaySnackBar(context);
 
 //    localData data;
@@ -467,10 +619,38 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return post2;
   }
 
-//  Future<UserLocation> _GetUserLocation() async {
+  Future<UserLocation> _GetUserLocation() async {
+    var ll = await LocationService().getLocation();
+
+//    Map<String, dynamic> lM = {
+//      "lat": current_location.latitude,
+//      "long": current_location.longitude,
+//      "address": current_location.address,
+//    };
+//
+//    UserLocation s = UserLocation.fromJsonMap(lM);
 //    print("_GetUserLocation Called");
-//    log("public ${locationString}");
-//    return current_location;
+//    print("${s.longitude} Called");
+//
+//    current_location = UserLocation(
+//      address: current_location.address,
+//      longitude: current_location.longitude,
+//      latitude: current_location.latitude,
+//    );
+//    setState(() {
+//      s = current_location;
+//    });
+    return ll;
+  }
+
+//  Future<Car> _GetUserCar() async {
+//    print("_GetUserCar Called");
+//
+//    Car s = Car(
+//      id: "from _GetUserCar Object Name s",
+//    );
+//
+//    return s;
 //  }
 
   /// Reset data
@@ -480,15 +660,14 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
     _textFieldControllerName.clear();
     _textFieldControllerDesc.clear();
-    _textFieldControllerLoca.clear();
-    _textFieldControllerLoca2.clear();
+//    _textFieldControllerLoca.clear();
+//    _textFieldControllerLoca2.clear();
     _readyToUploadImages.clear();
     mImagesPath.clear();
     setState(() {
       _desc = '';
-      _location = '';
+//      _location = '';
       _name = '';
-      locationString = '';
 
 //      readyToUploadImages.length = -1;
 //      listOfImageLinks.length = -1;
@@ -496,30 +675,23 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return dateRested;
   }
 
-  /// Reset data
+  /// Send data
   Future<bool> _SendToServer() async {
     showSpinner = true;
 
-    await Future.delayed(Duration(seconds: 4));
+//    await Future.delayed(Duration(seconds: 4));
     var dataUploaded = false;
 
     /// Check Inputs
     var dataChecked = await _validateInputs();
     print('dataChecked $dataChecked');
 
-//    var userLocationCreated = await _GetUserLocation().then((locationData) {
-//      print(' userLocationCreated ${locationData.address}');
-//    }, onError: (errorMesage) {
-//      print(' userLocationCreated == false Error is : ${errorMesage}');
-//    });
-
     /// Create New Post
-    var postCreated = await _CreatePost().then((value) {
-      print(' postCreated ${value.hName}');
-    }, onError: (errorMesage) {
-      print(' postCreated == false Error is : ${errorMesage}');
-    });
-//    print(' postCreated $postCreated');
+    var postCreated = await _CreatePost();
+
+//    /// Check Location
+//    var userLocationCreated = await _GetUserLocation();
+
     setState(() {
       dataChecked = true;
     });
@@ -528,22 +700,27 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     var fieldsRested = await _Resetdata();
     print('fieldsRested $fieldsRested');
 
-    if (dataChecked == false || postCreated != null || fieldsRested == true) {
+    var finalCheck =
+        dataChecked == false || postCreated != null || fieldsRested == true;
+//        userLocationCreated != null;
+
+    if (finalCheck == true) {
       dataUploaded = false;
 
       showSpinner = false;
       _displaySnackBar(context, " تم إضافة الهبة بنجاح");
 
-      print("fieldsRested $fieldsRested  \n " +
-          "dataChecked $dataChecked   \n    " +
-          "fieldsRested $fieldsRested  \n   ");
+      print("fieldsRested $fieldsRested     " +
+          "userLocationCreated From _CreatePost $postCreated      " +
+          "dataChecked  $dataChecked     " +
+          "fieldsRested $fieldsRested   ");
     }
 //    Navigator.pop(context);
 
     return dataUploaded;
   }
 
-  /// Reset data
+  /// Confirm data
   void _displaySnackBar(BuildContext context, var s) async {
     print("_displaySnackBar Called");
 
@@ -558,136 +735,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   /// Widgets ==========================================================================================
-  Widget FormUI(UserLocation userLocation) {
-    return Column(
-      children: <Widget>[
-        /// Name OF Heba
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextFormField(
-            maxLength: 32,
-            keyboardType: TextInputType.text,
-            controller: _textFieldControllerName,
-            maxLines: 1,
-            style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
-            decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
-              hint: UtilsImporter().uStringUtils.hintName,
-              lable: UtilsImporter().uStringUtils.lableFullname1,
-              icon: Icon(Icons.card_giftcard),
-            ),
-            textDirection: TextDirection.rtl,
-            validator: UtilsImporter().uCommanUtils.validateName,
-            onSaved: (String val) {
-              _name = val;
-            },
-            onChanged: (val) => setState(() => _name = val),
-          ),
-        ),
-
-        /// Desc OF Heba
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextFormField(
-            maxLength: 64,
-            keyboardType: TextInputType.text,
-            controller: _textFieldControllerDesc,
-            maxLines: 1,
-            style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
-            decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
-              hint: UtilsImporter().uStringUtils.hintDesc,
-              lable: UtilsImporter().uStringUtils.lableFullname2,
-              icon: Icon(Icons.description),
-            ),
-            textDirection: TextDirection.rtl,
-            validator: UtilsImporter().uCommanUtils.validateDesc,
-            onSaved: (String val) {
-              _desc = val;
-            },
-            onChanged: (val) => setState(() => _desc = val),
-          ),
-        ),
-
-//        /// Location todo add pick up functions
-//        Padding(
-//          padding: const EdgeInsets.all(8.0),
-//          child: TextFormField(
-//            maxLength: 32,
-//            controller: _textFieldControllerLoca,
-//            maxLines: 1,
-//            style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
-//            decoration: UtilsImporter().uStyleUtils.textFieldDecorationCircle(
-//                  hint: UtilsImporter().uStringUtils.hintLocation,
-//                  lable: UtilsImporter().uStringUtils.lableFullname3,
-//                  icon: Icon(Icons.not_listed_location),
-//                ),
-//            textDirection: TextDirection.rtl,
-//            validator: UtilsImporter().uCommanUtils.validateLocation,
-//            onSaved: (String val) {
-//              _location = val;
-//            },
-//            onChanged: (val) => setState(() => _location = val),
-//          ),
-//        ),
-
-        /// Location
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Container(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width - 100,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: TextFormField(
-                    enabled: true,
-                    maxLength: 32,
-                    controller: _textFieldControllerLoca2,
-                    maxLines: 1,
-                    style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
-                    decoration: UtilsImporter()
-                        .uStyleUtils
-                        .textFieldDecorationCircle(
-                      hint: UtilsImporter().uStringUtils.hintLocation,
-                      lable: UtilsImporter().uStringUtils.lableFullname3,
-                    ),
-                    textDirection: TextDirection.rtl,
-                    validator: UtilsImporter().uCommanUtils.validateLocation,
-                    onSaved: (String val) {
-                      locationString = val;
-                    },
-                    onChanged: (val) => setState(() => locationString = val),
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: IconButton(
-                  icon: Icon(Icons.location_on),
-                  onPressed: () {
-                    showBtnSheetForMap(context);
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        SizedBox(
-          height: 10,
-        ),
-      ],
-    );
-  }
-
-  final Map<String, Marker> _markers = {};
 
   Widget showBtnSheetForMap(BuildContext context) {
     var h = MediaQuery
@@ -699,106 +746,114 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         backgroundColor: Colors.transparent,
         context: context,
         builder: (context) {
-          return Stack(
-            children: <Widget>[
-              Container(
-                color: Colors.transparent,
-                padding: EdgeInsets.only(top: 20),
-                child: Container(
-                  height: h + 50,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(50),
-                      topRight: Radius.circular(50),
-                    ),
-                  ),
-                  child: Stack(
-                    children: <Widget>[
-                      Container(
-                        child: GoogleMap(
-                          gestureRecognizers:
-                          <Factory<OneSequenceGestureRecognizer>>[
-                            new Factory<OneSequenceGestureRecognizer>(
-                                  () => new EagerGestureRecognizer(),
-                            ),
-                          ].toSet(),
-                          onMapCreated: (GoogleMapController controller) {
-                            _controller.complete(controller);
-                          },
-                          mapType: MapType.normal,
-                          initialCameraPosition: CameraPosition(
-                            target: LatLng(40.688841, -74.044015),
-                            zoom: 11,
-                          ),
-                          markers: _markers.values.toSet(),
-                        ),
+          return Container(
+            height: h + 50,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(50),
+                topRight: Radius.circular(50),
+              ),
+            ),
+            child: Stack(
+              children: <Widget>[
+                Container(
+                  child: GoogleMap(
+                    gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                      new Factory<OneSequenceGestureRecognizer>(
+                            () => new EagerGestureRecognizer(),
                       ),
-                      Positioned(
-                        bottom: 50,
-                        right: 10,
-                        child: Column(
-                          children: <Widget>[
-                            RawMaterialButton(
-                              child: Icon(
-                                CupertinoIcons.location_solid,
-                                color: Colors.black38,
-                                size: 26.0,
-                              ),
-                              shape: CircleBorder(),
-                              elevation: 0.0,
-                              fillColor: Colors.white,
-                              padding: const EdgeInsets.all(8.0),
-                              onPressed: () async {
-//                                Navigator.of(context).pop();
-                                _getLocationAndGoToIt();
-                              },
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
+                    ].toSet(),
+                    onMapCreated: (GoogleMapController controller) {
+                      _controller.complete(controller);
+                    },
+                    onCameraMove: _onCameraMove,
+                    mapType: MapType.normal,
+                    myLocationButtonEnabled: true,
+                    initialCameraPosition: CameraPosition(
+                      target: _center,
+                      zoom: 11,
+                    ),
+//                    markers: _markers.values.toSet(),
+                    markers: _markers,
                   ),
                 ),
-              ),
-            ],
+//                Positioned(
+//                  bottom: 50,
+//                  right: 10,
+//                  child: Column(
+//                    children: <Widget>[
+//                      RawMaterialButton(
+//                        child: Icon(
+//                          CupertinoIcons.location_solid,
+//                          color: Colors.black38,
+//                          size: 30.0,
+//                        ),
+//                        shape: CircleBorder(),
+//                        elevation: 0.0,
+//                        fillColor: Colors.white,
+//                        padding: const EdgeInsets.all(8.0),
+//                        onPressed: () async {
+////                                Navigator.of(context).pop();
+//                          _onAddMarkerButtonPressed(context);
+//                        },
+//                      ),
+//                    ],
+//                  ),
+//                )
+              ],
+            ),
           );
-        }).then((value) {
-      _getLocationAndGoToIt();
-    });
-    return mBottomSheetForFiltiring;
+        });
+//    return mBottomSheetForFiltiring;
   }
 
-//  Future<void> _goToTheLake() async {
-//    final GoogleMapController controller = await _controller.future;
-//    controller.animateCamera(CameraUpdate.newCameraPosition(_kLake));
-//  }
+  void _onCameraMove(CameraPosition position) {
+    _lastMapPosition = position.target;
+  }
 
-  Future<void> _getLocationAndGoToIt() async {
+  void _onAddMarkerButtonPressed(BuildContext context) {
+    setState(() {
+      _markers.add(Marker(
+        // This marker id can be anything that uniquely identifies each marker.
+        markerId: MarkerId(_lastMapPosition.toString()),
+        position: _lastMapPosition,
+        infoWindow: InfoWindow(
+          title: 'تحديد هنا',
+          snippet: '5 Star Rating',
+        ),
+        icon: BitmapDescriptor.defaultMarker,
+      ));
+    });
+  }
+
+  Future<void> _getLocationAndGoToIt(context) async {
     /// CurrentLocation
     var currentLocation = await Geolocator()
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+    print("userLocation :  $currentLocation");
 
     /// CameraPosition
-    var currentPosition = CameraPosition(
-        bearing: 192.8334901395799,
+    CameraPosition currentPosition = CameraPosition(
+        bearing: 15.0,
         target: LatLng(currentLocation.latitude, currentLocation.longitude),
-        tilt: 59.440717697143555,
-        zoom: 19.151926040649414);
+        tilt: 75.00,
+        zoom: 12.0);
 
-    final GoogleMapController controller = await _controller.future;
+    GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(currentPosition));
 
-    setState(() {
-      _markers.clear();
-      final marker = Marker(
-        markerId: MarkerId("curr_loc"),
-        position: LatLng(currentLocation.latitude, currentLocation.longitude),
-        infoWindow: InfoWindow(title: 'Your Location'),
-      );
-      _markers["Current Location"] = marker;
-    });
-    print("AA");
+//    _onAddMarkerButtonPressed();
+
+//    this.setState(() {
+////      _markers.clear();
+//      var marker = Marker(
+//        markerId: MarkerId("curr_loc"),
+//        position: LatLng(currentLocation.latitude, currentLocation.longitude),
+//        infoWindow: InfoWindow(title: 'موقعي الخالي'),
+//      );
+//      _markers["Current Location"] = marker;
+//    });
   }
 
 //  void _setLocation(LocationData locData) {
@@ -827,7 +882,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   ///  Buttons
-  _Buttons(UserLocation userLocation) {
+  _Buttons() {
 //    print('Location From _Buttons : Lat  ${userLocation?.latitude}, Long: ${userLocation?.longitude}');
 
     return Padding(
@@ -837,23 +892,15 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           /// Add Images Btn
           UIHelper.verticalSpace(10),
 
-          Center(child: Text('Error: $_error')),
+          Center(child: Text('Error: $_error}')),
           UIHelper.verticalSpace(10),
 
           UIHelper.verticalSpace(10),
 
-          _loading
-              ? Padding(
-            child: CircularProgressIndicator(
-              backgroundColor: Colors.lightGreen,
-              valueColor: AlwaysStoppedAnimation(Colors.white),
-            ),
-            padding: EdgeInsets.only(bottom: 10),
-          )
-              : SizedBox.shrink(),
+          _loading ? mStatlessWidgets().mLoading() : SizedBox.shrink(),
 
           ///  Submit Btn
-          OutlineButton(
+          FlatButton(
               shape: new RoundedRectangleBorder(
                   borderRadius: new BorderRadius.circular(10.0)),
               splashColor: Colors.lightGreen,
@@ -871,7 +918,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                           style: TextStyle(
                               fontSize: 22.0,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black45),
+                              color: Colors.white),
                         ),
                       ),
                     ),
@@ -885,7 +932,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ],
               ),
               onPressed: () async {
-                return submit(userLocation);
+                return submit();
               }),
 
           UIHelper.verticalSpace(10),
@@ -895,12 +942,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  submit(UserLocation userLocation) async {
+  submit() async {
     if (_name.isNotEmpty && !_loading) {
-      final action = await Dialogs.yesAbortDialog(
-          context, ' Add Heba', 'Are You Sure You Wpant To Add This Post');
+      final action = await Dialogs.addNewHebaDialog(
+          context, ' Add Heba', 'Are You Sure You Want To Add This Post');
       if (action == DialogAction.yes) {
-        showDialog2(context);
+        showLoadingDialog(context);
         await _SendToServer();
         setState(() {
           tappedYes = true;
@@ -918,198 +965,3 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     }
   }
 }
-
-/// =======================================================================================
-
-/**
- * docs :
-    synchronous operation: A synchronous operation blocks other operations from executing until it completes.
-    synchronous function: A synchronous function only performs synchronous operations.
-    asynchronous operation: Once initiated, an asynchronous operation allows other operations to execute before it completes.
-    asynchronous function: An asynchronous function performs at least one asynchronous operation and can also perform synchronous operations.
- */
-
-/// Backup
-//Future<bool> uploadFile(int imageId, int duration) async {
-//  print('uploadFile Called');
-//  await Future.delayed(Duration(seconds: 1));
-//  print('uploadFile Complate for $imageId');
-//
-////    for (var imageFile in readyToUploadImages) {
-////      print('FROM UploadImageList() : image identifier is : ${imageFile.identifier}');
-////      mUploadedImagePath = await editedImages(imageFile);
-////      print("FROM UploadImageList() : mUploadedImagePath : ${mUploadedImagePath.toString()}");
-////    }
-////
-////    /// Check if All Images are Uploaded
-////    if (readyToUploadImages.length == listOfImageLinks.length) {
-////      print(
-////          'FROM UploadImageList() : Upload Finished and the total images are : ${readyToUploadImages.length} image');
-////      listOfImageLinks.add(mUploadedImagePath);
-////
-////    } else {
-////      print('FROM UploadImageList() : Something Wrong With This metheod Bro');
-////    }
-//  return true;
-//}
-//
-//Future uploadFiles() async {
-//  var futures = List<Future>();
-////
-////    for (var i = 0; i < listOfImageLinks.length; i++) {
-////      futures.add(uploadFile(i, listOfImageLinks.length));
-////    }
-////    print('started downloads');
-////    await Future.wait(futures);
-////    print(' downloads Complated');
-//
-//  for (var imageFile in readyToUploadImages) {
-//    print('FROM UploadImageList() : image identifier is : ${imageFile.identifier}');
-//    futures.add(editedImages(readyToUploadImages.length,imageFile));
-//    mUploadedImagePath = await editedImages(int.fromEnvironment(imageFile.identifier),imageFile);
-//    print("FROM UploadImageList() : mUploadedImagePath : ${mUploadedImagePath.toString()}");
-//  }
-//  print('Start Uploads');
-//  /// Check if All Images are Uploaded
-//  if (readyToUploadImages.length == listOfImageLinks.length) {
-//    print(
-//        'FROM UploadImageList() : Upload Finished and the total images are : ${readyToUploadImages.length} image');
-//    listOfImageLinks.add(mUploadedImagePath);
-//    await Future.wait(futures);
-//    print(' Upload Complate');
-//
-//  } else {
-//    print('FROM UploadImageList() : Something Wrong With This metheod Bro');
-//  }
-//
-//
-//}
-/// Json - Future from assets error handling
-//              print("Added  ${_name} ${_desc} ${_location}");
-//              print('Started');
-//
-//              /// error handling todo Move This logic to submit btn later ok !!
-//              var testErrorFrom =
-//                  await student().loadAStudentAsset().catchError((onError) {
-//                print(onError);
-//                CommanUtils().showSnackbar(context, 'مشكلة في ملف ال json ');
-//              });
-//              student().loadAStudentAsset().then((value) {
-//                print('future finished');
-//              }).catchError((error) {
-//                print(error);
-//              });
-//              print(_error);
-
-/// good stuff
-/// progress
-//Widget progress() {
-//  return Container(
-//    alignment: Alignment.center,
-//    child: Column(
-//      mainAxisAlignment: MainAxisAlignment.center,
-//      crossAxisAlignment: CrossAxisAlignment.center,
-//      children: <Widget>[
-//        Container(
-//          height: 200.0,
-//          width: 200.0,
-//          padding: EdgeInsets.all(20.0),
-//          margin: EdgeInsets.all(30.0),
-//          child: progressView(),
-//        ),
-//        OutlineButton(
-//          child: Text("START"),
-//          onPressed: () {
-//            startProgress();
-//          },
-//        )
-//      ],
-//    ),
-//  );
-//}
-//
-/////  ==========================================================================================
-//initAnimationController() {
-//  _progressAnimationController = AnimationController(
-//    vsync: this,
-//    duration: Duration(milliseconds: 1000),
-//  )..addListener(
-//        () {
-//      setState(() {
-//        _percentage = lerpDouble(_percentage, _nextPercentage,
-//            _progressAnimationController.value);
-//      });
-//    },
-//  );
-//}
-//
-//start() {
-//  Timer.periodic(Duration(milliseconds: 30), handleTicker);
-//}
-//
-//handleTicker(Timer timer) {
-//  _timer = timer;
-//  if (_nextPercentage < 100) {
-//    publishProgress();
-//  } else {
-//    timer.cancel();
-//    setState(() {
-//      _progressDone = true;
-//    });
-//  }
-//}
-//
-//startProgress() {
-//  if (null != _timer && _timer.isActive) {
-//    _timer.cancel();
-//  }
-//  setState(() {
-//    _percentage = 0.0;
-//    _nextPercentage = 0.0;
-//    _progressDone = false;
-//    start();
-//  });
-//}
-//
-//publishProgress() {
-//  setState(() {
-//    _percentage = _nextPercentage;
-//    _nextPercentage += 0.5;
-//    if (_nextPercentage > 100.0) {
-//      _percentage = 0.0;
-//      _nextPercentage = 0.0;
-//    }
-//    _progressAnimationController.forward(from: 0.0);
-//  });
-//}
-//
-//getDoneImage() {
-//  return Image.asset(
-//    'assets/images/appicon.png',
-//    width: 50,
-//    height: 50,
-//  );
-//}
-//
-//getProgressText() {
-//  return Text(
-//    _nextPercentage == 0 ? '' : '${_nextPercentage.toInt()}',
-//    style: TextStyle(
-//        fontSize: 40, fontWeight: FontWeight.w800, color: Colors.green),
-//  );
-//}
-//
-//progressView() {
-//  return CustomPaint(
-//    child: Center(
-//      child: _progressDone ? getDoneImage() : getProgressText(),
-//    ),
-//    foregroundPainter: ProgressPainter(
-//        defaultCircleColor: Colors.amber,
-//        percentageCompletedCircleColor: Colors.green,
-//        completedPercentage: _percentage,
-//        circleWidth: 50.0),
-//  );
-//}
-//
-/////  ==========================================================================================

@@ -14,6 +14,9 @@ final storageRef = FirebaseStorage.instance.ref();
 final usersRef = _firestore.collection('users');
 final postsRef = _firestore.collection('posts');
 final publicpostsRef = _firestore.collection('publicposts');
+final Query publicpostsRefWtihQuery =
+_firestore.collection('publicposts').where("hName", isEqualTo: "uyyhh");
+final locations = _firestore.collection('locations');
 final followersRef = _firestore.collection('followers');
 final followingRef = _firestore.collection('following');
 final feedsRef = _firestore.collection('feeds');

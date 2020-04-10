@@ -2,6 +2,8 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,29 +17,23 @@ import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:heba_project/models/models.dart';
+import 'package:heba_project/models/post_model.dart';
 import 'package:heba_project/models/user_model.dart';
-import 'package:heba_project/ui/Screens/HebaDetails.dart';
+import 'package:heba_project/service/LocationService.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
-import 'package:location/location.dart';
+import 'package:heba_project/ui/widgets/mWidgets.dart';
 import 'package:provider/provider.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
-enum _FooterLayout {
-  footer,
-  body,
-}
+import 'HebaDetails.dart';
 
 class FeedScreen extends StatefulWidget {
-  /// todo  FIX HEBA LIST EMPTY
-
   static final String id = 'feed_screen';
   final String currentUserId;
+  Post2 post;
+  Post post1;
 
-  Post2 post2;
-
-//  final User user;
-
-//  FeedScreen({this.currentUserId, this.post2, this.user});
   FeedScreen({this.currentUserId});
 
   @override
@@ -48,18 +44,30 @@ class _FeedScreenState extends State<FeedScreen>
     with SingleTickerProviderStateMixin {
   /// ==============================================================
   List<Post2> _docsList = [];
-  Post2 postFromFuture;
-  var _displayPosts = 0; // 0 - grid, 1 - column
-  var slids;
-  var stream;
 
-  /// map
-  GoogleMapController mapController;
-  Location location = new Location();
+//  List<Post> _docsList1 = [];
+  Post2 postFromFuture;
+  Post postFromFuture1;
+  var _displayPosts = 0; // 0 - grid, 1 - column
   var _ViewModeCode = 0;
 
+  var stream;
+  var isMine = false;
+  var featured = false;
+
+  /// Map
+  GoogleMapController mapController;
+
+//  Location location = new Location();
+  UserLocation userLocation = UserLocation();
+  List<Marker> markers = <Marker>[];
+  List<UserLocation> places;
+  Stream<QuerySnapshot> _iceCreamStores;
+
+  Completer<GoogleMapController> _controller = Completer();
+
   /// Bottom Sheet
-  var _selectedItemBtnSheet;
+//  var _selectedItemBtnSheet;
   TabController _tabController;
 
   /// Filtering Values :  0 = Filter [showBtnSheetForFiltiring] , 1 = Sort  [showBtnSheetForSorting]
@@ -69,27 +77,8 @@ class _FeedScreenState extends State<FeedScreen>
   int _selected = 0;
   QuerySnapshot qn;
 
-  ///  ========================= Methods ================================
-
   /// Query DATABASE Based On [_selected]
 
-//  int queryDbBy(String tag){
-//int selected = 0;
-//    switch(_selected){
-//      case 0 :
-//        tag ="isFeatured";
-//        break;
-//      case 1:
-//        tag ="timestamp";
-//        break;
-//      case 2 :
-//        tag ="timestamp";
-//        break;
-//
-//    }
-//
-//
-//  }
   Stream querDbWith({String tag}) {
     Query query = publicpostsRef.where(tag);
     query.snapshots();
@@ -99,6 +88,12 @@ class _FeedScreenState extends State<FeedScreen>
 //      });
 //    }).toList();
 //    return slids;
+  }
+
+  /// test
+  Stream<QuerySnapshot> queryLocations({String tag}) {
+    _iceCreamStores =
+        Firestore.instance.collection('locations').orderBy('name').snapshots();
   }
 
 //  Stream convertQuerySnapshotToStream() async* {
@@ -111,6 +106,22 @@ class _FeedScreenState extends State<FeedScreen>
 ////    stream = q.asStream();
 //    yield stream;
 //  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = new TabController(length: 3, vsync: this);
+
+//    _HebaPostsFromDb(widget.post);
+    _HebaPostsFromDb3(widget.post);
+//    _HebaPostsFromDb2(widget.post1);
+//    queryLocations();
+
+//    _HebaPostsFromDb2(widget.post);
+
+//    _getQueryPosts(widget.post2);
+//    convertQuerySnapshotToStream();
+  }
 
   List<dynamic> _getListOfImagesFromUser(Post2 post2) {
     dynamic list = postFromFuture.imageUrls;
@@ -126,29 +137,28 @@ class _FeedScreenState extends State<FeedScreen>
     return result;
   }
 
-  Future<List<Post2>> _getPosts() async {
-    List<Post2> list = [];
-    QuerySnapshot qn = await publicpostsRef.getDocuments();
-    List<DocumentSnapshot> documents = qn.documents;
-    documents.forEach((DocumentSnapshot doc) {
-      Post2 post = new Post2.fromDoc(doc);
-      list.add(post);
-    });
-
-    return list;
-  }
-
-  _getAllPosts(Post2 postModel) async {
+  _HebaPostsFromDb(Post2 postModel) async {
 //    List<Post2> posts = await DatabaseService.getAllPosts2();
+    var ll = await LocationService().getLocation();
+    print("_HebaPostsFromDb : ${ll.address}");
+
     List<Post2> posts = [];
     QuerySnapshot qn = await publicpostsRef.getDocuments();
 
     List<DocumentSnapshot> documents = qn.documents;
     documents.forEach((DocumentSnapshot doc) {
-      postFromFuture = new Post2.fromDoc(doc);
+      postFromFuture = new Post2.fromFirestore(doc);
+      var p = postFromFuture.location;
+      print("JJJJJJJJJ ${p}");
       postModel = postFromFuture;
       posts.add(postModel);
     });
+    // logs
+    var mMap = documents.map((e) =>
+        e.data.forEach((key, value) {
+          print("$key,$value");
+        }));
+    print("$mMap");
 
     ///todo
     setState(() {
@@ -157,52 +167,115 @@ class _FeedScreenState extends State<FeedScreen>
     print("_setupPosts  ${_docsList[0].hName}");
     print("_setupPosts  ${postModel.hName}");
     print("_setupPosts  ${_docsList.length}");
+    print("_setupPosts  ${postModel.location}");
   }
 
-  Future<QuerySnapshot> _getQueryPosts(Post2 postModel) async {
-//    List<Post2> posts = await DatabaseService.getAllPosts2();
+  _HebaPostsFromDb3(Post2 postModel) async {
     List<Post2> posts = [];
-    switch (_selected) {
-      case 0:
-        qn = await publicpostsRef
-            .where("${postFromFuture.isFeatured.toString()}", isEqualTo: false)
-            .getDocuments();
-        return qn;
+    QuerySnapshot qn = await publicpostsRef.getDocuments();
 
-        break;
-      case 1:
-        qn = await publicpostsRef
-            .where("${postFromFuture.timestamp.toString()}")
-            .orderBy(postFromFuture.timestamp.toString(), descending: false)
-            .getDocuments();
-        return qn;
+    var ll = await LocationService().getLocation().then((value) {
+      print("_HebaPostsFromDb : ${value.address}");
+      List<DocumentSnapshot> documents = qn.documents;
+      documents.forEach((DocumentSnapshot doc) {
+        postFromFuture = new Post2.fromFirestore(doc);
+        var p = postFromFuture.location;
+        print("JJJJJJJJJ ${p}");
+        postModel = postFromFuture;
+        posts.add(postModel);
+      });
+      // logs
+      var mMap = documents.map((e) =>
+          e.data.forEach((key, value) {
+            print("$key,$value");
+          }));
+      print("$mMap");
 
-        break;
-      case 2:
-        qn = await publicpostsRef
-            .where("${postFromFuture.timestamp.toString()}")
-            .orderBy(postFromFuture.timestamp.toString(), descending: true)
-            .getDocuments();
-        return qn;
-        break;
-    }
-
-    List<DocumentSnapshot> documents = qn.documents;
-    documents.forEach((DocumentSnapshot doc) {
-      postFromFuture = new Post2.fromDoc(doc);
-      postModel = postFromFuture;
-      posts.add(postModel);
+      ///todo
+      setState(() {
+        _docsList = posts;
+      });
+      print("_setupPosts  ${_docsList[0].hName}");
+      print("_setupPosts  ${postModel.hName}");
+      print("_setupPosts  ${_docsList.length}");
+      print("_setupPosts  ${postModel.location}");
     });
-
-    ///todo
-    setState(() {
-      _docsList = posts;
-    });
-    print("_getQueryPosts  ${_docsList[0].hName}");
-    print("_getQueryPosts  ${postModel.hName}");
-    print("_getQueryPosts  ${_docsList.length}");
-    return qn;
+    return ll;
   }
+
+//  _HebaPostsFromDb2(Post postModel) async {
+////    List<Post2> posts = await DatabaseService.getAllPosts2();
+//    List<Post> posts = [];
+//    QuerySnapshot qn = await publicpostsRef.getDocuments();
+//
+//    List<DocumentSnapshot> documents = qn.documents;
+////    documents.map((Map<String, dynamic> doc) {
+//    var mMap = documents.map((e) => e.data.forEach((key, value) {
+//          print("$key,$value");
+//        }));
+//    print("$mMap");
+//
+////      postFromFuture1 = new Post.fromJson(mMap);
+////      var p = postFromFuture1.location;
+////      print("JJJJJJJJJ ${p}");
+////      postModel = postFromFuture1;
+////      posts.add(postModel);
+////    });
+//
+//    ///todo
+//    setState(() {
+//      _docsList1 = posts;
+//    });
+//    print("_setupPosts  ${_docsList1[0].hName}");
+//    print("_setupPosts  ${postModel.hName}");
+//    print("_setupPosts  ${_docsList1.length}");
+//    print("_setupPosts  ${postModel.location}");
+//  }
+
+//  Future<QuerySnapshot> _getQueryPosts(Post2 postModel) async {
+////    List<Post2> posts = await DatabaseService.getAllPosts2();
+//    List<Post2> posts = [];
+//    switch (_selected) {
+//      case 0:
+//        qn = await publicpostsRef
+//            .where("${postFromFuture.isFeatured.toString()}", isEqualTo: false)
+//            .getDocuments();
+//        return qn;
+//
+//        break;
+//      case 1:
+//        qn = await publicpostsRef
+//            .where("${postFromFuture.timestamp.toString()}")
+//            .orderBy(postFromFuture.timestamp.toString(), descending: false)
+//            .getDocuments();
+//        return qn;
+//
+//        break;
+//      case 2:
+//        qn = await publicpostsRef
+//            .where("${postFromFuture.timestamp.toString()}")
+//            .orderBy(postFromFuture.timestamp.toString(), descending: true)
+//            .getDocuments();
+//        return qn;
+//        break;
+//    }
+//
+//    List<DocumentSnapshot> documents = qn.documents;
+//    documents.forEach((DocumentSnapshot doc) {
+//      postFromFuture = new Post2.fromSnapshot(doc);
+//      postModel = postFromFuture;
+//      posts.add(postModel);
+//    });
+//
+//    ///todo
+//    setState(() {
+//      _docsList = posts;
+//    });
+//    print("_getQueryPosts  ${_docsList[0].hName}");
+//    print("_getQueryPosts  ${postModel.hName}");
+//    print("_getQueryPosts  ${_docsList.length}");
+//    return qn;
+//  }
 
 //  _getQueryPosts(Post2 postModel) async {
 ////    List<Post2> posts = await DatabaseService.getAllPosts2();
@@ -244,12 +317,12 @@ class _FeedScreenState extends State<FeedScreen>
 //  }
 
   /// Bottom Sheet
-  void _selectItem(String name) {
-    Navigator.pop(context);
-    setState(() {
-      _selectedItemBtnSheet = name;
-    });
-  }
+//  void _selectItem(String name) {
+//    Navigator.pop(context);
+//    setState(() {
+//      _selectedItemBtnSheet = name;
+//    });
+//  }
 
   _selctedMethod(int selected) {
     Navigator.of(context).pop();
@@ -260,72 +333,6 @@ class _FeedScreenState extends State<FeedScreen>
   }
 
   /// rowView Content ================================================
-
-//  Widget feedView(Post2 post, User user) {
-//    return Container(
-//      height: 100,
-//      color: Colors.blueAccent,
-//      child: ListView.builder(
-//        shrinkWrap: true,
-//        itemCount: _docsList.length,
-//        itemBuilder: (context, index) {
-//          return FutureBuilder<QuerySnapshot>(
-//            future: publicpostsRef.getDocuments(),
-//            builder: (BuildContext context, snapshot) {
-//              switch (snapshot.connectionState) {
-//                case ConnectionState.waiting:
-//                  return Center(child: CircularProgressIndicator());
-//                  break;
-//                case ConnectionState.active:
-//                  break;
-//                case ConnectionState.done:
-//                  break;
-//                case ConnectionState.none:
-//                  break;
-//              }
-//
-//              if (snapshot.hasData) {
-//                print("${querDb()}");
-//                Text("${post.hName}");
-//                Text("${user.name}");
-//              } else if (snapshot.hasError) {
-//                print("${snapshot.error}");
-//              }
-//              return Text("${post.id}");
-//
-//////                return postsList(
-//////                    postList: _docsList,
-//////                    onSelected: () {
-//////                      print("object");
-//////                    });
-//////                return Text("${post.id}");
-////
-////                return RowView(
-////                  context: context,
-////                  post: post,
-////                );
-//            },
-//          );
-//        },
-//      ),
-//    );
-//  }
-
-  Widget mLoading() {
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          Text("Loading ... ")
-        ],
-      ),
-    );
-  }
 
 //  Widget viewType(Post2 post, User user) {
 //    if (_displayPosts == 0) {
@@ -347,16 +354,16 @@ class _FeedScreenState extends State<FeedScreen>
 //      return rowView(post);
 //    }
 //  }
-  Widget viewType(Post2 post, User user) {
+  Widget viewType(Post2 post, int index) {
     if (_displayPosts == 0) {
       // Grid
       return gridView(post);
     } else {
-      return rowView(post);
+      return rowView(post, index);
     }
   }
 
-  Widget rowView(Post2 post) {
+  Widget rowView(Post2 post, int index) {
     var fUser = Provider
         .of<FirebaseUser>(context)
         .displayName;
@@ -369,7 +376,7 @@ class _FeedScreenState extends State<FeedScreen>
     _getListOfImagesFromUser(post).cast<String>().toList();
     int _current = 0;
 
-    return contentRow(fUser, fImage, listFromFirebase, post, _current);
+    return contentRow(fUser, fImage, listFromFirebase, post, _current, index);
   }
 
   Widget gridView(Post2 post) {
@@ -379,268 +386,259 @@ class _FeedScreenState extends State<FeedScreen>
     var listFromFirebase =
     _getListOfImagesFromUser(post).cast<String>().toList();
     int _current = 0;
-    return contentGrid(listFromFirebase, post, _current);
+    return Container(
+        height: 200, child: contentGrid(listFromFirebase, post, _current));
   }
 
   Widget contentGrid(List<String> listFromFirebase, Post2 post, int _current) {
-    var child = GridTile(
-      child: Stack(
-        children: [
-          SizedBox(
-            height: 400,
-            child: Card(
-              semanticContainer: true,
-              elevation: 5,
-              clipBehavior: Clip.antiAliasWithSaveLayer,
-              child: Column(
-                children: <Widget>[
-                  /// image
-                  Flexible(
-                    child: listFromFirebase.isEmpty
-                        ? Center(child: Text("No Image Bro"))
-                        : ImagesSlider(
-                      items: map<Widget>(listFromFirebase, (index, i) {
-//                print("listFromFirebase ${listFromFirebase.length}");
-                        return Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.zero,
-                              bottomRight: Radius.circular(0),
-                              topLeft: Radius.zero,
-                              topRight: Radius.circular(0),
-                            ),
-                            image: DecorationImage(
-                                image: post.imageUrls.isEmpty
-                                    ? Image.asset(
-                                    'assets/images/user_placeholder.jpg')
-                                    : NetworkImage(i),
-                                fit: BoxFit.cover),
-                          ),
-                        );
-                      }),
-                      autoPlay: false,
-                      viewportFraction: 1.0,
-                      indicatorColor: Colors.grey,
-                      aspectRatio: 1.0,
-                      distortion: true,
-                      align: IndicatorAlign.bottom,
-                      indicatorWidth: 1,
-                      indicatorBackColor: Colors.black38,
-                      updateCallback: (index) {
-                        setState(
-                              () {
-                            _current = index;
-                          },
-                        );
-                      },
-                    ),
-                  ),
+//    todo
+  }
 
-                  /// texts
-                  Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      post.hName,
-                      textDirection: TextDirection.rtl,
-                      maxLines: 1,
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      post.hLocation,
-                      textDirection: TextDirection.rtl,
-                      maxLines: 1,
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      post.hDesc,
-                      textDirection: TextDirection.rtl,
-                      maxLines: 1,
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
+  Widget editIcon(Post2 post) {
+    featured = post.isFeatured;
+    isMine = post.authorId == widget.currentUserId;
+    print(
+        "contentRow ${widget
+            .currentUserId}  ${isMine}"); // true, contain the same characters
+    var isMineWidget;
+    if (isMine == true) {
+      isMineWidget = Expanded(
+        flex: 1,
+        child: GestureDetector(
+          child: Align(
+            alignment: Alignment.center,
+            child: Center(
+              child: Container(
+                height: 30.0,
+                color: Colors.white,
+                child: Icon(
+                  FontAwesomeIcons.edit,
+                  color: Colors.black38,
+                  size: 16,
+                ),
               ),
             ),
           ),
+          onTap: () {
+            print("Add edit Function");
+          },
+        ),
+      );
+    } else {
+      isMineWidget = Container(
+        width: 10,
+//        color: Colors.red,
+      );
+    }
 
-//          Padding(
-//            padding: const EdgeInsets.all(8.0),
-//            child: Card(
-//              child: ListView(
-//                children: <Widget>[
-//                  Padding(
-//                    padding: const EdgeInsets.all(8.0),
-//                    child: Text(post.hName),
-//                  ),
-//                  Padding(
-//                    padding: const EdgeInsets.all(8.0),
-//                    child: Text(post.hLocation),
-//                  ),
-//                  Padding(
-//                    padding: const EdgeInsets.all(8.0),
-//                    child: Text(post.hDesc),
-//                  ),
-//                  Padding(
-//                    padding: const EdgeInsets.all(8.0),
-//                    child: CachedNetworkImage(
-//                      imageUrl: post.imageUrls[0],
-//                    ),
-//                  ),
-//                ],
-//              ),
-//            ),
-//          )
-        ],
-      ),
-    );
-
-    List<GridTile> tiles = [];
-    tiles.add(child);
-
-    return GridView.count(
-      crossAxisCount: 2,
-      childAspectRatio: 1.0,
-      mainAxisSpacing: 2.0,
-      crossAxisSpacing: 2.0,
-      shrinkWrap: true,
-      physics: BouncingScrollPhysics(),
-      children: tiles,
+    return Container(
+      child: isMineWidget,
     );
   }
 
-  Widget contentRow(String fUser, String fImage, List<String> listFromFirebase,
-      Post2 post, int _current) {
-    return Container(
-      color: Colors.white30,
-//      height: 200,
-      margin: EdgeInsets.all(0),
-//      width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.all(1.0),
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(0),
-              bottomRight: Radius.circular(0),
-              topLeft: Radius.circular(0),
-              topRight: Radius.circular(0),
+  Widget contentRow(String fUserName, String fImage,
+      List<String> listFromFirebase, Post2 post, int _current, int index) {
+    featured = post.isFeatured;
+    var isFeaturedWidget;
+    if (featured == true) {
+      isFeaturedWidget = Align(
+        alignment: AlignmentDirectional.topStart,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: mLables(
+            mColor: Colors.green,
+            mStyle: TextStyle(
+                color: Colors.white,
+                wordSpacing: 1,
+                fontWeight: FontWeight.bold),
+            mTitle: "new",
+            mWidth: 40,
+          ),
+        ),
+      );
+    } else {
+      isFeaturedWidget = Container(
+        color: Colors.yellow,
+      );
+    }
+    return Stack(
+      children: <Widget>[
+        Align(
+          alignment: AlignmentDirectional.topCenter,
+          child: Container(
+            color: Colors.white30,
+            height: 200,
+            margin: EdgeInsets.all(0),
+            child: Padding(
+              padding: EdgeInsets.all(1),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(0),
+                    bottomRight: Radius.circular(0),
+                    topLeft: Radius.circular(0),
+                    topRight: Radius.circular(0),
+                  ),
+                ),
+                color: Colors.white,
+                elevation: 4,
+                child: Stack(
+                  children: <Widget>[
+                    Align(
+                        alignment: AlignmentDirectional.topCenter,
+                        child:
+                        rowBody(listFromFirebase, post, _current, index)),
+                    Align(
+                        alignment: AlignmentDirectional.bottomCenter,
+                        child: rowFooter(fUserName, fImage, post)),
+                  ],
+                ),
+              ),
             ),
           ),
-          color: Colors.white,
-          elevation: 1,
-          child: Column(
-            children: <Widget>[
-              rowBody(listFromFirebase, post, _current),
-              Divider(
-                color: Colors.transparent,
-              ),
-              rowFooter(fUser, fImage),
-            ],
-          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          child: isFeaturedWidget,
+        ),
+      ],
+    );
+  }
+
+  Widget rowBody(List<String> listFromFirebase, Post2 post, int _current,
+      int index) {
+    return Container(
+      height: 150,
+//      color: Colors.blueAccent,
+      child: InkWell(
+        focusColor: Colors.green,
+        splashColor: Colors.black54,
+        onTap: () {
+          print("${index} ");
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HebaDetails(_docsList[index]),
+            ),
+          );
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+
+            /// Content Side
+            rowContentSide(post),
+
+            /// Image Side
+            rowImageSide(listFromFirebase, post, _current),
+          ],
         ),
       ),
     );
   }
 
-  Widget rowBody(List<String> listFromFirebase, Post2 post, int _current) {
-    return Row(
-      children: <Widget>[
-        /// Image Side
-        rowImageSide(listFromFirebase, post, _current),
-
-        /// Content Side
-        rowContentSide(post),
-      ],
-    );
-  }
-
-  Widget rowFooter(String fUser, String fImage) {
+  Widget rowFooter(String fUser, String fImage, Post2 post) {
     return Container(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
+      height: 60,
+      child: Column(
         children: <Widget>[
-          Expanded(
-            flex: 3,
-            child: Container(
-              child: GestureDetector(
-                child: Padding(
-                  padding: const EdgeInsets.all(0),
-                  child: Container(
-                    color: Colors.white,
-                    height: 30.0,
+          Divider(
+            thickness: 0.4,
+            color: Colors.grey,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+//        mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Expanded(
+                flex: 1,
+                child: Container(
+                  child: GestureDetector(
+                    child: Padding(
+                      padding: const EdgeInsets.all(0),
+                      child: Container(
+                        color: Colors.white,
+                        height: 30.0,
+                        child: Center(
+                          child: Icon(
+                            FontAwesomeIcons.bookmark,
+                            color: Colors.black38,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    onTap: () {},
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: GestureDetector(
+                  child: Align(
+                    alignment: Alignment.center,
                     child: Center(
-                      child: Icon(
-                        FontAwesomeIcons.bookmark,
-                        color: Colors.black38,
-                        size: 16,
+                      child: Container(
+                        height: 30.0,
+                        color: Colors.white,
+                        child: Icon(
+                          FontAwesomeIcons.share,
+                          color: Colors.black38,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
+                  onTap: () {},
                 ),
-                onTap: () {},
               ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: GestureDetector(
-              child: Align(
-                alignment: Alignment.center,
-                child: Center(
-                  child: Container(
-                    height: 30.0,
+              editIcon(post),
+              Expanded(
+                  flex: 4,
+                  child: Divider(
                     color: Colors.white,
-                    child: Icon(
-                      FontAwesomeIcons.share,
-                      color: Colors.black38,
-                      size: 16,
-                    ),
+                  )),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Text(
+                    "${timeago.format(post.timestamp.toDate())}",
+                    maxLines: 1,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.black,
+                        fontWeight: FontWeight.normal),
                   ),
                 ),
               ),
-              onTap: () {},
-            ),
-          ),
-          Expanded(
-              flex: 4,
-              child: Divider(
-                color: Colors.white,
-              )),
-          Expanded(
-            flex: 1,
-            child: GestureDetector(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Container(
-                  height: 30.0,
-                  width: 30.0,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15.0),
-                    image: DecorationImage(
-                      image: fImage.isEmpty
-                          ? Image.asset('assets/images/user_placeholder.jpg')
-                          : NetworkImage(fImage),
-                      fit: BoxFit.contain,
+              Expanded(
+                flex: 1,
+                child: GestureDetector(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8.0, bottom: 10),
+                    child: Container(
+                      height: 30.0,
+                      width: 30.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10.0),
+                        image: DecorationImage(
+                          image: post.oImage.isEmpty
+                              ? Image.asset(
+                              'assets/images/user_placeholder.jpg')
+                              : NetworkImage(post.oImage),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
 //            child: Image.network(_googleSignIn.currentUser.photoUrl),
-            ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -652,7 +650,11 @@ class _FeedScreenState extends State<FeedScreen>
       height: 100,
       width: 100,
       child: listFromFirebase.isEmpty
-          ? Center(child: Text("No Image Bro"))
+          ? Center(
+          child: Image.asset(
+            'assets/images/appicon.png',
+            color: Colors.grey.withOpacity(0.4),
+          ))
           : ImagesSlider(
         items: map<Widget>(listFromFirebase, (index, i) {
 //                print("listFromFirebase ${listFromFirebase.length}");
@@ -660,9 +662,9 @@ class _FeedScreenState extends State<FeedScreen>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.zero,
-                bottomRight: Radius.circular(10),
+                bottomRight: Radius.circular(0),
                 topLeft: Radius.zero,
-                topRight: Radius.circular(10),
+                topRight: Radius.circular(0),
               ),
               image: DecorationImage(
                   image: post.imageUrls.isEmpty
@@ -718,14 +720,17 @@ class _FeedScreenState extends State<FeedScreen>
               fontWeight: FontWeight.normal,
             ),
           ),
-          Text(
-            post.hLocation,
-            overflow: TextOverflow.ellipsis,
-            style: new TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
+
+          /// todo
+//          Text(
+//            userLocation.address,
+//            overflow: TextOverflow.ellipsis,
+//            style: new TextStyle(
+//              color: Colors.blueAccent,
+//              fontSize: 14,
+//              fontWeight: FontWeight.normal,
+//            ),
+//          ),
         ],
       ),
     );
@@ -741,15 +746,6 @@ class _FeedScreenState extends State<FeedScreen>
   }
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = new TabController(length: 3, vsync: this);
-    _getAllPosts(widget.post2);
-//    _getQueryPosts(widget.post2);
-//    convertQuerySnapshotToStream();
-  }
-
-  @override
   void dispose() {
     super.dispose();
     _tabController.dispose();
@@ -758,7 +754,7 @@ class _FeedScreenState extends State<FeedScreen>
   ViewMode() {
     User user;
     if (_ViewModeCode == 0) {
-      return mPostViewPublicData(context, postFromFuture, user);
+      return mListData(context, postFromFuture, user);
     } else {
       return mMapView(context, postFromFuture, user);
     }
@@ -767,6 +763,9 @@ class _FeedScreenState extends State<FeedScreen>
   @override
   Widget build(BuildContext context) {
     User user;
+    var currentLocation = Provider.of<UserLocation>(context);
+    print(currentLocation.latitude);
+    print(currentLocation.longitude);
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         child: _ViewModeCode == 0
@@ -835,26 +834,26 @@ class _FeedScreenState extends State<FeedScreen>
           )
               : Container(),
           _ViewModeCode == 0
-              ? mPostViewPublicData(context, postFromFuture, user)
+              ? mListData(context, postFromFuture, user)
               : Container(child: mMapView(context, postFromFuture, user)),
         ],
       ),
     );
   }
 
-  Widget mPostViewPublicData(BuildContext context, Post2 post, User user) {
+  Widget mListData(BuildContext context, Post2 post, User user) {
     return StreamBuilder<QuerySnapshot>(
       stream: publicpostsRef.snapshots(),
-      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.hasData) {
-          return mHebatList(context, snapshot, user);
-//          final names = snapshot.data.documents;
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> map) {
+        if (map.hasData) {
+          return mHebatList(context, map, user);
+//          final names = map.data.documents;
 //          List<Text> messagesWidgets = [];
 //          for (var name in names) {
 //            final txt = name.data['hName'];
 //            final from = name.data['oName'];
 //            final uiTxt = Text("$txt from $from");
-////            List<DocumentSnapshot> documents = snapshot.data.documents;
+////            List<DocumentSnapshot> documents = map.data.documents;
 //            names.forEach((docObject) {
 //              postFromFuture = new Post2.fromDoc(docObject);
 ////              post = postFromFuture;
@@ -869,14 +868,14 @@ class _FeedScreenState extends State<FeedScreen>
 
         } else {
           return Center(
-            child: CircularProgressIndicator(),
+            child: mStatlessWidgets().mLoading(),
           );
         }
       },
     );
   }
 
-  Widget mHebatList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot,
+  Widget mHebatList(BuildContext context, AsyncSnapshot<QuerySnapshot> map,
       User user) {
     return SingleChildScrollView(
       physics: ScrollPhysics(),
@@ -884,30 +883,32 @@ class _FeedScreenState extends State<FeedScreen>
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-
           /// todo Fix GridView
           new ListView.builder(
               physics: NeverScrollableScrollPhysics(),
               scrollDirection: Axis.vertical,
               shrinkWrap: true,
-              itemCount: snapshot.data.documents.length,
+//              itemCount: map.data.documents.length,
+              itemCount: _docsList.length,
               padding: const EdgeInsets.only(top: 15.0),
               itemBuilder: (context, index) {
-                DocumentSnapshot ds = snapshot.data.documents[index];
+//                DocumentSnapshot ds = map.data.documents[index];
+//                DocumentSnapshot ds = map.data.documents[index];
 //                      Post2 post2 = Post2.fromDoc(ds);
-                postFromFuture = Post2.fromDoc(ds);
-                return GestureDetector(
-                    onTap: () {
-                      print("${index} ");
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              HebaDetails(_docsList[index], ds),
-                        ),
-                      );
-                    },
-                    child: viewType(postFromFuture, user));
+//                postFromFuture = Post2.fromFirestore(ds);
+//                _HebaPostsFromDb(widget.post);
+                return rowView(_docsList[index], index);
+//                return GestureDetector(
+//                    onTap: () {
+//                      print("${index} ");
+//                      Navigator.push(
+//                        context,
+//                        MaterialPageRoute(
+//                          builder: (context) => HebaDetails(_docsList[index]),
+//                        ),
+//                      );
+//                    },
+//                    child: viewType(postFromFuture));
               }),
         ],
       ),
@@ -931,7 +932,7 @@ class _FeedScreenState extends State<FeedScreen>
             Padding(
               padding: const EdgeInsets.only(left: 18.0),
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
                   print("object");
                   return showBtnSheetForFiltiring(context, _tabController);
                 },
@@ -1017,7 +1018,7 @@ class _FeedScreenState extends State<FeedScreen>
                     Directionality(
                       textDirection: TextDirection.rtl,
                       child: Text(
-                        " عرض",
+                        "عرض",
                         style: TextStyle(
                             color: Colors.black87,
                             fontSize: 14,
@@ -1071,8 +1072,7 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-  Widget showBtnSheetForFiltiring(BuildContext context,
-      TabController _tabController) {
+  showBtnSheetForFiltiring(BuildContext context, TabController _tabController) {
     var w = MediaQuery
         .of(context)
         .size
@@ -1110,7 +1110,8 @@ class _FeedScreenState extends State<FeedScreen>
                             child: Container(
                               child: Column(
                                 children: <Widget>[
-                                  /// popular
+
+                                  /// my
                                   Flexible(
                                     child: RadioListTile(
                                       value: 0,
@@ -1118,7 +1119,7 @@ class _FeedScreenState extends State<FeedScreen>
                                       onChanged: _selctedMethod,
                                       title: Directionality(
                                         child: Text(
-                                          "الأكثر رواجا",
+                                          "هباتي",
                                           style: TextStyle(
                                               fontWeight: _selected == 0
                                                   ? FontWeight.bold
@@ -1129,7 +1130,7 @@ class _FeedScreenState extends State<FeedScreen>
                                     ),
                                   ),
 
-                                  ///low to  hight
+                                  ///old to  new
                                   Flexible(
                                     child: RadioListTile(
                                       value: 1,
@@ -1138,7 +1139,7 @@ class _FeedScreenState extends State<FeedScreen>
                                       title: Directionality(
                                         textDirection: TextDirection.rtl,
                                         child: Text(
-                                          'بالسعر: من الأقل إلى الأكثر',
+                                          'الأقدم',
                                           style: TextStyle(
                                               fontWeight: _selected == 1
                                                   ? FontWeight.bold
@@ -1148,7 +1149,7 @@ class _FeedScreenState extends State<FeedScreen>
                                     ),
                                   ),
 
-                                  /// hight to low
+                                  /// new to old
                                   Flexible(
                                     child: RadioListTile(
                                       value: 2,
@@ -1157,7 +1158,7 @@ class _FeedScreenState extends State<FeedScreen>
                                       title: Directionality(
                                         textDirection: TextDirection.rtl,
                                         child: Text(
-                                          'بالسعر: من الأكثر  إلى الأقل',
+                                          'الأحدث',
                                           style: TextStyle(
                                               fontWeight: _selected == 2
                                                   ? FontWeight.bold
@@ -1201,7 +1202,9 @@ class _FeedScreenState extends State<FeedScreen>
     return mBottomSheetForFiltiring;
   }
 
-  Widget mMapView(BuildContext context, Post2 postFromFuture, User user) {
+  Widget mMapView(BuildContext context,
+      Post2 postFromFuture,
+      User user,) {
     var h = MediaQuery
         .of(context)
         .size
@@ -1222,57 +1225,66 @@ class _FeedScreenState extends State<FeedScreen>
               myLocationEnabled: true,
               // Add little blue dot for device location, requires permission from user
               mapType: MapType.hybrid,
-//              markers: , // todo
+              markers: Set<Marker>.of(markers),
+              // todo
+
               myLocationButtonEnabled: true),
 //      Text("sss"),
+
           Positioned(
             bottom: 50,
             left: 10,
             child: Column(
               children: <Widget>[
-                RawMaterialButton(
-                  child: Icon(
-                    CupertinoIcons.location_solid,
-                    color: Colors.black38,
-                    size: 26.0,
-                  ),
-                  shape: CircleBorder(),
-                  elevation: 0.0,
-                  fillColor: Colors.white,
-                  padding: const EdgeInsets.all(8.0),
+                FloatingActionButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    getMarkers(userLocation.latitude, userLocation.longitude);
                   },
+                  child: Icon(Icons.place),
                 ),
-                RawMaterialButton(
-                  child: Icon(
-                    Icons.list,
-                    color: Colors.black38,
-                    size: 26.0,
-                  ),
-                  shape: CircleBorder(),
-                  elevation: 0.0,
-                  fillColor: Colors.white,
-                  padding: const EdgeInsets.all(8.0),
-                  onPressed: () {
-//                  Navigator.of(context).pop();
-//                  _animateToUser();
-                  },
-                ),
-                RawMaterialButton(
-                  child: Icon(
-                    Icons.list,
-                    color: Colors.black38,
-                    size: 26.0,
-                  ),
-                  shape: CircleBorder(),
-                  elevation: 0.0,
-                  fillColor: Colors.white,
-                  padding: const EdgeInsets.all(8.0),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+//                RawMaterialButton(
+//                  child: Icon(
+//                    CupertinoIcons.location_solid,
+//                    color: Colors.black38,
+//                    size: 26.0,
+//                  ),
+//                  shape: CircleBorder(),
+//                  elevation: 0.0,
+//                  fillColor: Colors.white,
+//                  padding: const EdgeInsets.all(8.0),
+//                  onPressed: () {
+//                    Navigator.of(context).pop();
+//                  },
+//                ),
+//                RawMaterialButton(
+//                  child: Icon(
+//                    Icons.list,
+//                    color: Colors.black38,
+//                    size: 26.0,
+//                  ),
+//                  shape: CircleBorder(),
+//                  elevation: 0.0,
+//                  fillColor: Colors.white,
+//                  padding: const EdgeInsets.all(8.0),
+//                  onPressed: () {
+////                  Navigator.of(context).pop();
+////                  _animateToUser();
+//                  },
+//                ),
+//                RawMaterialButton(
+//                  child: Icon(
+//                    Icons.list,
+//                    color: Colors.black38,
+//                    size: 26.0,
+//                  ),
+//                  shape: CircleBorder(),
+//                  elevation: 0.0,
+//                  fillColor: Colors.white,
+//                  padding: const EdgeInsets.all(8.0),
+//                  onPressed: () {
+//                    Navigator.of(context).pop();
+//                  },
+//                ),
               ],
             ),
           )
@@ -1286,6 +1298,23 @@ class _FeedScreenState extends State<FeedScreen>
       mapController = controller;
     });
   }
+
+  void editPost(DocumentSnapshot documentSnapshot) {
+//    documentSnapshot.reference.updateData(data);
+  }
+
+  void getMarkers(latitude, longitude) {
+    setState(() {
+      markers.clear();
+    });
+    publicpostsRef.snapshots().listen((event) {
+      event.documents.map((e) {
+        e.data['hName'];
+        print(e.data);
+      });
+    });
+  }
+
 //  Widget showBtnSheetForSorting(
 //      BuildContext context, TabController _tabController) {
 //    var w = MediaQuery.of(context).size.width * 0.1;
@@ -1445,11 +1474,11 @@ class _FeedScreenState extends State<FeedScreen>
 //  Widget mPostView() {
 //    return FutureBuilder(
 //      future: postsRef.document(widget.currentUserId).get(),
-//      builder: (BuildContext context, AsyncSnapshot snapshot) {
-//        if (!snapshot.hasData) {
+//      builder: (BuildContext context, AsyncSnapshot map) {
+//        if (!map.hasData) {
 //          print(
-//              "snapshot : ${postsRef.getDocuments().then((QuerySnapshot snapshot) {
-//            snapshot.documents.forEach((f) => print('${f.exists}}'));
+//              "map : ${postsRef.getDocuments().then((QuerySnapshot map) {
+//            map.documents.forEach((f) => print('${f.exists}}'));
 //          })}");
 //
 //          return Center(
@@ -1465,10 +1494,10 @@ class _FeedScreenState extends State<FeedScreen>
 //              ],
 //            ),
 //          );
-//        } else if (snapshot.hasError) {
+//        } else if (map.hasError) {
 //          print('u have error in future');
 //        }
-//        User user = User.fromDoc(snapshot.data);
+//        User user = User.fromDoc(map.data);
 //        return Padding(
 //          padding: const EdgeInsets.all(8.0),
 //          child: Card(
@@ -1572,8 +1601,8 @@ class _FeedScreenState extends State<FeedScreen>
 //    var user = Provider.of<FirebaseUser>(context);
 //    return StreamBuilder<QuerySnapshot>(
 //      stream: publicpostsRef.snapshots(),
-//      builder: (BuildContext context, snapshot) {
-//        if (!snapshot.hasData == null) {
+//      builder: (BuildContext context, map) {
+//        if (!map.hasData == null) {
 //          return Center(
 //            child: Column(
 //              crossAxisAlignment: CrossAxisAlignment.center,
@@ -1587,7 +1616,7 @@ class _FeedScreenState extends State<FeedScreen>
 //              ],
 //            ),
 //          );
-//        } else if (snapshot.hasError) {
+//        } else if (map.hasError) {
 //          print('mPostView : ${user.email} + U Have Error');
 //        }
 //
@@ -1596,7 +1625,7 @@ class _FeedScreenState extends State<FeedScreen>
 //        return CarouselSlider(
 //          enlargeCenterPage: true,
 //          height: MediaQuery.of(context).size.height,
-//          items: getItems(context, snapshot.data.documents),
+//          items: getItems(context, map.data.documents),
 //        );
 //        print('mPostView : ${user.email}');
 //      },
@@ -1605,8 +1634,8 @@ class _FeedScreenState extends State<FeedScreen>
 //  Widget mPostViewWithUserData() {
 //    return FutureBuilder(
 //      future: DatabaseService.getUserPosts(widget.currentUserId),
-//      builder: (BuildContext context, AsyncSnapshot snapshot) {
-//        if (snapshot.hasData) {
+//      builder: (BuildContext context, AsyncSnapshot map) {
+//        if (map.hasData) {
 //          return SingleChildScrollView(
 //            physics: ScrollPhysics(),
 //            child: Column(
@@ -1614,12 +1643,12 @@ class _FeedScreenState extends State<FeedScreen>
 //                new ListView.builder(
 //                    physics: NeverScrollableScrollPhysics(),
 //                    shrinkWrap: true,
-//                    itemCount: snapshot.data.documents.length,
+//                    itemCount: map.data.documents.length,
 //                    padding: const EdgeInsets.only(top: 15.0),
 //                    itemBuilder: (context, index) {
-//                      DocumentSnapshot ds = snapshot.data.documents[index];
+//                      DocumentSnapshot ds = map.data.documents[index];
 //                      Post2 post2 = Post2.fromDoc(ds);
-//                      User user = User.fromDoc(snapshot.data);
+//                      User user = User.fromDoc(map.data);
 //                      return Column(
 //                        children: <Widget>[
 ////                          _buildDisplayPosts2(),
@@ -1802,8 +1831,8 @@ class _FeedScreenState extends State<FeedScreen>
 //  Widget mPostViewPublicData(BuildContext context, Post2 post) {
 //    return StreamBuilder(
 //      stream: postsRef.snapshots(),
-//      builder: (BuildContext context, AsyncSnapshot snapshot) {
-//        if (snapshot.hasData) {
+//      builder: (BuildContext context, AsyncSnapshot map) {
+//        if (map.hasData) {
 //          return SingleChildScrollView(
 //            physics: ScrollPhysics(),
 //            child: Column(
@@ -1812,10 +1841,10 @@ class _FeedScreenState extends State<FeedScreen>
 //                    physics: NeverScrollableScrollPhysics(),
 //                    scrollDirection: Axis.vertical,
 //                    shrinkWrap: true,
-//                    itemCount: snapshot.data.documents.length,
+//                    itemCount: map.data.documents.length,
 //                    padding: const EdgeInsets.only(top: 15.0),
 //                    itemBuilder: (context, index) {
-//                      DocumentSnapshot ds = snapshot.data.documents[index];
+//                      DocumentSnapshot ds = map.data.documents[index];
 //                      Post2 post2 = Post2.fromDoc(ds);
 //                      return rowView(post2);
 //                    }),
@@ -1833,9 +1862,9 @@ class _FeedScreenState extends State<FeedScreen>
 //    return StreamBuilder(
 //      stream: slids,
 //      initialData: [],
-//      builder: (BuildContext context, AsyncSnapshot snapshot) {
-//        if (snapshot.hasData) {
-//          List slidList = snapshot.data.toList();
+//      builder: (BuildContext context, AsyncSnapshot map) {
+//        if (map.hasData) {
+//          List slidList = map.data.toList();
 //          print("${slidList.length}");
 //          return SingleChildScrollView(
 //            physics: ScrollPhysics(),
@@ -1845,10 +1874,10 @@ class _FeedScreenState extends State<FeedScreen>
 //                    physics: NeverScrollableScrollPhysics(),
 //                    scrollDirection: Axis.vertical,
 //                    shrinkWrap: true,
-//                    itemCount: snapshot.data.documents.length,
+//                    itemCount: map.data.documents.length,
 //                    padding: const EdgeInsets.only(top: 15.0),
 //                    itemBuilder: (context, index) {
-//                      DocumentSnapshot ds = snapshot.data.documents[index];
+//                      DocumentSnapshot ds = map.data.documents[index];
 //                      Post2 post2 = Post2.fromDoc(ds);
 //                      return rowView(post2);
 //                    }),
@@ -1889,10 +1918,10 @@ class _FeedScreenState extends State<FeedScreen>
 //  return SingleChildScrollView(
 //    child: StreamBuilder(
 //      stream: publicpostsRef.snapshots(),
-//      builder: (BuildContext context, snapshot) {
+//      builder: (BuildContext context, map) {
 //        print("${_docsList.length}");
 //
-//        if (!snapshot.hasData) {
+//        if (!map.hasData) {
 //          return mLoading();
 ////
 //        }

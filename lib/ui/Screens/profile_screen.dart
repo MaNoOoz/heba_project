@@ -9,21 +9,24 @@ import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Views/post_view.dart';
+import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/MyClipper.dart';
 import 'package:heba_project/ui/shared/constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
 
+import 'ChatScreen.dart';
 import 'edit_profile_screen.dart';
 
-/// =================================================
-
-/// =================================================
 class ProfileScreen extends StatefulWidget {
   static String id = "profile_screen";
   final String currentUserId;
   final String userId;
 
+//  final User user;
+//  final Chat chat;
+
+//  ProfileScreen({this.currentUserId, this.userId, this.user, this.chat});
   ProfileScreen({this.currentUserId, this.userId});
 
   @override
@@ -31,43 +34,92 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  List<Post2> _posts = [];
+  /// vars
+  List<HebaModel> _posts = [];
   int _displayPosts = 0; // 0 - grid, 1 - column
   User _profileUser;
+  bool isMyProfile = false;
 
+  /// life cycle
   @override
   void initState() {
     super.initState();
-    _setupPosts();
-    _setupProfileUser();
+    _initProfileInfo();
+    _initUserPosts();
   }
 
-  _setupPosts() async {
-    List<Post2> posts = await DatabaseService.getUserPosts(widget.userId);
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: CustomAppBar(
+        isImageVisble: true,
+        IsBack: false,
+        title: "Profile ",
+        color: Colors.white,
+      ),
+      body: mBody(),
+    );
+  }
+
+  /// Methods ======================
+  _initUserPosts() async {
+    print("_initUserPosts Called : ");
+    List<HebaModel> posts = await DatabaseService.getUserPosts(widget.userId);
+
     setState(() {
       _posts = posts;
     });
+
+    print("_initUserPosts : ${_posts.length}");
   }
 
-  _setupProfileUser() async {
-//    profileUser.id == Provider.of<UserData>(context).currentUserId;
+  _initProfileInfo() async {
+//    widget.userId == Provider.of<UserData>(context).currentUserId;
 
     User profileUser = await DatabaseService.getUserWithId(widget.userId);
-    print("current profileUser id :  ${profileUser.id}");
+    print("current profileUser id :  ${profileUser.documentId}");
     print("current profileUser email :  ${profileUser.email}");
     print("current profileUser name :  ${profileUser.name}");
+
+//    var s = await usersRef.document(widget.userId).snapshots().length;
+//    print("map : $s");
+
     setState(() {
       _profileUser = profileUser;
     });
   }
 
   /// getImagesUrls
-  List<dynamic> _getListOfImagesFromUser(Post2 post2) {
+  List<dynamic> _getListOfImagesFromUser(HebaModel post2) {
     dynamic list = post2.imageUrls;
     return list;
   }
 
-  Widget _buildProfileInfo(User user) {
+  List<T> map<T>(List list, Function handler) {
+    List<T> result = [];
+    for (var i = 0; i < list.length; i++) {
+      result.add(handler(i, list[i]));
+    }
+
+    return result;
+  }
+
+  /// Widgets ======================
+
+  _buildProfileInfo(User user) {
+    isMyProfile = widget.userId == widget.currentUserId;
+
+    print(
+        "widget.userId : ${widget.userId} widget.currentUserId ${widget
+            .currentUserId}");
+    print("isMyProfile : ${isMyProfile}");
+
     return ClipPath(
       clipper: MyClipper(),
       child: Container(
@@ -93,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             image: DecorationImage(
                               fit: BoxFit.cover,
                               image: user.profileImageUrl.isEmpty
-                                  ? Image.asset("assets/images/building.gif")
+                                  ? Image.asset(AvailableImages.uph)
                                   : CachedNetworkImageProvider(
                                   user.profileImageUrl),
                             )),
@@ -127,7 +179,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(width: 1), // give it width
               ],
             ),
-            Padding(
+            isMyProfile
+                ? Padding(
               padding: const EdgeInsets.all(8.0),
               child: Align(
                 alignment: Alignment.bottomRight,
@@ -154,9 +207,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.all(Radius.circular(16)),
+                            borderRadius:
+                            BorderRadius.all(Radius.circular(16)),
                             boxShadow: [
-                              BoxShadow(color: Colors.black12, blurRadius: 20)
+                              BoxShadow(
+                                  color: Colors.black12, blurRadius: 20)
+                            ]),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+                : Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ChatScreen(
+                                currentUserId: widget.currentUserId,
+                                userId: widget.userId,
+//                                  user: currentUser,
+//                                  chat: widget.chat,
+                              ),
+                        ));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                    child: Transform.rotate(
+                      angle: (pi * 0.00),
+                      child: Container(
+                        width: 110,
+                        height: 32,
+                        child: Center(
+                          child: Text("Chat With Me!!"),
+                        ),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                            BorderRadius.all(Radius.circular(16)),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black12, blurRadius: 20)
                             ]),
                       ),
                     ),
@@ -167,14 +264,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Divider(
               color: Colors.white,
             ),
-            _buildToggleButtons(),
+            _switchButtons(),
           ],
         ),
       ),
     );
   }
 
-  _buildToggleButtons() {
+  Widget _switchButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: <Widget>[
@@ -198,22 +295,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  List<T> map<T>(List list, Function handler) {
-    List<T> result = [];
-    for (var i = 0; i < list.length; i++) {
-      result.add(handler(i, list[i]));
-    }
-
-    return result;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   ///
-  Widget _gridView(Post2 post) {
+  _gridView(HebaModel post) {
     /// fetch the list
     var listFromFirebase =
     _getListOfImagesFromUser(post).cast<String>().toList();
@@ -234,8 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     image: DecorationImage(
                         image: post.imageUrls.isEmpty
-                            ? Image.asset(
-                            'assets/images/user_placeholder.jpg')
+                            ? Image.asset(AvailableImages.uph)
                             : NetworkImage(i),
                         fit: BoxFit.cover),
                   ),
@@ -289,39 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-//  _buildDisplayPosts() {
-//    if (_displayPosts == 0) {
-//      // Grid
-//      List<GridTile> tiles = [];
-//      _posts.forEach(
-//        (post) => tiles.add(_gridView(post)),
-//      );
-//      return GridView.count(
-//        crossAxisCount: 3,
-//        childAspectRatio: 1.0,
-//        mainAxisSpacing: 2.0,
-//        crossAxisSpacing: 2.0,
-//        shrinkWrap: true,
-//        physics: NeverScrollableScrollPhysics(),
-//        children: tiles,
-//      );
-//    } else {
-//      // Column
-//      List<PostView> postViews = [];
-//      _posts.forEach((post) {
-//        postViews.add(
-//          PostView(
-//            currentUserId: widget.currentUserId,
-//            post: post,
-//            author: _profileUser,
-//          ),
-//        );
-//      });
-//      return Column(children: postViews);
-//    }
-//  }
-
-  _buildDisplayPosts2() {
+  viewType() {
     if (_displayPosts == 0) {
       // Grid
       List<GridTile> tiles = [];
@@ -329,7 +379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             (post) => tiles.add(_gridView(post)),
       );
       return GridView.count(
-        crossAxisCount: 2,
+        crossAxisCount: 3,
         childAspectRatio: 1.0,
         mainAxisSpacing: 2.0,
         crossAxisSpacing: 2.0,
@@ -354,13 +404,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget mBody() {
-    return FutureBuilder(
-      future: usersRef.document(widget.currentUserId).get(),
-      builder: (BuildContext context, AsyncSnapshot map) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: usersRef.document(widget.userId).get(),
+      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> map) {
         if (!map.hasData) {
-          print("map : ${usersRef.getDocuments().then((QuerySnapshot map) {
-            map.documents.forEach((f) => print('${f.exists}}'));
-          })}");
           return Center(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -373,39 +420,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         } else if (map.hasError) {
           print('u have error in future');
         }
-        User user = User.fromDoc(map.data);
+        User userFromDb = User.fromFirestore(map.data);
+
         return ListView(
           children: <Widget>[
-            _buildProfileInfo(user),
+            _buildProfileInfo(userFromDb),
 //              _buildImageSlider(post);
 //              _buildToggleButtons(),
+
             Divider(),
+
             _posts.isEmpty
                 ? Padding(
               padding: const EdgeInsets.all(32.0),
               child: Center(
-                child: Image.asset("assets/images/building.gif"),
+                child: mStatlessWidgets().EmptyView(),
               ),
             )
-                : _buildDisplayPosts2(),
+                : viewType(),
 //              Text("${_posts.length}"),
           ],
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: CustomAppBar(
-        title: "Heba",
-        IsBack: false,
-        color: Colors.white,
-        isImageVisble: true,
-      ),
-      body: mBody(),
     );
   }
 }

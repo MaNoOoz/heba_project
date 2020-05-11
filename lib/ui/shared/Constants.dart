@@ -9,11 +9,22 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 const googleMapsApiKey = 'AIzaSyDRMvVRVlma0gjFhELTtESq53WsVqvllGw';
 
+/// sup collication
+const USERMESSAGES = "USER-MESSAGES";
+const USERCHATS = "USER-CHATS";
+final themeColor = Color(0xfff5a623);
+final primaryColor = Color(0xff203152);
+final greyColor = Color(0xffaeaeae);
+final greyColor2 = Color(0xffE8E8E8);
+
 final _firestore = Firestore.instance;
 final storageRef = FirebaseStorage.instance.ref();
 final usersRef = _firestore.collection('users');
 final postsRef = _firestore.collection('posts');
 final publicpostsRef = _firestore.collection('publicposts');
+final contacts = _firestore.collection('contacts');
+final CHATS = _firestore.collection('chats');
+
 final Query publicpostsRefWtihQuery =
 _firestore.collection('publicposts').where("hName", isEqualTo: "uyyhh");
 final locations = _firestore.collection('locations');

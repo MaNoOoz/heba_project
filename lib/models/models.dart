@@ -7,6 +7,7 @@ import 'dart:core';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 
 // https://github.com/googlecodelabs/flutter-cupertino-store/blob/master/step-06/lib/model/product.dart
 //enum Category {
@@ -16,31 +17,7 @@ import 'package:flutter/cupertino.dart';
 //  home,
 //}
 
-class Car {
-  String id;
-
-  Car({this.id});
-
-  factory Car.fromJson(Map<String, dynamic> map) {
-    return Car(
-      id: map['id'],
-    );
-  }
-
-  Map<String, dynamic> toMap() =>
-      <String, dynamic>{
-        'id': this.id,
-      };
-
-  String drive() {
-    return "dr+iving ...";
-  }
-
-//  Car.fromJson(Map<String, dynamic> map) : id = map['id'];
-
-}
-
-class Post2 {
+class HebaModel {
   final String id;
 
   /// todo : add List Of comments and likes
@@ -55,15 +32,15 @@ class Post2 {
   bool isFeatured;
   bool isMine;
   UserLocation location;
-
-//  Map location;
-  Car car;
+  GeoPoint geoPoint;
+  GeoFirePoint geoFirePoint;
   DocumentReference reference;
 
-  Post2({
+  HebaModel({
+    this.geoFirePoint,
+    this.geoPoint,
     this.reference,
     this.id,
-    this.car,
     this.isFeatured,
     this.imageUrls,
     this.oImage,
@@ -80,17 +57,21 @@ class Post2 {
 //  Post2.fromSnapshot(DocumentSnapshot map)
 //      : this.fromMap(map.data, reference: map.reference);
 
-  factory Post2.fromFirestore(DocumentSnapshot doc) {
-//    Map data = doc.data;
 
-    return Post2(
+  factory HebaModel.fromFirestore(DocumentSnapshot doc) {
+//
+
+    return HebaModel(
       id: doc.documentID,
       imageUrls: List<String>.from(doc['imagesUrls'] ?? ["ss", "ss"]),
       hName: doc['hName'] ?? "noName",
       oName: doc['oName'] ?? "noName",
-//      location: data['location'] ?? UserLocation(longitude: 23, latitude: 12, address: "asd"),
-//      location: UserLocation.fromDoc(doc['location']),
-      location: UserLocation.fromMap(doc['location']),
+      geoPoint: doc['geoPoint'],
+//      geoFirePoint: GeoFirePoint(doc['geoPoint']['latitude'], doc['geoPoint']['longitude']),
+//      location: UserLocation.fromFeilds(address: "SSSS"),
+//      location: (),
+//        location: UserLocation.fromMapt(doc['location']),
+//      location: UserLocation.fromMap(doc['location']),
       isFeatured: doc['isFeatured'] ?? false,
 //      car: Car.fromJson({"id": "0"}) ?? Car.fromJson({"id": "1"}),
       oImage: doc['oImage'] ?? "noImage",
@@ -100,23 +81,23 @@ class Post2 {
     );
   }
 
-//  Post2.fromSnapshot(DocumentSnapshot map)
+//  HebaModel.fromSnapshot(DocumentSnapshot map)
 //      : id = map.documentID,
 //        imageUrls = List.from(map['imagesUrls'] ?? ["ss", "ss"]),
 //        hName = map['hName'] ?? "noName",
 //        oName = map['oName'] ?? "noName",
-//        car = Car.fromJson(map['car']),
+////        car = Car.fromJson(map['car']),
 //        location = UserLocation.fromJson(map['location']),
 //        isFeatured = map['isFeatured'] ?? false,
 //        isMine = map['isMine'] ?? false,
 //        oImage = map['oImage'] ?? "noImage",
 //        hDesc = map['hDesc'] ?? "noDesc",
-//        hLocation = map['hLocation'] ?? "noLocation",
+////        hLocation = map['hLocation'] ?? "noLocation",
 //        authorId = map['authorId'] ?? "noAuthorId",
 //        timestamp = map['timestamp' ?? "noDate"];
 
-  factory Post2.fromMap(Map<String, dynamic> map, {reference}) {
-    return Post2(
+  factory HebaModel.fromMap(Map<dynamic, dynamic> map, {reference}) {
+    return HebaModel(
       id: map['id'],
       imageUrls: List.from(map['imagesUrls'] ?? ["ss", "ss"]),
       hName: map['hName'] ?? "noName",
@@ -134,8 +115,9 @@ class Post2 {
 
   @override
   String toString() => "Record<$hName:$hDesc>";
-  factory Post2.fromDb(Map<String, dynamic> mapDb) {
-    return Post2(
+
+  factory HebaModel.fromDb(Map<String, dynamic> mapDb) {
+    return HebaModel(
       id: mapDb['id'],
       imageUrls: jsonDecode(mapDb['imagesUrls']),
       hName: mapDb['hName'] ?? "noName",
@@ -171,7 +153,6 @@ class Post2 {
       "oImage": this.oImage,
       "hDesc": this.hDesc,
       "authorId": this.authorId,
-      "car": this.car.toMap(),
       "isFeatured": this.isFeatured ? 1 : 0,
     };
   }
@@ -183,7 +164,7 @@ class UserLocation {
   String address;
   DocumentReference reference;
 
-  UserLocation();
+//  UserLocation();
 
   UserLocation.fromFeilds(
       {this.latitude, this.reference, this.longitude, this.address});
@@ -196,20 +177,28 @@ class UserLocation {
     );
   }
 
-  UserLocation.fromJsonMap(Map<dynamic, dynamic> json, {this.reference})
+  UserLocation.fromJsonMap(Map json, {this.reference})
       : latitude = json['lat'] as num ?? 2.0,
         longitude = json['long'] as num ?? 2.0,
         address = json['address'] as String ?? "sasd";
 
+  UserLocation.fromMapt(Map<dynamic, dynamic> json)
+      : latitude = json['lat'] as num ?? 2.0,
+        longitude = json['long'] as num ?? 2.0,
+        address = json['address'] as String ?? "sasd";
+
+//  UserLocation.fromDoc(DocumentSnapshot map) : this.fromJsonMap(map.data, reference: map.reference);
   UserLocation.fromDoc(DocumentSnapshot map)
-      : this.fromJsonMap(map.data, reference: map.reference);
+      : latitude = map['lat'],
+        longitude = map['long'],
+        address = map['address'];
 
   static UserLocation fromMap(Map<dynamic, dynamic> map) {
-    UserLocation gameReivew = new UserLocation();
-    gameReivew.latitude = map["lat"].toDouble();
-    gameReivew.longitude = map["long"].toDouble();
-    gameReivew.address = map["address"].toString();
+    UserLocation loc = new UserLocation.fromMapt(map);
+    loc.latitude = map["lat"].toDouble();
+    loc.longitude = map["long"].toDouble();
+    loc.address = map["address"].toString();
 
-    return gameReivew;
+    return loc;
   }
 }

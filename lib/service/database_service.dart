@@ -5,117 +5,177 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:heba_project/models/Chat.dart';
+import 'package:heba_project/models/Message.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 
 class DatabaseService {
-  Post2 post;
-  StreamController<Post2> _Post2Controller = StreamController<Post2>();
+  //  Post2 post;
+  StreamController<HebaModel> controller = StreamController<HebaModel>();
 
-  Stream<Post2> get PostsStream => _Post2Controller.stream;
+  //
+  //  Stream<Post2> get PostsStream => _Post2Controller.stream;
 
-//
-//  DatabaseService() {
-//    List<Post2> posts = [];
-//    publicpostsRef.snapshots().listen((snapshot) {
-//      if (snapshot != null) {
-//        List<DocumentSnapshot> documents = snapshot.documents;
-//        documents.forEach((DocumentSnapshot doc) {
-//          post = new Post2.fromSnapshot(doc);
-//          posts.add(post);
-//        });
-//        _Post2Controller.add(post);
-//      }
-//    });
-//  }
+  //
+  //  DatabaseService() {
+  //    List<Post2> posts = [];
+  //    publicpostsRef.snapshots().listen((snapshot) {
+  //      if (snapshot != null) {
+  //        List<DocumentSnapshot> documents = snapshot.documents;
+  //        documents.forEach((DocumentSnapshot doc) {
+  //          post = new Post2.fromSnapshot(doc);
+  //          posts.add(post);
+  //        });
+  //        _Post2Controller.add(post);
+  //      }
+  //    });
+  //  }
 
-  static HebaPostsFromDb(Post2 postModel) async {
-//    List<Post2> posts = await DatabaseService.getAllPosts2();
-    List<Post2> posts = [];
+  /// Feed Page ==================================================
+
+  static HebaPostsFromDb(HebaModel postModel) async {
+    List<HebaModel> posts = [];
     QuerySnapshot qn = await publicpostsRef.getDocuments();
 
     List<DocumentSnapshot> documents = qn.documents;
     documents.forEach((DocumentSnapshot doc) {
-      postModel = new Post2.fromFirestore(doc);
+      postModel = new HebaModel.fromFirestore(doc);
       posts.add(postModel);
     });
 
-    print("_setupPosts  ${postModel.hName}");
-    print("_setupPosts  ${posts.length}");
+    /// Logs
+    documents.map((e) =>
+        e.data.forEach((key, value) {
+          print("HebaPostsFromDb : Key : $key, Value : $value");
+        }));
+
+    /// Logs
+
+    return posts;
+  }
+
+  /// as A Stream
+  Stream<HebaModel> get hebatStream => controller.stream;
+
+  mStreamOfHeba(HebaModel postModel) async {
+    List<HebaModel> posts = [];
+    QuerySnapshot qn = await publicpostsRef.getDocuments();
+    Stream<HebaModel> stream;
+    List<DocumentSnapshot> documents = qn.documents;
+    documents.map((DocumentSnapshot msg) {
+      var heba = HebaModel.fromFirestore(msg);
+      controller.add(heba);
+      return heba;
+    });
+
+    documents.forEach((DocumentSnapshot doc) {
+      postModel = new HebaModel.fromFirestore(doc);
+      posts.add(postModel);
+    });
+
+    /// Logs
+    documents.map((e) =>
+        e.data.forEach((key, value) {
+          print("HebaPostsFromDb : Key : $key, Value : $value");
+        }));
+
+    /// Logs
+
     return posts;
   }
 
   static void updateUser(User user) {
-    usersRef.document(user.id).updateData({
+    usersRef.document(user.documentId).updateData({
       'name': user.name,
       'profileImageUrl': user.profileImageUrl,
-      'bio': user.bio,
     });
   }
 
-  static Future<QuerySnapshot> searchUsers(String name) {
-    Future<QuerySnapshot> users =
-    usersRef.where('name', isGreaterThanOrEqualTo: name).getDocuments();
+  static Future<QuerySnapshot> searchUsers(String keyword) {
+    Future<QuerySnapshot> users = usersRef.where(
+        'name', isGreaterThanOrEqualTo: keyword).getDocuments();
     return users;
   }
 
-  /// ===============================================================================
-  static void createPrivatePost(Post2 post) {
+  /// todo Fix
+  static Future<QuerySnapshot> searchChats(String keyword, User user,
+      Chat chat) {
+    Future<QuerySnapshot> chats = contacts.document(user.uid).collection(
+        'userChats')
+        .where(chat.chatId, isGreaterThanOrEqualTo: keyword)
+        .getDocuments();
+    return chats;
+  }
+
+  /// Create Post Page ===============================================================================
+  static void createPrivatePost(HebaModel post) {
     postsRef.document(post.authorId).collection('userPosts').add({
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
       'isFeatured': post.isFeatured,
-//      'location': post.location,
-      'oName': post.oName,
-      'oImage': post.oImage,
-      'hDesc': post.hDesc,
-      'authorId': post.authorId,
-      'timestamp': post.timestamp,
-    });
-  }
-
-  /// Publish to Wall ===============================================================
-  static void createPublicPosts(Post2 post) {
-    publicpostsRef.add({
-      'imagesUrls': post.imageUrls,
-      'hName': post.hName,
-      'oName': post.oName,
-      'isFeatured': post.isFeatured,
-      'isMine': post.isMine ?? false,
-//      'location': post.location,
-//      'car': post.car,
-      'oImage': post.oImage,
-      'hDesc': post.hDesc,
-      'authorId': post.authorId,
-      'timestamp': post.timestamp,
-    });
-  }
-
-  static Future<bool> createPublicPosts2(Post2 post) async {
-    var tt = true;
-    publicpostsRef.add({
-      'imagesUrls': post.imageUrls,
-      'hName': post.hName,
-      'oName': post.oName,
-      'isFeatured': post.isFeatured,
-      'isMine': post.isMine ?? false,
       'location': post.location,
+      'oName': post.oName,
+      'oImage': post.oImage,
+//      'geoPoint': post.geoPoint,
+      'isMine': post.isMine ?? false,
+      'hDesc': post.hDesc,
+      'authorId': post.authorId,
+      'timestamp': post.timestamp,
+    });
+  }
+
+  static void createPublicPosts(HebaModel post) {
+//    Map<dynamic, dynamic> sd = {
+//      'lat': 12.0,
+//      'long': 12.9,
+//    };
+
+    publicpostsRef.add({
+      'geoPoint': post.geoPoint,
+      'imagesUrls': post.imageUrls,
+      'hName': post.hName,
+      'oName': post.oName,
+      'isFeatured': post.isFeatured,
+      'isMine': post.isMine ?? false,
+      "location": post.location,
+//      "geFirePoint": post.geoFirePoint,
       'oImage': post.oImage,
       'hDesc': post.hDesc,
       'authorId': post.authorId,
       'timestamp': post.timestamp,
     });
-    return tt;
   }
 
-  static void editPublicPosts(Post2 post) {
+  //  static Future<bool> createPublicPosts2(Post2 post) async {
+  //    var tt = true;
+  //        Map<String, dynamic> sd = {
+  //      'lat': 12.0,
+  //      'long': 12.9,
+  //    };
+  //    publicpostsRef.add({
+  //      'imagesUrls': post.imageUrls,
+  //      'hName': post.hName,
+  //      'oName': post.oName,
+  //      'isFeatured': post.isFeatured,
+  //      'isMine': post.isMine ?? false,
+  //      'location': post.location?? UserLocation.fromMapt(sd),
+  //      'oImage': post.oImage,
+  //      'hDesc': post.hDesc,
+  //      'authorId': post.authorId,
+  //      'timestamp': post.timestamp,
+  //    });
+  //    return tt;
+  //  }
+
+  static void editPublicPosts(HebaModel post) {
     publicpostsRef.add({
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
       'oName': post.oName,
       'isFeatured': post.isFeatured,
-//      'location': post.location,
+      //      'location': post.location,
       'oImage': post.oImage,
       'hDesc': post.hDesc,
       'authorId': post.authorId,
@@ -123,168 +183,188 @@ class DatabaseService {
     });
   }
 
-//  static Stream<List<Post2>> getAllPosts() {
-//    var ref = publicpostsRef.orderBy('timestamp', descending: true);
-//
-//    return ref.snapshots().map((list) =>
-//        list.documents.map((doc) => Post2.fromSnapshot(doc)).toList());
-//
-////    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
-//  }
+  //  static Stream<List<Post2>> getAllPosts() {
+  //    var ref = publicpostsRef.orderBy('timestamp', descending: true);
+  //
+  //    return ref.snapshots().map((list) =>
+  //        list.documents.map((doc) => Post2.fromSnapshot(doc)).toList());
+  //
+  ////    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
+  //  }
 
-//  static Future<List<dynamic>> getAllPosts2() async {
-//    QuerySnapshot feedSnapshot = await publicpostsRef
-//        .orderBy('timestamp', descending: true)
-//        .getDocuments();
-//
-//    List<dynamic> posts =
-//        feedSnapshot.documents.map((doc) => Post2.fromSnapshot(doc)).toList();
-//    return posts;
-//
-////    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
-//  }
+  //  static Future<List<dynamic>> getAllPosts2() async {
+  //    QuerySnapshot feedSnapshot = await publicpostsRef
+  //        .orderBy('timestamp', descending: true)
+  //        .getDocuments();
+  //
+  //    List<dynamic> posts =
+  //        feedSnapshot.documents.map((doc) => Post2.fromSnapshot(doc)).toList();
+  //    return posts;
+  //
+  ////    List<dynamic> posts = feedSnapshot.documents.map((doc) => Post2.fromDoc(doc)).toList() ;
+  //  }
 
-  /// ===============================================================================
-  static Future<List<Post2>> getUserPosts(String userId) async {
-    QuerySnapshot userPostsSnapshot = await postsRef
-        .document(userId)
-        .collection('userPosts')
-        .orderBy('timestamp', descending: true)
+  /// Profile Page ===============================================================================
+  static Future<List<HebaModel>> getUserPosts(String userId) async {
+    QuerySnapshot userPostsSnapshot = await postsRef.document(userId)
+        .collection('userPosts').orderBy('timestamp', descending: true)
         .getDocuments();
-    List<Post2> posts = userPostsSnapshot.documents
-        .map((doc) => Post2.fromFirestore(doc))
-        .toList();
+    List<HebaModel> posts = userPostsSnapshot.documents.map((doc) =>
+        HebaModel.fromFirestore(doc)).toList();
     return posts;
   }
 
   static Future<User> getUserWithId(String userId) async {
     DocumentSnapshot userDocSnapshot = await usersRef.document(userId).get();
     if (userDocSnapshot.exists) {
-      return User.fromDoc(userDocSnapshot);
+      return User.fromFirestore(userDocSnapshot);
     }
     return User();
   }
 
-//  static Future<List<Post2>> getFeedPrivatePosts(String userId) async {
-//    QuerySnapshot feedSnapshot = await feedsRef
-//        .document(userId)
-//        .collection('userFeed')
-//        .orderBy('timestamp', descending: true)
-//        .getDocuments();
-//
-//    List<Post2> posts =
-//        feedSnapshot.documents.map((doc) => Post2.fromSnapshot(doc)).toList();
-//    return posts;
-//  }
+  /// Chat  ==================================================
+  static Future<Message> CreateFakeMessageFuture(
+      {String senderID, String channelName, String reciverID}) async {
+    var ts = Timestamp.fromDate(DateTime.now());
 
-  static void followUser({String currentUserId, String userId}) {
-    // Add user to current user's following collection
-    followingRef
-        .document(currentUserId)
-        .collection('userFollowing')
-        .document(userId)
-        .setData({});
-    // Add current user to user's followers collection
-    followersRef
-        .document(userId)
-        .collection('userFollowers')
-        .document(currentUserId)
-        .setData({});
+    CHATS.document(senderID).collection('userChats')
+        .document(channelName)
+        .collection("messages");
+
+    Message message = Message(
+        chatId: channelName,
+        message: "TEST FROM CreateFakeMessageFuture",
+        senderName: "",
+        receiverId: reciverID,
+        createdAt: DateTime.now().toIso8601String().toString(),
+        seen: false,
+        timestamp: ts,
+        senderId: senderID);
+    var mapFromMessage = message.toMap();
+    CHATS.add(mapFromMessage);
+
+    return message;
   }
 
-  static void unfollowUser({String currentUserId, String userId}) {
-    // Remove user from current user's following collection
-    followingRef
-        .document(currentUserId)
-        .collection('userFollowing')
-        .document(userId)
-        .get()
-        .then((doc) {
-      if (doc.exists) {
-        doc.reference.delete();
-      }
-    });
-    // Remove current user from user's followers collection
-    followersRef
-        .document(userId)
-        .collection('userFollowers')
-        .document(currentUserId)
-        .get()
-        .then((doc) {
-      if (doc.exists) {
-        doc.reference.delete();
-      }
-    });
+  ///  as a List future
+  static Future<List<Message>> GetMessagesFutureAsList(
+      {String senderID, String reciverID, String channelName}) async {
+    QuerySnapshot messagesSnapshots = await CHATS.document(senderID).collection(
+        'userChats').document(channelName).collection("messages").orderBy(
+        'timestamp', descending: true).getDocuments();
+
+    if (messagesSnapshots.documents.length > 0) {
+      print("U Have  ${messagesSnapshots.documents.length} Messages");
+    } else if (messagesSnapshots.documents.length <= 0) {
+      print(
+          "Error U Dont Have   ${messagesSnapshots.documents.length} Messages");
+    }
+    List<Message> messages = messagesSnapshots.documents.map((doc) =>
+        Message.fromFirestore(doc)).toList();
+    return messages;
   }
 
-  static Future<bool> isFollowingUser({String currentUserId, String userId}) async {
-    DocumentSnapshot followingDoc = await followersRef
-        .document(userId)
-        .collection('userFollowers')
-        .document(currentUserId)
-        .get();
-    return followingDoc.exists;
+  /// Chats Page ==================================================
+  static Future<List<String>> getUserChats(String userId, String chatId) async {
+    Chat chat;
+    print("${chat.chatId}");
+
+    DocumentSnapshot userPostsSnapshot = await usersRef.document(userId).get();
+
+    Map data = userPostsSnapshot.data;
+
+    var list = userPostsSnapshot['chatIds'] as List;
+    List<String> chatIds = list.map<String>((i) => chat.chatId).toList();
+    print("${chatIds}");
+
+    return chatIds;
   }
 
-  static Future<int> numFollowing(String userId) async {
-    QuerySnapshot followingSnapshot = await followingRef
-        .document(userId)
-        .collection('userFollowing')
-        .getDocuments();
-    return followingSnapshot.documents.length;
-  }
+  /// check if changed
+  static void checkForChange(String id) {
+    print("checkForChange Called");
 
-  static Future<int> numFollowers(String userId) async {
-    QuerySnapshot followersSnapshot = await followersRef
-        .document(userId)
-        .collection('userFollowers')
-        .getDocuments();
-    return followersSnapshot.documents.length;
-  }
-
-  static void likePost({String currentUserId, Post2 post}) {
-    DocumentReference postRef = postsRef
-        .document(post.authorId)
-        .collection('userPosts')
-        .document(post.id);
-    postRef.get().then((doc) {
-      int likeCount = doc.data['likeCount'];
-      postRef.updateData({'likeCount': likeCount + 1});
-      likesRef
-          .document(post.id)
-          .collection('postLikes')
-          .document(currentUserId)
-          .setData({});
-    });
-  }
-
-  static void unlikePost({String currentUserId, Post2 post}) {
-    DocumentReference postRef = postsRef
-        .document(post.authorId)
-        .collection('userPosts')
-        .document(post.id);
-    postRef.get().then((doc) {
-      int likeCount = doc.data['likeCount'];
-      postRef.updateData({'likeCount': likeCount - 1});
-      likesRef
-          .document(post.id)
-          .collection('postLikes')
-          .document(currentUserId)
-          .get()
-          .then((doc) {
-        if (doc.exists) {
-          doc.reference.delete();
+    CHATS.document(id).collection(USERCHATS).snapshots().listen((
+        querySnapshot) {
+      for (var docChange in querySnapshot.documentChanges) {
+        if (docChange.type == DocumentChangeType.added) {
+          print("DATA CHANGED ${docChange.document.data}");
         }
+      }
+    });
+  }
+
+  /// Create new Chat
+  static void CreateFakeChat({
+    String currentUserId,
+    String channelName,
+  }) async {
+    print("_CreateChat Called");
+
+    CHATS.document(currentUserId).collection(USERCHATS)
+        .document(channelName)
+        .collection(channelName);
+
+    Chat mChat = Chat(
+      chatId: "@@@@",
+      messages: [],
+    );
+
+    /// database
+    //    createFakeChat(mChat, _collectionReference);
+    Map map = mChat.ToMap();
+
+    CHATS.add(map);
+  }
+
+  static void CreateFakeMessage(
+      {String senderID, String channelId, String reciverID}) {
+    var ts = Timestamp.fromDate(DateTime.now());
+
+    CollectionReference messagesSnapshots = CHATS.document(senderID).collection(
+        USERCHATS).document(channelId).collection(USERMESSAGES);
+
+    Message message = Message(
+        chatId: channelId,
+        message: "TEST FROM createMesageForUser",
+        senderName: "",
+        receiverId: reciverID,
+        createdAt: DateTime.now().toIso8601String().toString(),
+        seen: false,
+        timestamp: ts,
+        senderId: senderID);
+    var mapFromMessage = message.toMap();
+    messagesSnapshots.add(mapFromMessage);
+
+    var Fakemessages = [];
+    Fakemessages.add(message);
+  }
+
+  static Stream<QuerySnapshot> getStreamOfMessagesFromDocument(String senderID,
+      String channelId) {
+    print("${channelId}");
+
+    var chatsSnapshotStream = CHATS.document(senderID).collection("userChats")
+        .document(channelId).collection("messages")
+        .snapshots();
+
+    chatsSnapshotStream.map((QuerySnapshot msg) {
+      msg.documents.map((DocumentSnapshot e) {
+        return Message.fromFirestore(e);
       });
     });
   }
 
-  static Future<bool> didLikePost({String currentUserId, Post2 post}) async {
-    DocumentSnapshot userDoc = await likesRef
-        .document(post.id)
-        .collection('postLikes')
-        .document(currentUserId)
-        .get();
-    return userDoc.exists;
+  static List<String> createChatIdsForUser(
+      {String currentUserId, String userId}) {
+    CollectionReference messagesSnapshots = contacts.document(currentUserId)
+        .collection('userContacts').document(userId).collection("chats")
+        .orderBy('timestamp', descending: true);
+
+    Chat message = Chat(chatId: "test");
+    messagesSnapshots.add({"": ""});
+    var messages = [];
+    messages.add(message);
+    return messages;
   }
 }

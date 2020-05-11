@@ -7,7 +7,7 @@ import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 
 class FeedView extends StatefulWidget {
-  final Post2 post;
+  final HebaModel post;
   final User author;
 
   FeedView({

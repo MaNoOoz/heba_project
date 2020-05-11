@@ -3,10 +3,16 @@
  */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+const bool kReleaseMode =
+bool.fromEnvironment('dart.vm.product', defaultValue: false);
+
 class StringUtils {
+  static final kAnalytics = FirebaseAnalytics();
+
   //Font
   String cairo = 'Cairo';
 
@@ -76,6 +82,27 @@ class StringUtils {
     {"childName": "نهى", "mPlusVotes": 10, "mMinusVotes": 20, "isfav": false},
     {"childName": "شام", "mPlusVotes": 10, "mMinusVotes": 20, "isfav": false},
   ];
+
+  static void cprint(dynamic data, {String errorIn, String event}) {
+    if (errorIn != null) {
+      print(
+          '****************************** error ******************************');
+      print('[Error] $errorIn $data');
+      print(
+          '****************************** error ******************************');
+    } else if (data != null) {
+      print(data);
+    }
+    if (event != null) {
+      logEvent(event);
+    }
+  }
+
+  static void logEvent(String event, {Map<String, dynamic> parameter}) {
+    kReleaseMode
+        ? kAnalytics.logEvent(name: event, parameters: parameter)
+        : print("[EVENT]: $event");
+  }
 
 //  List<Name> mNameList = List<Name>()  ;
 

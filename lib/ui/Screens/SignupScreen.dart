@@ -99,7 +99,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<bool> _CreateNewAcount() async {
     try {
-      await new Future.delayed(Duration(seconds: 5));
+//      await new Future.delayed(Duration(seconds: 5));
       var valdited = _formKey.currentState.validate();
 
       print('_CreateNewAcount Called');
@@ -107,8 +107,9 @@ class _SignupScreenState extends State<SignupScreen> {
         _formKey.currentState.save();
 
         /// SignUp the User In Firebase
-        FirestoreServiceAuth.signUpUser(
+        FirestoreServiceAuth.signUpUserFromInput(
             context, _name, _email, _password, _imageUrl);
+
         _imageUrl = await StorageService.uploadUserProfileImageInSignUp(
             _imageUrl, _profileImage);
       } else {}

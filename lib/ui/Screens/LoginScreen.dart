@@ -4,13 +4,10 @@
 
 import 'dart:developer';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:heba_project/models/user_model.dart';
+import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
@@ -41,101 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  /// vars ==============================================
-  static final _firebase_Auth = FirebaseAuth.instance;
-  static final _firestore = Firestore.instance;
-  static final GoogleSignIn googleSignIn = GoogleSignIn();
-
-  Future<String> signInWithGoogle() async {
-    print("signInWithGoogle");
-
-    final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
-    final GoogleSignInAuthentication googleSignInAuthentication =
-    await googleSignInAccount.authentication;
-
-    final AuthCredential credential = GoogleAuthProvider.getCredential(
-      accessToken: googleSignInAuthentication.accessToken,
-      idToken: googleSignInAuthentication.idToken,
-    );
-
-    final AuthResult authResult =
-    await _firebase_Auth.signInWithCredential(credential);
-    final FirebaseUser user = authResult.user;
-
-    assert(!user.isAnonymous);
-    assert(await user.getIdToken() != null);
-
-    final FirebaseUser currentUser = await _firebase_Auth.currentUser();
-    assert(user.uid == currentUser.uid);
-    print("signed in " + user.displayName + "\n" + user.photoUrl);
-    var clonedUser = await saveDetailsFromGoogleAuth(user);
-//    var savedUser = await saveProfileDetails(user, user.photoUrl, user.email, user.email);
-
-    print("signed in " +
-        clonedUser.id +
-        clonedUser.name +
-        "\n" +
-//        savedUser.name +
-//        savedUser.id +
-        "\n" +
-        clonedUser.profileImageUrl);
-
-    return 'signInWithGoogle succeeded: $clonedUser';
-  }
-
-  /// saveDetailsFromGoogleAuth =================================================================
-  Future<User> saveDetailsFromGoogleAuth(FirebaseUser user) async {
-    print("saveDetailsFromGoogleAuth");
-
-    DocumentReference ref = _firestore.collection('/users').document(user
-        .uid); //reference of the user's document node in database/users. This node is created using uid
-    final bool userExists =
-    !await ref
-        .snapshots()
-        .isEmpty; // check if user exists or not
-    var data = {
-      //add details received from google auth
-      'profileImageUrl': user.photoUrl,
-      'email': user.email,
-      'name': user.displayName,
-    };
-    if (!userExists && user.photoUrl != null) {
-      // if user entry exists then we would not want to override the photo url with the one received from googel auth
-      data['profileImageUrl'] = user.photoUrl;
-    }
-    ref.setData(data, merge: true); // set the data
-    final DocumentSnapshot currentDocument =
-    await ref.get(); // get updated data reference
-
-    return User.fromFirestore(
-        currentDocument); // create a user object and return
-  }
-
-  Future<User> saveProfileDetails(FirebaseUser user, String profileImageUrl,
-      String email, String bio) async {
-    print("saveProfileDetails");
-
-    String uid = _firestore.document(user.uid).toString();
-    //get a reference to the map
-    DocumentReference mapReference = _firestore.document(user.uid);
-    var mapData = {'uid': uid};
-    //map the uid to the username
-    mapReference.setData(mapData);
-
-    DocumentReference ref = _firestore.document(
-        uid); //reference of the user's document node in database/users. This node is created using uid
-    var data = {
-      'photoUrl': profileImageUrl,
-      'email': email,
-      'bio': bio,
-    };
-    await ref.setData(data, merge: true); // set the photourl, age and username
-    final DocumentSnapshot currentDocument =
-    await ref.get(); // get updated data back from firestore
-    return User.fromFirestore(
-        currentDocument); // create a user object and return it
-  }
-
   @override
   void initState() {
     super.initState();
@@ -148,7 +50,10 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       if (_formKey.currentState.validate()) {
         _formKey.currentState.save();
-        FirestoreServiceAuth.login(_email, _password);
+        FirestoreServiceAuth.loginWithFirebase(_email, _password);
+        var cu = await FirestoreServiceAuth.isUserLogged();
+        print('current User Check bool : ${cu}  ');
+
         return true;
       } else {
         _displaySnackBar(context, "Enter Correct Info");
@@ -202,19 +107,20 @@ class _LoginScreenState extends State<LoginScreen> {
               UIHelper.verticalSpace(10),
 
               /// AppName
-//                  Align(
-//                    alignment: Alignment.topCenter,
-//                    child: Text(
-//                      ' هــبـة ',
-//                      style: TextStyle(
-//                        fontFamily: ArabicFonts.Cairo,
-//                        fontSize: 32.0,
-//                        letterSpacing: 5,
-//                        fontWeight: FontWeight.bold,
-//                        color: Colors.black45,
-//                      ),
-//                    ),
-//                  ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  ' هــبـة ',
+                  style: TextStyle(
+                    fontFamily: ArabicFonts.Cairo,
+                    fontSize: 32.0,
+                    letterSpacing: 5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black45,
+                  ),
+                ),
+              ),
+
               /// Form
               FormUi(),
 //                    UIHelper.verticalSpace(20),
@@ -329,7 +235,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                           onPressed: () {
-                            return signInWithGoogle().whenComplete(() {
+                            return FirestoreServiceAuth.signInWithGoogle()
+                                .whenComplete(() {
                               print(FirestoreServiceAuth
                                   .googleSignIn.currentUser.displayName);
 

@@ -2,20 +2,18 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
-import 'dart:developer';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/models.dart';
+import 'package:heba_project/models/Chat.dart';
 import 'package:heba_project/models/user_data.dart';
-import 'package:heba_project/ui/Screens/chat_screen.dart';
+import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/Screens/search_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'Create_post_screen.dart';
 import 'FeedScreen.dart';
+import 'chats_screen.dart';
 
 enum AuthStatus {
   NOT_DETERMINED,
@@ -67,11 +65,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final String currentUserId = Provider
         .of<UserData>(context)
         .currentUserId;
-    var currentLocation = Provider.of<UserLocation>(context);
-    var currentUser = Provider.of<FirebaseUser>(context);
+    final ChatModel conversation = Provider
+        .of<UserData>(context)
+        .conver;
+    final User user = Provider
+        .of<UserData>(context)
+        .user;
+//    var currentLocation = Provider.of<UserLocation>(context);
+//    var currentUser = Provider.of<FirebaseUser>(context);
 //     currentLocation = Us;
-    log(" home Screen : currentLocation.address = ${currentLocation.address}");
-    UniqueKey key;
+//    log(' home Screen : currentLocation.address value is currentLocationFrom stream = ${currentLocation.address}');
+
+//    UniqueKey key;
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -81,15 +86,22 @@ class _HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             FeedScreen(
               currentUserId: currentUserId,
+              userId: currentUserId,
             ),
-            SearchScreen(),
+            SearchScreen(
+              currentUserId: currentUserId,
+            ),
             CreatePostScreen(
               currentUserId: currentUserId,
             ),
-            ChatsScreen(),
+            ChatsScreen(
+              currentUserId: currentUserId,
+            ),
             ProfileScreen(
               currentUserId: currentUserId,
               userId: currentUserId,
+//              user: user,
+//              chat: chat,
             ),
           ],
           onPageChanged: (int index) {
@@ -99,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         bottomNavigationBar: CupertinoTabBar(
-          key: key,
+//          key: key,
           inactiveColor: Colors.grey,
           border: Border.all(color: Colors.grey, width: 1),
           currentIndex: _currentTab,

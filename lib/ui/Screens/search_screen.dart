@@ -9,12 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
-import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
-import 'package:heba_project/ui/widgets/SearchBarIOS.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
 
 class SearchScreen extends StatefulWidget {
+  final String currentUserId;
+
+  SearchScreen({this.currentUserId});
+
   @override
   _SearchScreenState createState() => _SearchScreenState();
 }
@@ -23,29 +25,34 @@ class _SearchScreenState extends State<SearchScreen> {
   TextEditingController _searchController = TextEditingController();
   Future<QuerySnapshot> _users;
 
+  //  todo 1- fix search function
+  /// todo 2- fix profile ID not work after selected from search
+  ///
   _buildUserTile(User user) {
     return ListTile(
-      leading: CircleAvatar(
-        radius: 20.0,
-        backgroundImage: user.profileImageUrl.isEmpty
-            ? AssetImage('assets/images/uph.jpg')
-            : CachedNetworkImageProvider(user.profileImageUrl),
-      ),
-      title: Text(user.name),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ProfileScreen(
-            userId: user.id,
-          ),
+        leading: CircleAvatar(
+          radius: 20.0,
+          backgroundImage: user.profileImageUrl.isEmpty ? AssetImage(
+              'assets/images/uph.jpg') : CachedNetworkImageProvider(
+              user.profileImageUrl),
         ),
-      ),
-    );
+        title: Text(user.name),
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    ProfileScreen(
+                      currentUserId: widget.currentUserId,
+                      userId: user.uid,
+                    ),
+              ));
+        });
   }
 
   _clearSearch() {
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _searchController.clear());
+    WidgetsBinding.instance.addPostFrameCallback((_) =>
+        _searchController.clear());
     setState(() {
       _users = null;
     });
@@ -56,17 +63,23 @@ class _SearchScreenState extends State<SearchScreen> {
       margin: EdgeInsets.only(top: 5.0),
       height: 50.0,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.0),
-        color: CustomColors.unselectedCardColor,
-      ),
+          borderRadius: BorderRadius.circular(12.0), color: Colors.transparent),
       child: TextField(
-        onSubmitted: (input) {
+        onChanged: (input) {
           if (input.isNotEmpty) {
             setState(() {
+              _users = DatabaseService.searchUsers(input);
               _users = DatabaseService.searchUsers(input);
             });
           }
         },
+//        onSubmitted: (input) {
+//          if (input.isNotEmpty) {
+//            setState(() {
+//              _users = DatabaseService.searchUsers(input);
+//            });
+//          }
+//        },
         controller: _searchController,
         decoration: InputDecoration(
           hintText: "Search for name",
@@ -102,13 +115,13 @@ class _SearchScreenState extends State<SearchScreen> {
           title: "Search ",
           color: Colors.white,
         ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        body: ListView(
+          shrinkWrap: true,
           children: <Widget>[
-            SearchBar(
-              focusNode: null,
-              controller: _searchController,
-            ),
+//            SearchBar(
+//              focusNode: null,
+//              controller: _searchController,
+//            ),
             searchFun(),
             Divider(
               height: 10,
@@ -123,7 +136,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ? Center(
       child: Text('Search for a user'),
     )
-        : FutureBuilder(
+        : FutureBuilder<QuerySnapshot>(
       future: _users,
       builder: (context, map) {
         if (!map.hasData) {
@@ -138,7 +151,9 @@ class _SearchScreenState extends State<SearchScreen> {
           shrinkWrap: true,
           itemCount: map.data.documents.length,
           itemBuilder: (BuildContext context, int index) {
-            User user = User.fromDoc(map.data.documents[index]);
+            User user = User.fromFirestore(map.data.documents[index]);
+//                  Chat chat = Chat.fromFiresore(doc)
+
             return _buildUserTile(user);
           },
         );

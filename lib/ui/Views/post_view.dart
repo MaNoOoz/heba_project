@@ -4,14 +4,15 @@
 
 import 'package:animator/animator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
-import 'package:heba_project/ui/Screens/profile_screen.dart';
+import 'package:heba_project/ui/shared/Assets.dart';
 
 class PostView extends StatefulWidget {
   final String currentUserId;
-  final Post2 post;
+  final HebaModel post;
   final User author;
 
   PostView({this.currentUserId, this.post, this.author});
@@ -83,17 +84,10 @@ class _PostViewState extends State<PostView> {
     return Column(
       children: <Widget>[
         GestureDetector(
-          onTap: () =>
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      ProfileScreen(
-                        currentUserId: widget.currentUserId,
-                        userId: widget.post.authorId,
-                      ),
-                ),
-              ),
+          onTap: () {
+            print("WTF U WANT !!!! ");
+            print("STOP BUG  ME !! :) ");
+          },
           child: Container(
             padding: EdgeInsets.symmetric(
               horizontal: 16.0,
@@ -101,17 +95,12 @@ class _PostViewState extends State<PostView> {
             ),
             child: Row(
               children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Image.asset('assets/images/user_placeholder.jpg'),
-                  ),
-                ),
+//
                 CircleAvatar(
                   radius: 25.0,
                   backgroundColor: Colors.grey,
                   backgroundImage: widget.author.profileImageUrl.isEmpty
-                      ? AssetImage('assets/images/user_placeholder.jpg')
+                      ? AssetImage(AvailableImages.appIcon)
                       : CachedNetworkImageProvider(
                       widget.author.profileImageUrl),
                 ),
@@ -132,18 +121,23 @@ class _PostViewState extends State<PostView> {
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
-
               /// todo fix
+              Container(
+                height: 100,
+                child: Image.asset(AvailableImages.appIcon),
+              ),
+
 //              Container(
-//                height: MediaQuery
-//                    .of(context)
-//                    .size
-//                    .width,
+//                height: 100,
 //                decoration: BoxDecoration(
 //                  image: DecorationImage(
-////                    image: CachedNetworkImageProvider(widget.post.profileImage?? '') ,
+//                    image: CachedNetworkImageProvider(
+////                      widget.post.oImage,
+//                      AvailableImages.appIcon,
+//                      scale: 2,
+//                    ),
 ////                    image: CachedNetworkImageProvider() ,
-//                    fit: BoxFit.cover,
+//                    fit: BoxFit.contain,
 //                  ),
 //                ),
 //              ),

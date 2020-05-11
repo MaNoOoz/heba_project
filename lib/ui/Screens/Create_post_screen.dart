@@ -5,11 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/service/LocationService.dart';
@@ -30,7 +29,7 @@ class CreatePostScreen extends StatefulWidget {
   static final String id = 'CreatePostScreen';
   final String currentUserId;
   Key key;
-  Post2 post;
+  HebaModel post;
 
   CreatePostScreen({Key key, this.currentUserId}) : super(key: key);
 
@@ -46,29 +45,25 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   /// Multi Image Picker ====================================
   List<Asset> _readyToUploadImages = List<Asset>();
-  var imageUrl2;
   var uploadingState;
   var mSelectedImage;
-  var mImagesPath;
+  List<dynamic> mImagesPath;
   String _error = 'No Error Dectected';
 
   /// Post ===================================================
-  var userId;
-  var fuser;
-  var fuserImage;
-  var currentUserId;
-  var isMine;
-  var mCar;
-  UserLocation fetchedLocation;
+  String userId;
+  String fuser;
+  String fuserImage;
+  String currentUserId;
+  bool isMine;
+  Position currentPosition;
+  Geoflutterfire geo = Geoflutterfire();
 
   /// Form ====================================================
   GlobalKey<FormState> _formkey = GlobalKey();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _textFieldControllerName;
   TextEditingController _textFieldControllerDesc;
-
-//  TextEditingController _textFieldControllerLoca;
-//  TextEditingController _textFieldControllerLoca2;
   bool _autoValidate = false;
   String _name;
   String _desc;
@@ -77,47 +72,30 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   /// Map ====================================================
   String mCl;
   Color color;
-  UserLocation current_location;
   Future<BottomSheet> mBottomSheetForFiltiring;
 
-//  final Map<String, Marker> _markers = {};
-  final Set<Marker> _markers = {};
-  Completer<GoogleMapController> _controller = Completer();
-  static const LatLng _center = const LatLng(26.0055512, 44.169235);
-  LatLng _lastMapPosition = _center;
-  MapType _currentMapType = MapType.normal;
-
-  String city = "";
-
   ///  ====================================================
-  _LocationFromFuture() async {
-    UserLocation ll;
-    try {
-      ll = await LocationService().getLocation();
-      print("_LocationFromFuture : ${ll.address}");
-      return ll;
-    } on Exception catch (e) {
-      print('Could not get location: ${e.toString()}');
-    } finally {
-      print("_LocationFromFuture Done");
-    }
-    return ll;
-  }
 
   @override
   void initState() {
     super.initState();
+    Geolocator().getCurrentPosition().then((currloc) {
+      setState(() {
+        currentPosition = currloc;
+      });
+    });
+
+//    LocationService().getPosition().then((value) {
+//      setState(() {
+//        currentPosition = value;
+//      });
+//    });
 
     _loading = false;
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
     this._name = _textFieldControllerName.text;
     this._desc = _textFieldControllerDesc.text;
-
-//    _textFieldControllerLoca = TextEditingController();
-//    this._location = _textFieldControllerLoca.text;
-//    this.locationString = longitude + "," + latitude;
-//    this.locationString = _textFieldControllerLoca2.text;
   }
 
   @override
@@ -128,7 +106,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     fuserImage = Provider
         .of<FirebaseUser>(context)
         .photoUrl;
-    current_location = Provider.of<UserLocation>(context);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -267,8 +244,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             Icons.add_circle,
                             color: Colors.blueAccent,
                           ),
-                          onPressed: () {
-                            _loadAssets();
+                          onPressed: () async {
+                            await _loadAssets();
                           },
                         ),
                         Text('أضف صورة')
@@ -317,7 +294,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         autovalidate: _autoValidate,
         child: Column(
           children: <Widget>[
-
             /// Name OF Heba
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -377,36 +353,47 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   textDirection: TextDirection.rtl,
                   children: <Widget>[
-                    Text(
-                      "${city}",
-                      style: TextStyle(
+                    currentPosition == null
+                        ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                        : Flexible(
+                      flex: 2,
+                      child: Text(
+                        currentPosition.latitude == null
+                            ? ""
+                            : "${currentPosition.latitude}",
+                        style: TextStyle(
+                          fontSize: 12,
                           color: Colors.blueAccent,
-                          fontWeight: FontWeight.bold),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: Text(
-                          "تحديد الموقع",
-                          style: TextStyle(
-                              color: Colors.black38,
-                              fontWeight: FontWeight.bold),
-                        )),
+                    Flexible(
+                      flex: 1,
+                      child: Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: Text(
+                            "تحديد الموقع الحالي",
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black45,
+                                fontWeight: FontWeight.bold),
+                          )),
+                    ),
                     const Icon(
                       Icons.location_on,
                       color: Colors.blueAccent,
                     ),
                   ],
                 ),
-                onPressed: () async {
-                  fetchedLocation = await _GetUserLocation().then((value) {
-                    city = value.address;
-                    print(
-                        " Create _post_Screen :FormUi: onPressed currentLocation.address = ${value
-                            .address}");
-                  });
+                onPressed: () {
+                  var s = currentPosition;
+                  print(s);
                 },
               ),
             ),
@@ -434,7 +421,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   showLoadingDialog(BuildContext context) {
-//    if (!_validateInputs() || imageUrl2 == null) {
     return AlertDialog(
       title: Text('جاري رفع الإعلان'),
       content: CircularProgressIndicator(),
@@ -460,8 +446,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     if (_formkey.currentState.validate()) {
 //    If all data are correct then save data to out variables
       _formkey.currentState.save();
-      print(
-          "From _validateInputs :  name $_name desc $_desc  Userlocation : $fetchedLocation");
+//      print("From _validateInputs :  name $_name desc $_desc  Userlocation : ${fetchedLocation.address}");
       return true;
     } else {
       return false;
@@ -476,7 +461,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   /// Multi Image Picker ======================================================
-
   /// Selected Images
   Future<void> _loadAssets() async {
     List<Asset> resultList = List<Asset>();
@@ -530,11 +514,67 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return listOfImageLinks;
   }
 
-  Future<Post2> _CreatePost() async {
+  Future<HebaModel> _CreatePost() async {
     print("_CreatePost Called");
-    Post2 post2;
+    HebaModel publicFeed;
+    HebaModel privateFeed;
 
-//    setState(() {
+    mImagesPath = await _listOfImageLinks();
+    print("mImagesPath: ${mImagesPath.length} ");
+
+    /// public posts
+    var currentUserId2 =
+        Provider
+            .of<UserData>(context, listen: false)
+            .currentUserId;
+    isMine = widget.currentUserId == currentUserId2;
+    var ts = Timestamp.fromDate(DateTime.now());
+    var lat = currentPosition.latitude;
+    var long = currentPosition.longitude;
+    var gePoint = GeoPoint(lat, long);
+//    var geFirePoint = GeoFirePoint(lat, long);
+
+
+    publicFeed = HebaModel(
+        oName: fuser,
+        oImage: fuserImage,
+        isFeatured: false,
+        isMine: isMine,
+        imageUrls: mImagesPath,
+        hName: _name,
+        geoPoint: gePoint,
+//        geoFirePoint: geFirePoint,
+        hDesc: _desc,
+        authorId: widget.currentUserId,
+        timestamp: ts);
+
+//    print("geFirePoint :${geFirePoint.geoPoint}");
+
+    /// database
+    DatabaseService.createPublicPosts(publicFeed);
+
+    /// private Post Object
+//    privateFeed = Post2(
+//          imageUrls: mImagesPath,
+//          oName: fuser,
+//          oImage: fuserImage,
+//          isFeatured: false,
+//          isMine: isMine,
+////          location: fetchedLocation,
+////          geoPoint: GeoPoint(fetchedLocation.latitude, fetchedLocation.longitude),
+//          hName: _name,
+//          hDesc: _desc,
+//          authorId: widget.currentUserId,
+//          timestamp: ts);
+
+    /// database
+//      DatabaseService.createPrivatePost(publicFeed);
+
+//    /// public Post Object
+
+//    current_location = post2.location;
+
+    //    setState(() {
 //      var mLocation = cl;
 //    });
 //
@@ -549,109 +589,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //    var ts = Timestamp.fromDate(DateTime.now());
 //    print("car after map ${mCar.id} ${sd['id']} ${mCar.drive().toString()}");
 //
-    mImagesPath = await _listOfImageLinks();
 
-    /// private Post Object
-//    post2 = Post2(
-//        imageUrls: mImagesPath,
-//        oName: fuser,
-//        oImage: fuserImage,
-//        isFeatured: false,
-////        category: Category.home,
-//        hName: _name,
-//        hDesc: _desc,
-//        hLocation: _location,
-//        authorId: Provider.of<UserData>(context, listen: false).currentUserId,
-//        timestamp: Timestamp.fromDate(DateTime.now()));
-//    log("private ${post2.authorId}");
-
-//    /// public Post Object
-
-//    current_location = post2.location;
-    var currentUserId2 =
-        Provider
-            .of<UserData>(context, listen: false)
-            .currentUserId;
-
-    isMine = widget.currentUserId == currentUserId2;
-//    isMine = widget.currentUserId;
-    var ts = Timestamp.fromDate(DateTime.now());
-
-    post2 = Post2(
-        oName: fuser,
-        oImage: fuserImage,
-        isFeatured: false,
-        isMine: isMine,
-//        car: mCar,
-//        location: fetchedLocation,
-        imageUrls: mImagesPath,
-        hName: _name,
-        hDesc: _desc,
-//        hLocation: _location,
-        authorId: widget.currentUserId,
-        timestamp: ts);
-//    log("public ${post2.location.address}");
-
-    /// private posts
-//    DatabaseService.createPost(post2);
-
-    /// public posts
-//    var s = await DatabaseService.createPublicPosts2(post2).then((value) {
-//      log("after public posts ${post2.authorId}");
-//      print("onPressed Triggerd \n"
-//          "Post Object :  name : $_name desc : $_desc location: $locationString \n"
-//          " images pathes : ${mImagesPath.length} "
-//          "Selected Images List : ${_readyToUploadImages.length} \n");
-//    });
-//    log("s ${s.toString()}");
-
-    DatabaseService.createPublicPosts(post2);
-
-//    _displaySnackBar(context);
-
-//    localData data;
-//    await data.addItem(post2);
-
-    setState(() {});
-//    } else {
-//      _displaySnackBar(context);
-//    }
-    return post2;
+    return publicFeed;
   }
-
-  Future<UserLocation> _GetUserLocation() async {
-    var ll = await LocationService().getLocation();
-
-//    Map<String, dynamic> lM = {
-//      "lat": current_location.latitude,
-//      "long": current_location.longitude,
-//      "address": current_location.address,
-//    };
-//
-//    UserLocation s = UserLocation.fromJsonMap(lM);
-//    print("_GetUserLocation Called");
-//    print("${s.longitude} Called");
-//
-//    current_location = UserLocation(
-//      address: current_location.address,
-//      longitude: current_location.longitude,
-//      latitude: current_location.latitude,
-//    );
-//    setState(() {
-//      s = current_location;
-//    });
-    return ll;
-  }
-
-//  Future<Car> _GetUserCar() async {
-//    print("_GetUserCar Called");
-//
-//    Car s = Car(
-//      id: "from _GetUserCar Object Name s",
-//    );
-//
-//    return s;
-//  }
 
   /// Reset data
   Future<bool> _Resetdata() async {
@@ -660,16 +600,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
     _textFieldControllerName.clear();
     _textFieldControllerDesc.clear();
-//    _textFieldControllerLoca.clear();
-//    _textFieldControllerLoca2.clear();
     _readyToUploadImages.clear();
     mImagesPath.clear();
+
     setState(() {
       _desc = '';
-//      _location = '';
       _name = '';
 
-//      readyToUploadImages.length = -1;
 //      listOfImageLinks.length = -1;
     });
     return dateRested;
@@ -711,7 +648,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       _displaySnackBar(context, " تم إضافة الهبة بنجاح");
 
       print("fieldsRested $fieldsRested     " +
-          "userLocationCreated From _CreatePost $postCreated      " +
+          "userLocationCreated From _CreatePost $postCreated " +
           "dataChecked  $dataChecked     " +
           "fieldsRested $fieldsRested   ");
     }
@@ -735,131 +672,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   /// Widgets ==========================================================================================
-
-  Widget showBtnSheetForMap(BuildContext context) {
-    var h = MediaQuery
-        .of(context)
-        .size
-        .height / 2;
-
-    mBottomSheetForFiltiring = showModalBottomSheet(
-        backgroundColor: Colors.transparent,
-        context: context,
-        builder: (context) {
-          return Container(
-            height: h + 50,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(50),
-                topRight: Radius.circular(50),
-              ),
-            ),
-            child: Stack(
-              children: <Widget>[
-                Container(
-                  child: GoogleMap(
-                    gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-                      new Factory<OneSequenceGestureRecognizer>(
-                            () => new EagerGestureRecognizer(),
-                      ),
-                    ].toSet(),
-                    onMapCreated: (GoogleMapController controller) {
-                      _controller.complete(controller);
-                    },
-                    onCameraMove: _onCameraMove,
-                    mapType: MapType.normal,
-                    myLocationButtonEnabled: true,
-                    initialCameraPosition: CameraPosition(
-                      target: _center,
-                      zoom: 11,
-                    ),
-//                    markers: _markers.values.toSet(),
-                    markers: _markers,
-                  ),
-                ),
-//                Positioned(
-//                  bottom: 50,
-//                  right: 10,
-//                  child: Column(
-//                    children: <Widget>[
-//                      RawMaterialButton(
-//                        child: Icon(
-//                          CupertinoIcons.location_solid,
-//                          color: Colors.black38,
-//                          size: 30.0,
-//                        ),
-//                        shape: CircleBorder(),
-//                        elevation: 0.0,
-//                        fillColor: Colors.white,
-//                        padding: const EdgeInsets.all(8.0),
-//                        onPressed: () async {
-////                                Navigator.of(context).pop();
-//                          _onAddMarkerButtonPressed(context);
-//                        },
-//                      ),
-//                    ],
-//                  ),
-//                )
-              ],
-            ),
-          );
-        });
-//    return mBottomSheetForFiltiring;
-  }
-
-  void _onCameraMove(CameraPosition position) {
-    _lastMapPosition = position.target;
-  }
-
-  void _onAddMarkerButtonPressed(BuildContext context) {
-    setState(() {
-      _markers.add(Marker(
-        // This marker id can be anything that uniquely identifies each marker.
-        markerId: MarkerId(_lastMapPosition.toString()),
-        position: _lastMapPosition,
-        infoWindow: InfoWindow(
-          title: 'تحديد هنا',
-          snippet: '5 Star Rating',
-        ),
-        icon: BitmapDescriptor.defaultMarker,
-      ));
-    });
-  }
-
-  Future<void> _getLocationAndGoToIt(context) async {
-    /// CurrentLocation
-    var currentLocation = await Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-    print("userLocation :  $currentLocation");
-
-    /// CameraPosition
-    CameraPosition currentPosition = CameraPosition(
-        bearing: 15.0,
-        target: LatLng(currentLocation.latitude, currentLocation.longitude),
-        tilt: 75.00,
-        zoom: 12.0);
-
-    GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(currentPosition));
-
-//    _onAddMarkerButtonPressed();
-
-//    this.setState(() {
-////      _markers.clear();
-//      var marker = Marker(
-//        markerId: MarkerId("curr_loc"),
-//        position: LatLng(currentLocation.latitude, currentLocation.longitude),
-//        infoWindow: InfoWindow(title: 'موقعي الخالي'),
-//      );
-//      _markers["Current Location"] = marker;
-//    });
-  }
-
-//  void _setLocation(LocationData locData) {
-//    _formData['location'] = locData;
-//  }
-
   ///  ImagesLook
   Widget buildGridView() {
     return GridView.count(
@@ -965,3 +777,36 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     }
   }
 }
+//Future<UserLocation> _GetUserLocation() async {
+//  var ll = await LocationService().getLocation();
+//
+////    Map<String, dynamic> lM = {
+////      "lat": current_location.latitude,
+////      "long": current_location.longitude,
+////      "address": current_location.address,
+////    };
+////
+////    UserLocation s = UserLocation.fromJsonMap(lM);
+////    print("_GetUserLocation Called");
+////    print("${s.longitude} Called");
+////
+////    current_location = UserLocation(
+////      address: current_location.address,
+////      longitude: current_location.longitude,
+////      latitude: current_location.latitude,
+////    );
+////    setState(() {
+////      s = current_location;
+////    });
+//  return ll;
+//}
+//
+////  Future<Car> _GetUserCar() async {
+////    print("_GetUserCar Called");
+////
+////    Car s = Car(
+////      id: "from _GetUserCar Object Name s",
+////    );
+////
+////    return s;
+////  }

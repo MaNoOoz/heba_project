@@ -24,14 +24,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   File _profileImage;
   String _name = '';
-  String _bio = '';
   bool _isLoading = false;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   void initState() {
     super.initState();
     _name = widget.user.name;
-    _bio = widget.user.bio;
   }
 
   _handleImageFromGallery() async {
@@ -79,14 +77,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _profileImage,
         );
         _displaySnackBar(context, 'Profile Image Updated');
-
       }
 
       User user = User(
-        id: widget.user.id,
-        name: _name,
-        profileImageUrl: _profileImageUrl,
-        bio: _bio,
+        profileImageUrl: widget.user.profileImageUrl,
+        documentId: widget.user.documentId,
+        name: widget.user.name,
       );
       // Database update
       DatabaseService.updateUser(user);
@@ -101,10 +97,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.blueAccent,
         title: Text(
           'Edit Profile',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.white),
         ),
       ),
       body: GestureDetector(
@@ -152,21 +148,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           : null,
                       onSaved: (input) => _name = input,
                     ),
-                    TextFormField(
-                      initialValue: _bio,
-                      style: TextStyle(fontSize: 18.0),
-                      decoration: InputDecoration(
-                        icon: Icon(
-                          Icons.book,
-                          size: 30.0,
-                        ),
-                        labelText: 'Bio',
-                      ),
-                      validator: (input) => input.trim().length > 150
-                          ? 'Please enter a bio less than 150 characters'
-                          : null,
-                      onSaved: (input) => _bio = input,
-                    ),
                     Container(
                       margin: EdgeInsets.all(40.0),
                       height: 40.0,
@@ -195,5 +176,4 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final snackBar = SnackBar(content: Text('أدخل معلومات صحيح' + message));
     _scaffoldKey.currentState.showSnackBar(snackBar);
   }
-
 }

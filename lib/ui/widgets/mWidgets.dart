@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
+import 'package:heba_project/ui/shared/Assets.dart';
 
 class mStatlessWidgets {
   Widget mAppBar() {
@@ -47,7 +48,7 @@ class mStatlessWidgets {
             color: Colors.black45,
           ),
           onPressed: () async {
-            FirestoreServiceAuth.logout();
+            FirestoreServiceAuth.signOutFirebase();
 //            Navigator.pushNamed(context, LoginScreen.id);
 
             print("message");
@@ -72,6 +73,16 @@ class mStatlessWidgets {
       ),
     );
   }
+
+  Widget EmptyView() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Image(
+        image: AssetImage(AvailableImages.building),
+      ),
+    );
+  }
+
 }
 
 class mLables extends StatelessWidget {
@@ -97,4 +108,110 @@ class mLables extends StatelessWidget {
       ),
     );
   }
+}
+
+class ButtonMessage extends StatelessWidget {
+  final String text;
+  final GestureTapCallback onTap;
+
+  const ButtonMessage(this.text, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: ShapeDecoration(
+        shape: MessageBorder(usePadding: false),
+        shadows: [
+          BoxShadow(color: Colors.black, blurRadius: 4, offset: Offset(2, 2)),
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        clipBehavior: Clip.antiAlias,
+        shape: MessageBorder(),
+        child: InkWell(
+          splashColor: Colors.orange,
+          hoverColor: Colors.blueGrey,
+          highlightColor: Colors.transparent,
+          onTap: onTap,
+          child: Container(
+            height: 64,
+            padding: EdgeInsets.only(bottom: 20, right: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                Container(
+                  width: 7,
+                  height: 8,
+                  decoration: BoxDecoration(
+                      color: Color(0xFFCCCCCC), shape: BoxShape.circle),
+                ),
+                Container(
+                  width: 3,
+                ),
+                Container(
+                  width: 7,
+                  height: 8,
+                  decoration: BoxDecoration(
+                      color: Color(0xFFCCCCCC), shape: BoxShape.circle),
+                ),
+                Container(
+                  width: 3,
+                ),
+                Container(
+                  width: 7,
+                  height: 8,
+                  decoration: BoxDecoration(
+                      color: Color(0xFFCCCCCC), shape: BoxShape.circle),
+                ),
+                Container(
+                  width: 6,
+                ),
+                Container(
+                  width: 25,
+                  height: 24,
+                  decoration: BoxDecoration(
+                      color: Color(0xFF1287BA), shape: BoxShape.circle),
+                  child: Center(
+                    child:
+                    Text(text, style: TextStyle(color: Color(0xFFFFFFFF))),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MessageBorder extends ShapeBorder {
+  final bool usePadding;
+
+  MessageBorder({this.usePadding = true});
+
+  @override
+  EdgeInsetsGeometry get dimensions =>
+      EdgeInsets.only(bottom: usePadding ? 20 : 0);
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection textDirection}) => null;
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection textDirection}) {
+    rect = Rect.fromPoints(rect.topLeft, rect.bottomRight - Offset(0, 20));
+    return Path()
+      ..addRRect(
+          RRect.fromRectAndRadius(rect, Radius.circular(rect.height / 2)))
+      ..moveTo(rect.bottomCenter.dx - 10, rect.bottomCenter.dy)
+      ..relativeLineTo(10, 20)..relativeLineTo(20, -20)
+      ..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection textDirection}) {}
+
+  @override
+  ShapeBorder scale(double t) => this;
 }

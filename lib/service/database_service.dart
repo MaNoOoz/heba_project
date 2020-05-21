@@ -46,8 +46,7 @@ class DatabaseService {
     });
 
     /// Logs
-    documents.map((e) =>
-        e.data.forEach((key, value) {
+    documents.map((e) => e.data.forEach((key, value) {
           print("HebaPostsFromDb : Key : $key, Value : $value");
         }));
 
@@ -94,16 +93,17 @@ class DatabaseService {
   }
 
   static Future<QuerySnapshot> searchUsers(String keyword) {
-    Future<QuerySnapshot> users = usersRef.where(
-        'name', isGreaterThanOrEqualTo: keyword).getDocuments();
+    Future<QuerySnapshot> users =
+    usersRef.where('name', isGreaterThanOrEqualTo: keyword).getDocuments();
     return users;
   }
 
   /// todo Fix
   static Future<QuerySnapshot> searchChats(String keyword, User user,
       Chat chat) {
-    Future<QuerySnapshot> chats = contacts.document(user.uid).collection(
-        'userChats')
+    Future<QuerySnapshot> chats = contacts
+        .document(user.uid)
+        .collection('userChats')
         .where(chat.chatId, isGreaterThanOrEqualTo: keyword)
         .getDocuments();
     return chats;
@@ -206,11 +206,14 @@ class DatabaseService {
 
   /// Profile Page ===============================================================================
   static Future<List<HebaModel>> getUserPosts(String userId) async {
-    QuerySnapshot userPostsSnapshot = await postsRef.document(userId)
-        .collection('userPosts').orderBy('timestamp', descending: true)
+    QuerySnapshot userPostsSnapshot = await postsRef
+        .document(userId)
+        .collection('userPosts')
+        .orderBy('timestamp', descending: true)
         .getDocuments();
-    List<HebaModel> posts = userPostsSnapshot.documents.map((doc) =>
-        HebaModel.fromFirestore(doc)).toList();
+    List<HebaModel> posts = userPostsSnapshot.documents
+        .map((doc) => HebaModel.fromFirestore(doc))
+        .toList();
     return posts;
   }
 
@@ -227,9 +230,11 @@ class DatabaseService {
       {String senderID, String channelName, String reciverID}) async {
     var ts = Timestamp.fromDate(DateTime.now());
 
-    CHATS.document(senderID).collection('userChats')
+    CHATS
+        .document(senderID)
+        .collection(USERCHATS)
         .document(channelName)
-        .collection("messages");
+        .collection(channelName);
 
     Message message = Message(
         chatId: channelName,
@@ -247,11 +252,15 @@ class DatabaseService {
   }
 
   ///  as a List future
-  static Future<List<Message>> GetMessagesFutureAsList(
-      {String senderID, String reciverID, String channelName}) async {
-    QuerySnapshot messagesSnapshots = await CHATS.document(senderID).collection(
-        'userChats').document(channelName).collection("messages").orderBy(
-        'timestamp', descending: true).getDocuments();
+  static Future<List<Message>> GetMessagesFutureAsList(String senderID,
+      String reciverID, String channelName) async {
+    QuerySnapshot messagesSnapshots = await CHATS
+        .document(senderID)
+        .collection(USERCHATS)
+        .document(channelName)
+        .collection(channelName)
+        .orderBy('timestamp', descending: true)
+        .getDocuments();
 
     if (messagesSnapshots.documents.length > 0) {
       print("U Have  ${messagesSnapshots.documents.length} Messages");
@@ -259,12 +268,14 @@ class DatabaseService {
       print(
           "Error U Dont Have   ${messagesSnapshots.documents.length} Messages");
     }
-    List<Message> messages = messagesSnapshots.documents.map((doc) =>
-        Message.fromFirestore(doc)).toList();
+    List<Message> messages = messagesSnapshots.documents
+        .map((doc) => Message.fromFirestore(doc))
+        .toList();
     return messages;
   }
 
   /// Chats Page ==================================================
+
   static Future<List<String>> getUserChats(String userId, String chatId) async {
     Chat chat;
     print("${chat.chatId}");
@@ -280,18 +291,90 @@ class DatabaseService {
     return chatIds;
   }
 
-  /// check if changed
-  static void checkForChange(String id) {
-    print("checkForChange Called");
-
-    CHATS.document(id).collection(USERCHATS).snapshots().listen((
-        querySnapshot) {
-      for (var docChange in querySnapshot.documentChanges) {
-        if (docChange.type == DocumentChangeType.added) {
-          print("DATA CHANGED ${docChange.document.data}");
-        }
+  static String getDocId({String docID, String currentUserId}) {
+    var curentChats =
+    CHATS.document(currentUserId).collection(USERCHATS).snapshots();
+    var docId = curentChats.forEach((documentSnapshot) {
+      var docs = documentSnapshot.documents;
+      for (var doc in docs) {
+        docID = doc.documentID;
+        print("getDocId $docID");
       }
     });
+    return docID;
+  }
+
+  static Future<QuerySnapshot> ChatsFromFuture(currentUserId) async {
+    var curentChats = await CHATS
+        .document(currentUserId)
+        .collection(USERCHATS)
+        .getDocuments();
+    return curentChats;
+  }
+
+  static Stream<QuerySnapshot> ChatsFromStream(currentUserId) {
+    var curentChats =
+    CHATS.document(currentUserId).collection(USERCHATS).snapshots();
+    return curentChats;
+  }
+
+  /// TEST
+  /// as A Stream
+  StreamController<Chat> _chatsController = StreamController<Chat>();
+
+  Stream<Chat> get chatsStream => _chatsController.stream;
+
+  Stream<Chat> ChatsFromStreamTest(currentUserId) {
+    CHATS
+        .document(currentUserId)
+        .collection(USERCHATS)
+        .snapshots()
+        .listen((querySnapshot) {
+      var docs = querySnapshot.documents;
+      for (var doc in docs) {
+        var docID = doc.documentID;
+        print("getDocId $docID");
+        Chat chat = Chat.fromFiresore(doc);
+        print("chat ${chat.chatId}");
+
+        _chatsController.add(chat);
+      }
+    });
+  }
+
+  static changes(QuerySnapshot querySnapshot, String currentUserId) {
+//    var chatStream =  ChatsFromStream(currentUserId);
+    var docId = getDocId(currentUserId: currentUserId);
+
+//    todo
+    for (var docChange in querySnapshot.documentChanges) {
+      if (docChange.type == DocumentChangeType.added) {
+        var channelName = "";
+        docId = docId
+            .substring(0, 5)
+            .compareTo(currentUserId.substring(0, 5))
+            .toString();
+        channelName = docId;
+        print("channelName  ${channelName}");
+
+        if (currentUserId == docId) {}
+        print("DATA CHANGED ${docChange.document.data}");
+      }
+    }
+  }
+
+  /// check if changed ==================================== Listener ======================
+  static checkForChange(String currentUserId) {
+    print("checkForChange Called");
+    var chatStream = ChatsFromStream(currentUserId);
+//    todo
+//    chatStream.
+//
+//    chatStream.listen((event) {
+//      var result = changes(event, currentUserId);
+//      print("result :  ${result}");
+//      return result;
+//    });
   }
 
   /// Create new Chat
@@ -301,7 +384,9 @@ class DatabaseService {
   }) async {
     print("_CreateChat Called");
 
-    CHATS.document(currentUserId).collection(USERCHATS)
+    CHATS
+        .document(currentUserId)
+        .collection(USERCHATS)
         .document(channelName)
         .collection(channelName);
 
@@ -317,12 +402,73 @@ class DatabaseService {
     CHATS.add(map);
   }
 
-  static void CreateFakeMessage(
-      {String senderID, String channelId, String reciverID}) {
+  static Future<List<Chat>> CreateFakeChatFuture({
+    String currentUserId,
+    String channelName,
+    User sender,
+    User reciver,
+  }) async {
+    print("_CreateChat Called");
+    List<Chat> chats;
+
+    var ref = CHATS.document(currentUserId).collection(USERCHATS);
+//        .document(channelName)
+//        .collection(channelName);
+
+    Chat mChat = Chat(
+      chatId: "@@@@",
+      messages: [],
+      chatingFrom: User(),
+      chatingWith: User(),
+    );
+
+    /// database
+    //    createFakeChat(mChat, _collectionReference);
+    Map map = mChat.ToMap();
+
+    ref.add(map);
+    return chats;
+  }
+
+//  static void CreateFakeMessage({String senderID, String channelId, String reciverID}) {
+//    var ts = Timestamp.fromDate(DateTime.now());
+//
+//    CollectionReference messagesSnapshots = CHATS.document(senderID).collection(
+//        USERCHATS).document(channelId).collection(USERMESSAGES);
+//
+//    Message message = Message(
+//        chatId: channelId,
+//        message: "TEST FROM createMesageForUser",
+//        senderName: "",
+//        receiverId: reciverID,
+//        createdAt: DateTime.now().toIso8601String().toString(),
+//        seen: false,
+//        timestamp: ts,
+//        senderId: senderID);
+//    var mapFromMessage = message.toMap();
+//    messagesSnapshots.add(mapFromMessage);
+//
+//    var Fakemessages = [];
+//    Fakemessages.add(message);
+//  }
+  static void CreateChatAndFakeMessage(
+      {String senderID, String channelId, String reciverID}) async {
     var ts = Timestamp.fromDate(DateTime.now());
 
-    CollectionReference messagesSnapshots = CHATS.document(senderID).collection(
-        USERCHATS).document(channelId).collection(USERMESSAGES);
+    /// todo loop on messages in firestore
+    CollectionReference chatSnapshot = CHATS
+        .document(senderID)
+        .collection(USERCHATS)
+        .document(channelId)
+        .collection(channelId);
+    var messagesSnapshots = await chatSnapshot.getDocuments();
+    var msgs =
+    messagesSnapshots.documents.map((e) =>
+        e.data.forEach((key, value) {
+          var mMap = {key, value};
+          print(" SSSSSSS $mMap");
+        }));
+    print(msgs);
 
     Message message = Message(
         chatId: channelId,
@@ -334,18 +480,22 @@ class DatabaseService {
         timestamp: ts,
         senderId: senderID);
     var mapFromMessage = message.toMap();
-    messagesSnapshots.add(mapFromMessage);
+    chatSnapshot.add(mapFromMessage);
 
-    var Fakemessages = [];
-    Fakemessages.add(message);
+//    var Fakemessages = msgs;
+//    msgs.add(message);
+
   }
 
   static Stream<QuerySnapshot> getStreamOfMessagesFromDocument(String senderID,
-      String channelId) {
+      String channelId, String reciverID) {
     print("${channelId}");
 
-    var chatsSnapshotStream = CHATS.document(senderID).collection("userChats")
-        .document(channelId).collection("messages")
+    var chatsSnapshotStream = CHATS
+        .document(senderID)
+        .collection(USERCHATS)
+        .document(channelId)
+        .collection(channelId)
         .snapshots();
 
     chatsSnapshotStream.map((QuerySnapshot msg) {
@@ -353,12 +503,17 @@ class DatabaseService {
         return Message.fromFirestore(e);
       });
     });
+    return chatsSnapshotStream;
   }
+
 
   static List<String> createChatIdsForUser(
       {String currentUserId, String userId}) {
-    CollectionReference messagesSnapshots = contacts.document(currentUserId)
-        .collection('userContacts').document(userId).collection("chats")
+    CollectionReference messagesSnapshots = contacts
+        .document(currentUserId)
+        .collection('userContacts')
+        .document(userId)
+        .collection("chats")
         .orderBy('timestamp', descending: true);
 
     Chat message = Chat(chatId: "test");

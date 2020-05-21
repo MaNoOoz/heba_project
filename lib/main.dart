@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:heba_project/service/LocationService.dart';
+import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/state/AppState.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
 import 'package:heba_project/ui/Screens/Create_post_screen.dart';
@@ -17,14 +18,15 @@ import 'package:heba_project/ui/Screens/Location_Pickup.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
 import 'package:heba_project/ui/Screens/MapScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
-import 'package:heba_project/ui/Screens/chats_screen.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/shared/AppNavigation.dart';
 import 'package:heba_project/ui/shared/theme.dart';
 import 'package:provider/provider.dart';
 
+import 'models/Chat.dart';
 import 'models/models.dart';
 import 'models/user_data.dart';
+import 'ui/Screens/ChatListScreen.dart';
 
 void main() {
   runApp(MyApp());
@@ -37,13 +39,10 @@ class MyApp extends StatelessWidget {
       builder: (BuildContext context, AsyncSnapshot map) {
 //        todo make sure this is the right way to check user
         if (!map.hasData == false) {
-          Provider
-              .of<UserData>(context, listen: true)
-              .currentUserId = map.data.uid;
-          Provider
-              .of<UserData>(context, listen: true)
-              .currentChatId = map.data.uid.toString().substring(0, 14);
-//          print("_getScreenId : currentUserId s : ${currentUserId.toString()}");
+          Provider.of<UserData>(context, listen: true).currentUserId =
+              map.data.uid;
+          Provider.of<UserData>(context, listen: true).currentChatId =
+              map.data.uid.toString().substring(0, 14);
 
           return HomeScreen();
         } else {
@@ -77,7 +76,7 @@ class MyApp extends StatelessWidget {
           onGenerateRoute: Router.generateRoute,
           routes: {
             LoginScreen.id: (context) => LoginScreen(),
-            ChatsScreen.id: (context) => ChatsScreen(),
+            ChatListScreen.id: (context) => ChatListScreen(),
             ChatScreen.id: (context) => ChatScreen(),
             HomeScreen.id: (context) => HomeScreen(),
             ProfileScreen.id: (context) => ProfileScreen(),
@@ -102,6 +101,7 @@ class MyApp extends StatelessWidget {
             value: LocationService().locationStream),
         StreamProvider<Position>.value(
             value: LocationService().locationStream2),
+        StreamProvider<Chat>.value(value: DatabaseService().chatsStream),
 //        StreamProvider<UserLocation>.value(value: LocationService().locationStream),
 //        StreamProvider<Post2>.value(value: DatabaseService().PostsStream), // Not Working
       ],

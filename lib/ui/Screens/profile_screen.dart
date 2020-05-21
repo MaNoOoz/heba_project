@@ -15,7 +15,6 @@ import 'package:heba_project/ui/shared/constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
 
-import 'ChatScreen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -38,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<HebaModel> _posts = [];
   int _displayPosts = 0; // 0 - grid, 1 - column
   User _profileUser;
-  bool isMyProfile = false;
+  bool isMyProfile;
 
   /// life cycle
   @override
@@ -80,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   _initProfileInfo() async {
-//    widget.userId == Provider.of<UserData>(context).currentUserId;
+    isMyProfile = widget.userId == widget.currentUserId;
 
     User profileUser = await DatabaseService.getUserWithId(widget.userId);
     print("current profileUser id :  ${profileUser.documentId}");
@@ -113,12 +112,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Widgets ======================
 
   _buildProfileInfo(User user) {
-    isMyProfile = widget.userId == widget.currentUserId;
+    print("_buildProfileInfo : Called");
 
-    print(
-        "widget.userId : ${widget.userId} widget.currentUserId ${widget
-            .currentUserId}");
-    print("isMyProfile : ${isMyProfile}");
+    ///   print("widget.userId : ${widget.userId} widget.currentUserId ${widget.currentUserId}");
+    ///   print("isMyProfile : ${isMyProfile}");
 
     return ClipPath(
       clipper: MyClipper(),
@@ -147,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               image: user.profileImageUrl.isEmpty
                                   ? Image.asset(AvailableImages.uph)
                                   : CachedNetworkImageProvider(
-                                  user.profileImageUrl),
+                                      user.profileImageUrl),
                             )),
                       ),
                     ),
@@ -225,17 +222,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 alignment: Alignment.bottomRight,
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ChatScreen(
-                                currentUserId: widget.currentUserId,
-                                userId: widget.userId,
-//                                  user: currentUser,
-//                                  chat: widget.chat,
-                              ),
-                        ));
+//                          Navigator.push(
+//                              context,
+//                              MaterialPageRoute(
+//                                builder: (_) => ChatScreen(
+//                                  loggedInUserUid: widget.currentUserId,
+//                                  userId: widget.userId,
+////                                  user: currentUser,
+////                                  chat: widget.chat,
+//                                ),
+//                              ));
+//                        todo
                   },
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),

@@ -11,9 +11,9 @@ import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/Screens/search_screen.dart';
 import 'package:provider/provider.dart';
 
+import 'ChatListScreen.dart';
 import 'Create_post_screen.dart';
 import 'FeedScreen.dart';
-import 'chats_screen.dart';
 
 enum AuthStatus {
   NOT_DETERMINED,
@@ -34,23 +34,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<bool> _onWillPop() async {
     return (await showDialog(
-      context: context,
-      builder: (context) =>
-      new AlertDialog(
-        title: Expanded(child: Text('Are you sure?')),
-        content: new Text('Do you want to exit an App'),
-        actions: <Widget>[
-          new FlatButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: new Text('No'),
+          context: context,
+          builder: (context) => new AlertDialog(
+            title: Expanded(child: Text('Are you sure?')),
+            content: new Text('Do you want to exit an App'),
+            actions: <Widget>[
+              new FlatButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: new Text('No'),
+              ),
+              new FlatButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: new Text('Yes'),
+              ),
+            ],
           ),
-          new FlatButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: new Text('Yes'),
-          ),
-        ],
-      ),
-    )) ??
+        )) ??
         false;
   }
 
@@ -94,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
             CreatePostScreen(
               currentUserId: currentUserId,
             ),
-            ChatsScreen(
+            ChatListScreen(
               currentUserId: currentUserId,
             ),
             ProfileScreen(

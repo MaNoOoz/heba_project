@@ -189,7 +189,6 @@ class _FeedScreenState extends State<FeedScreen>
         children: <Widget>[
           Center(
             child: Visibility(
-
               /// todo
               visible: true,
               child: Container(
@@ -245,8 +244,7 @@ class _FeedScreenState extends State<FeedScreen>
       hebat.add(postModel);
     });
 
-    var mMap = documents.map((e) =>
-        e.data.forEach((key, value) {
+    var mMap = documents.map((e) => e.data.forEach((key, value) {
 //          print("Map From Firestore :$key,$value");
         }));
     print("Map:$mMap");
@@ -300,8 +298,7 @@ class _FeedScreenState extends State<FeedScreen>
 
         print("filterdHebat :${filterdHebat.length}");
       });
-    }
-    else if (selected == 1) {
+    } else if (selected == 1) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         List<HebaModel> filterdHebat = [];
         for (var Heba in _HebatListFromUsers) {
@@ -375,7 +372,6 @@ class _FeedScreenState extends State<FeedScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-
             /// Filter
             Padding(
               padding: const EdgeInsets.only(left: 18.0),
@@ -539,7 +535,6 @@ class _FeedScreenState extends State<FeedScreen>
                             child: Container(
                               child: Column(
                                 children: <Widget>[
-
                                   /// my
                                   Flexible(
                                     child: RadioListTile(
@@ -650,7 +645,6 @@ class _FeedScreenState extends State<FeedScreen>
                             child: Container(
                               child: Column(
                                 children: <Widget>[
-
                                   ///old to  new
                                   Flexible(
                                     child: RadioListTile(
@@ -827,9 +821,7 @@ class _FeedScreenState extends State<FeedScreen>
   Widget editIcon(HebaModel post) {
     featured = post.isFeatured;
     isMine = post.authorId == widget.currentUserId;
-    print(
-        "contentRow ${widget
-            .currentUserId}  ${isMine}"); // true, contain the same characters
+//    print("isMine :${isMine.toString()} ${widget.currentUserId}  "); // true, contain the same characters
     var isMineWidget;
     if (isMine == true) {
       isMineWidget = Expanded(
@@ -1171,7 +1163,6 @@ class _FeedScreenState extends State<FeedScreen>
 
   Widget mData(BuildContext context, List<HebaModel> hebatList) {
     QuerySnapshot emptyList;
-
     return StreamBuilder<QuerySnapshot>(
       initialData: emptyList,
       stream: _PostsStream,
@@ -1676,54 +1667,3 @@ class _FeedScreenState extends State<FeedScreen>
 //////              });
   }
 }
-//viewMode(Post2 post) {
-//  if (_displayPosts == 0) {
-//    return GridView.count(
-//      shrinkWrap: true,
-//      physics: NeverScrollableScrollPhysics(),
-//      // Create a grid with 2 columns. If you change the scrollDirection to
-//      // horizontal, this produces 2 rows.
-//      crossAxisCount: 2,
-//      // Generate 100 widgets that display their index in the List.
-//      children: List.generate(100, (index) {
-//        return Center(
-//          child: Text(
-//            'Item $index',
-//            style: Theme.of(context).textTheme.bodyText1,
-//          ),
-//        );
-//      }),
-//    );
-//  } else if (_displayPosts == 1) {
-//    return ListView.builder(
-//        physics: NeverScrollableScrollPhysics(),
-//        scrollDirection: Axis.vertical,
-//        shrinkWrap: true,
-//        reverse: true,
-////              itemCount: map.data.documents.length,
-//        itemCount: _HebatList.length,
-//        padding: const EdgeInsets.only(top: 15.0),
-//        itemBuilder: (context, index) {
-////                DocumentSnapshot ds = map.data.documents[index];
-////                DocumentSnapshot ds = map.data.documents[index];
-////                      Post2 post2 = Post2.fromDoc(ds);
-////                postFromFuture = Post2.fromFirestore(ds);
-////                _HebaPostsFromDb(widget.post);
-////                return rowView(_docsList[index], index);
-//          return GestureDetector(
-//            child: rowView(post, index),
-//            onTap: () {
-//              Navigator.push(
-//                context,
-//                MaterialPageRoute(
-//                  builder: (context) =>
-//                      HebaDetails(post: _HebatList[index], isMe: false, userId: widget.userId),
-//                ),
-//              );
-//            },
-//          );
-//        });
-//  } else if (_displayPosts == 2) {
-//    return mMapView(context: context);
-//  }
-//}

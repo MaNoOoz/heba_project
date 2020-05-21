@@ -10,6 +10,7 @@ import 'Chat.dart';
 class UserData extends ChangeNotifier {
   String currentUserId;
   String currentChatId;
+  String channelId;
   bool isFeatured;
   User user;
   ChatModel conver;

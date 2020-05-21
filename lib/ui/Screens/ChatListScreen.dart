@@ -8,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/Chat.dart';
+import 'package:heba_project/models/user_data.dart';
+import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
@@ -15,44 +17,47 @@ import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
 import 'package:provider/provider.dart';
 
-class ChatsScreen extends StatefulWidget {
-  static final String id = 'chats_screen';
+class ChatListScreen extends StatefulWidget {
+  static final String id = 'ChatListScreen';
   final GlobalKey<ScaffoldState> scaffoldKey;
   final String currentUserId;
 
-//  List<User> users;
-
-//  const ChatsScreen({Key key, this.scaffoldKey}) : super(key: key);
-  ChatsScreen({Key key, this.currentUserId, this.scaffoldKey})
+  ChatListScreen({Key key, this.currentUserId, this.scaffoldKey})
       : super(key: key);
 
   @override
-  _ChatsScreenState createState() => _ChatsScreenState();
+  _ChatListScreenState createState() => _ChatListScreenState();
 }
 
-class _ChatsScreenState extends State<ChatsScreen> {
+class _ChatListScreenState extends State<ChatListScreen> {
   /// search
   var _searchController = new TextEditingController();
 
 //  Future<QuerySnapshot> _chats;
   List<Text> texts;
 
-  CollectionReference _collectionReference;
-  DocumentReference _documentReference;
+//  CollectionReference _collectionReference;
+//  DocumentReference _documentReference;
+//  List<Chat> _chats;
 
-  List<ChatModel> _chats;
-  ChatModel mChat;
+  Chat mChat;
 
   String chatId;
 
-  _clearSearch() {
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        _searchController.clear());
-    setState(() {
-//      _chats = null; // Future<QuerySnapshot> _chats;
-      _chats = null;
-    });
-  }
+  Stream<QuerySnapshot> chatListStream;
+
+  String currentUserId;
+
+  FirebaseUser fUser;
+
+//  _clearSearch() {
+//    WidgetsBinding.instance
+//        .addPostFrameCallback((_) => _searchController.clear());
+//    setState(() {
+////      _chats = null; // Future<QuerySnapshot> _chats;
+////      _chats = null;
+//    });
+//  }
 
 //  mChatsFromDb() async {
 //    print("mChatsFromDb Called");
@@ -88,23 +93,41 @@ class _ChatsScreenState extends State<ChatsScreen> {
 //    mChatsFromDb();
   }
 
-  void init() async {
+  void init() {
     print("init Called");
     print("init : ${widget.currentUserId.length} ");
+    print("init : ${widget.currentUserId} ");
+    getStreamOfUsers();
+    getStreamOfChats();
+    DatabaseService.checkForChange(widget.currentUserId);
+    var s = DatabaseService().chatsStream;
+    print("${s.map((event) => event.chatId ?? "SSS")}");
 
-    _collectionReference =
-        CHATS.document(widget.currentUserId).collection("userChats");
+//   DatabaseService.ChatsFromStream(widget.currentUserId);
+//    _collectionReference = CHATS.document(widget.currentUserId).collection(USERCHATS);
+//    chatListStream = _collectionReference.snapshots();
   }
+
+  var channelName = "123123123";
+
+  String senderUserId = "";
+  String reviverUserId = "";
 
   @override
   Widget build(BuildContext context) {
+    currentUserId = Provider.of<UserData>(context).currentUserId;
+
+    print("currentUserId value : $currentUserId ");
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-//          await DatabaseService.CreateFakeChatFuture(
-//              _collectionReference, widget.currentUserId,);
-          DatabaseService.checkForChange(widget.currentUserId);
+        onPressed: () async {
+          await DatabaseService.CreateFakeChatFuture(
+            channelName: channelName,
+            currentUserId: currentUserId,
+//            reciver: reviver,
+//            sender: sender,
+          );
         },
       ),
       appBar: PreferredSize(
@@ -123,7 +146,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               thickness: 12,
               color: Colors.green.withAlpha(32),
             ),
-            searchFun3(),
+//            searchFun3(),
           ],
         ),
       ),
@@ -134,53 +157,220 @@ class _ChatsScreenState extends State<ChatsScreen> {
     );
   }
 
+  getStreamOfUsers() async {
+    List<User> users = [];
+    var qn = usersRef.snapshots();
+    await for (var userSnapshot in qn) {
+      for (var doc in userSnapshot.documents) {
+        User user = new User.fromFirestore(doc);
+        users.add(user);
+        print("getStreamOfUsers  : ${users.length} ");
+      }
+    }
+//    var documents = qn.map((event) => event.documents).listen((event) {
+//      var docs = event;
+//
+//      docs.forEach((DocumentSnapshot doc) {
+//
+//
+//      });
+//    });
+  }
+
+  getUsersIds() async {
+    List<String> userIds = [];
+    var qn = usersRef.snapshots();
+    await for (var userSnapshot in qn) {
+      var docs = userSnapshot.documents;
+      for (var doc in docs) {
+        List<Map> ids = doc.data['uid'];
+        print("getUsersIds  : ${ids.length} ");
+
+//        User sender = User(uid: );
+//        User reviver = User();
+//        User user = new User.fromFirestore(doc);
+//        userIds.add(uid);
+//        print("getStreamOfUsers  : ${users.length} ");
+      }
+    }
+//    var documents = qn.map((event) => event.documents).listen((event) {
+//      var docs = event;
+//
+//      docs.forEach((DocumentSnapshot doc) {
+//
+//
+//      });
+//    });
+  }
+
+  getStreamOfChats() async {
+//    List<User> users = [];
+    var qn = CHATS.document(currentUserId).collection(USERCHATS).snapshots();
+    await for (var userSnapshot in qn) {
+      for (var doc in userSnapshot.documents) {
+//        User user = new User.fromFirestore(doc);
+//        users.add(user);
+        print("getStreamOfChats  : ${userSnapshot.documents.length} ");
+      }
+    }
+//    var documents = qn.map((event) => event.documents).listen((event) {
+//      var docs = event;
+//
+//      docs.forEach((DocumentSnapshot doc) {
+//
+//
+//      });
+//    });
+  }
+
+  getStreamOfChats2() {
+//    var pos =  DatabaseService().chatsStream;
+//    pos.listen((event) {event.})
+
+
+  }
+
+  String downloadUrlFinal;
+  String bioOfUser;
+  String receiverToken;
+
   Widget buildFutureBuilder() {
     var screenSize = MediaQuery
         .of(context)
         .size;
-
+//    var chat = Provider.of<Chat>(context).chatId;
+    QuerySnapshot empty;
     return StreamBuilder<QuerySnapshot>(
-      stream: _collectionReference.snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        print("Future value : ${snapshot.data.documents.length} ");
-        print("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e
-            .data['chatId'])} ");
+        stream: usersRef.snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> userSnapshot) {
+          if (!userSnapshot.hasData) {
+            return Container(
+              color: Colors.amber,
+            );
+          }
 
-        if (!snapshot.hasData) {
-          return Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                mStatlessWidgets().mLoading(),
-              ],
-            ),
-          );
-        } else if (snapshot.hasError) {
-          print('u have error in future');
-        } else if (snapshot.data.documents.length == 0) {
-          return Center(
-            child: Text('No Chats'),
-          );
-        }
-        return ListView.builder(
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: snapshot.data.documents.length,
-          shrinkWrap: true,
-          itemBuilder: (context, i) {
-            var txt = snapshot.data.documents.map((e) => e.documentID)
-                .toString();
+          return StreamBuilder<QuerySnapshot>(
+            initialData: empty,
+            stream: CHATS
+                .document(currentUserId)
+                .collection(USERCHATS)
+//
+//                .document(channelName)
+//                .collection(channelName)
+                .snapshots(),
+            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              print("stream value : ${snapshot.data.documents.length} ");
+//        print("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
 
-            texts = [];
-            String tx = txt;
-            Text text = Text(tx);
-            texts.add(text);
-            return chatRow(screenSize);
-          },
-        );
-      },
-    );
+              if (!snapshot.hasData) {
+                return Center(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      mStatlessWidgets().mLoading(),
+                    ],
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                print('u have error in future');
+              } else if (snapshot.data.documents.length == 0) {
+                return Center(
+                  child: Text('No Chats'),
+                );
+              }
+              return ListView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: snapshot.data.documents.length,
+                shrinkWrap: true,
+                itemBuilder: (context, i) {
+                  var txt = snapshot.data.documents
+                      .map((e) => e.documentID)
+                      .toString();
+
+                  texts = [];
+                  String tx = txt;
+                  Text text = Text(tx);
+//                  Text text2 = Text("${chat}");
+                  texts.add(text);
+                  return Column(children: texts);
+//                  return chatRow(screenSize);
+//
+//                  final messagedUsers = userSnapshot.data.documents;
+//                  List<Container> listOfViewHolder = [];
+//                  for (var userDoc in messagedUsers) {
+//                    final String userUid = userDoc.data['uid'];
+//                    var listOfDocuments = snapshot.data.documents;
+//                    for (var dc in listOfDocuments) {
+//                      if (dc["uid"] == userUid) {
+//                        downloadUrlFinal = dc["imageDownloadUrl"];
+//                        bioOfUser = dc["bio"];
+//                        receiverToken = dc['token'];
+//                      }
+//                    }
+//
+//                  }
+//                  users.add(user);
+//                  print("getStreamOfUsers  : ${users.length} ");m
+//                  return Column(children: listOfViewHolder);
+                },
+              );
+            },
+          );
+        });
   }
+
+//  Widget buildFutureBuilder() {
+//    var screenSize = MediaQuery.of(context).size;
+//    QuerySnapshot empty;
+//    return StreamBuilder<QuerySnapshot>(
+//      initialData: empty,
+//      stream: CHATS
+//          .document(currentUserId)
+//          .collection(USERCHATS)
+//          .document(channelName)
+//          .collection(channelName)
+//          .snapshots(),
+//      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+//        print("stream value : ${snapshot.data.documents.length} ");
+////        print("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
+//
+//        if (!snapshot.hasData) {
+//          return Center(
+//            child: Column(
+//              crossAxisAlignment: CrossAxisAlignment.center,
+//              mainAxisAlignment: MainAxisAlignment.center,
+//              children: <Widget>[
+//                mStatlessWidgets().mLoading(),
+//              ],
+//            ),
+//          );
+//        } else if (snapshot.hasError) {
+//          print('u have error in future');
+//        } else if (snapshot.data.documents.length == 0) {
+//          return Center(
+//            child: Text('No Chats'),
+//          );
+//        }
+//        return ListView.builder(
+//          physics: NeverScrollableScrollPhysics(),
+//          itemCount: snapshot.data.documents.length,
+//          shrinkWrap: true,
+//          itemBuilder: (context, i) {
+//            var txt =
+//                snapshot.data.documents.map((e) => e.documentID).toString();
+//
+//            texts = [];
+//            String tx = txt;
+//            Text text = Text(tx);
+//            texts.add(text);
+//            return Column(children: texts);
+//            return chatRow(screenSize);
+//          },
+//        );
+//      },
+//    );
+//  }
 
 //  Widget mListData(BuildContext context, Post2 post, User user) {
 //    return StreamBuilder<QuerySnapshot>(
@@ -215,49 +405,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
 //      },
 //    );
 //  }
-
-  Widget searchFun() {
-    return Container(
-      height: 60,
-      child: Card(
-        color: Colors.white,
-        elevation: 3,
-        shape: new RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(20.0)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 10.0),
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: TextField(
-              autofocus: false,
-              textDirection: TextDirection.rtl,
-              onSubmitted: (input) {
-                if (input.isNotEmpty) {
-                  setState(
-                        () {
-//                      _chats = DatabaseService.searchUsers(input);
-                    },
-                  );
-                }
-              },
-              controller: _searchController,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                suffixIcon: Icon(CupertinoIcons.search),
-                hintText: "إبحث",
-                hintStyle: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.normal,
-//                  color: Colors.grey.withOpacity(0.6),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget searchFun3() {
     return Container(
       margin: EdgeInsets.only(top: 5.0),
@@ -294,50 +441,13 @@ class _ChatsScreenState extends State<ChatsScreen> {
               CupertinoIcons.clear,
               size: 30.0,
             ),
-            onPressed: _clearSearch,
+//            onPressed: _clearSearch,
           ),
           filled: true,
           prefixIcon: Icon(
             CupertinoIcons.search,
             color: Colors.black,
             size: 30.0,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget searchFun2() {
-    return Container(
-//      height: 60,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 1.0),
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: new TextFormField(
-            autofocus: false,
-            textDirection: TextDirection.rtl,
-            decoration: new InputDecoration(
-              labelText: "إبحث",
-
-              fillColor: Colors.white,
-              border: new OutlineInputBorder(
-                borderRadius: new BorderRadius.circular(5.0),
-                borderSide: new BorderSide(),
-              ),
-              //fillColor: Colors.green
-            ),
-            validator: (val) {
-              if (val.length == 0) {
-                return "Email cannot be empty";
-              } else {
-                return null;
-              }
-            },
-            keyboardType: TextInputType.emailAddress,
-            style: new TextStyle(
-              fontFamily: "Poppins",
-            ),
           ),
         ),
       ),
@@ -493,7 +603,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 //      ),
 //    );
 //  }
-  Widget chatRow(var screenSize,) {
+  Container chatRow(var screenSize,) {
     var fUser = Provider.of<FirebaseUser>(context);
 
     return Container(
@@ -521,12 +631,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                 padding: const EdgeInsets.only(right: 8.0),
                                 child: Container(
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment
-                                        .spaceBetween,
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment
-                                            .center,
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.center,
                                         children: <Widget>[
                                           /// Icons
                                           Container(
@@ -582,14 +692,15 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                           Padding(
                                             padding: const EdgeInsets.all(1.0),
                                             child: Align(
-                                              alignment: AlignmentDirectional
-                                                  .center,
+                                              alignment:
+                                              AlignmentDirectional.center,
                                               child: Container(
                                                 child: Text(
                                                   fUser.displayName,
-                                                  style: TextStyle(fontSize: 11,
-                                                      fontWeight: FontWeight
-                                                          .bold),
+                                                  style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                      FontWeight.bold),
                                                 ),
                                               ),
                                             ),
@@ -597,8 +708,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                           Padding(
                                             padding: const EdgeInsets.all(1.0),
                                             child: Align(
-                                              alignment: AlignmentDirectional
-                                                  .center,
+                                              alignment:
+                                              AlignmentDirectional.center,
                                               child: Container(
                                                 child: CircleAvatar(
                                                   radius: 15.0,
@@ -634,3 +745,169 @@ class _ChatsScreenState extends State<ChatsScreen> {
     );
   }
 }
+
+///// todo
+//class ChatList extends StatelessWidget {
+//  @override
+//  Widget build(BuildContext context) {
+//    return StreamBuilder(
+//      stream: activeUsersRef.document(loggedInUserID).collection('messagedUsers').orderBy('timestamp', descending: true).snapshots(),
+//      builder: (context, snapshot){
+//
+//        if(!snapshot.hasData || gotAsyncInfo == false || gotContactsInfo == false || getSharedPrefInfo == false){
+//          return Container();
+//        }
+//
+//        return StreamBuilder(
+//          stream: Firestore.instance.collection('users').snapshots(),
+//          builder: (context, snapshot2){
+//            if(!snapshot2.hasData || gotAsyncInfo == false || gotContactsInfo == false || getSharedPrefInfo == false){
+//              return Container(
+//                color: Colors.transparent,
+//              );
+//            }
+//
+//            final messagedUsers = snapshot.data.documents;
+//            List<MessagedContactsWidget> listOfMessagedContactsWidget = [];
+//            for(var users in messagedUsers){
+//              final String userPhoneNumber = users.data['phoneNumber'];
+//              var listOfDocuments = snapshot2.data.documents;
+//              for(var dc in listOfDocuments){
+//                if(dc["phoneNumber"]==userPhoneNumber)
+//                {
+//                  downloadUrlFinal = dc["imageDownloadUrl"];
+//                  bioOfUser = dc["bio"];
+//                  receiverToken = dc['token'];
+//                }
+//              }
+//              final String receiverID = users.data['receiverID'];
+//
+//              String mostRecentText = users.data['mostRecentMessage'];
+//              if(mostRecentText.length>42){
+//                mostRecentText = mostRecentText.substring(0,42);
+//              }
+//              for(int index = 0; index < contactsList.length; index++){
+//                phoneNumberAtIndex = (contactsList[index].phones.isEmpty) ? ' ' : contactsList[index].phones.firstWhere((anElement) => anElement.value != null).value;
+//                String trimmedPhoneNumber = phoneNumberAtIndex.split(" ").join("");
+//                trimmedPhoneNumber = trimmedPhoneNumber.split("-").join("");
+//                if(userPhoneNumber == trimmedPhoneNumber || userPhoneNumber.substring(3) == trimmedPhoneNumber){
+//                  userName = contactsList[index].displayName;
+//                  if(contactedUserNames.length!=0){
+//                    counter = 0;
+//                    for(int i=0;i<contactedUserNames.length;i++){
+//                      if(contactedUserNames[i]==userName){
+//                        counter++;
+//                        break;
+//                      }
+//                    }
+//                    if(counter==0){
+//                      contactedUserNames.add(userName);
+//                      userInfoForSearch[userName] = [trimmedPhoneNumber.toString(), downloadUrlFinal, receiverID, mostRecentText, bioOfUser, receiverToken];
+//                    }
+//                  }
+//                  else{
+//                    contactedUserNames.add(userName);
+//                    userInfoForSearch[userName] = [trimmedPhoneNumber.toString(), downloadUrlFinal, receiverID, mostRecentText, bioOfUser, receiverToken];
+//                  }
+//                  break;
+//                }
+//                else{
+//                  userName = userPhoneNumber;
+//                }
+//              }
+//
+//              isUserNameActuallyNumber = isNumeric(userName);
+//              var messagedContact;
+//              if(isUserNameActuallyNumber == true){
+//                messagedContact = MessagedContactsWidget(phoneNumber: userPhoneNumber, userID: receiverID, downloadUrl: downloadUrlFinal,mostRecentMessage: mostRecentText, bio: bioOfUser, token: receiverToken,);
+//              }
+//              else{
+//                messagedContact = MessagedContactsWidget(contactName: userName, phoneNumber: userPhoneNumber, userID: receiverID, downloadUrl: downloadUrlFinal, mostRecentMessage: mostRecentText, bio: bioOfUser, token: receiverToken,);
+//              }
+//
+//
+//
+//              listOfMessagedContactsWidget.add(messagedContact);
+//            }
+//
+//            return Expanded(
+//              child: SingleChildScrollView(
+//                child: Column(
+//                  children: listOfMessagedContactsWidget,
+//                ),
+//              ),
+//            );
+//
+//
+//          },
+//        );
+//
+//
+//
+//      },
+//
+//    );
+//  }
+//}
+//
+//class MessagedContactsWidget extends StatelessWidget {
+//  final String contactName;
+//  final String phoneNumber;
+//  final String userID;
+//  final String downloadUrl;
+//  final String mostRecentMessage;
+//  final String bio;
+//  final String token;
+//
+//  MessagedContactsWidget({this.contactName = 'defaultName', this.phoneNumber, this.userID, this.downloadUrl, this.mostRecentMessage, this.bio, this.token});
+//
+//  @override
+//  Widget build(BuildContext context) {
+//    return GestureDetector(
+//      onTap: ()=> openChatScreen(contactName, phoneNumber, userID, context, this.downloadUrl, this.bio, this.token),
+//      child: Column(
+//        children: <Widget>[
+//          ListTile(
+//            leading: (this.downloadUrl == 'NoImage' || this.downloadUrl == null)
+//                ? CircleAvatar(child: Image.asset('images/blah.png'), radius: 23,)
+//                :   CircleAvatar(
+//              backgroundColor: Theme.of(context).accentColor,
+//              radius: 23,
+//              child: ClipOval(
+//                child: CachedNetworkImage(
+//                  fadeInCurve: Curves.easeIn,
+//                  fadeOutCurve: Curves.easeOut,
+//                  imageUrl: this.downloadUrl,
+//                  placeholder: (context, url) => spinkit(),
+//                  errorWidget: (context, url, error) => new Icon(Icons.error),
+//                ),
+//              ),
+//            ),
+//
+//            title: Column(
+//              crossAxisAlignment: CrossAxisAlignment.start,
+//              children: <Widget>[
+//                (contactName == 'defaultName') ? Text(phoneNumber, style: TextStyle(fontSize: 20), textAlign: TextAlign.start,) : Text(contactName, style: TextStyle(fontSize: 20),),
+//                SizedBox(
+//                  height: 3,
+//                ),
+//                Text(mostRecentMessage,
+//                  style: TextStyle(fontSize: 15, color: Colors.black54,),
+//                  textAlign: TextAlign.start,
+//                ),
+//              ],
+//            ),
+//          ),
+//          Container(
+//            width: MediaQuery.of(context).size.width*0.9,
+//            child: Divider(
+//              height: 13,
+//              thickness: 0.4,
+//              indent: MediaQuery.of(context).size.width*0.14,
+//            ),
+//          ),
+//        ],
+//      ),
+//    );
+//  }
+//}

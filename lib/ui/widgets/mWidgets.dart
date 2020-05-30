@@ -58,7 +58,7 @@ class mStatlessWidgets {
     );
   }
 
-  Widget mLoading() {
+  Widget mLoading({String title}) {
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -68,7 +68,7 @@ class mStatlessWidgets {
             padding: const EdgeInsets.all(8.0),
             child: Center(child: CircularProgressIndicator()),
           ),
-          Text("Loading ... ")
+          Text(title)
         ],
       ),
     );

@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:heba_project/models/Chat.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/models/user_model.dart';
-import 'package:heba_project/service/database_service.dart';
+import 'package:heba_project/ui/Screens/ChatScreen.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
@@ -21,8 +21,9 @@ class ChatListScreen extends StatefulWidget {
   static final String id = 'ChatListScreen';
   final GlobalKey<ScaffoldState> scaffoldKey;
   final String currentUserId;
+  final String userID;
 
-  ChatListScreen({Key key, this.currentUserId, this.scaffoldKey})
+  ChatListScreen({Key key, this.currentUserId, this.scaffoldKey, this.userID})
       : super(key: key);
 
   @override
@@ -47,6 +48,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Stream<QuerySnapshot> chatListStream;
 
   String currentUserId;
+  User chattingWithUser;
 
   FirebaseUser fUser;
 
@@ -93,15 +95,23 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //    mChatsFromDb();
   }
 
-  void init() {
+  init() async {
     print("init Called");
     print("init : ${widget.currentUserId.length} ");
     print("init : ${widget.currentUserId} ");
-    getStreamOfUsers();
-    getStreamOfChats();
-    DatabaseService.checkForChange(widget.currentUserId);
-    var s = DatabaseService().chatsStream;
-    print("${s.map((event) => event.chatId ?? "SSS")}");
+//    getStreamOfUsers();
+//    getStreamOfChats();
+    var s = getCurrentUserChats(widget.currentUserId).asStream();
+    setState(() {
+      chatListStream = s;
+    });
+
+//    await getUserFromUid(uid);
+
+//    DatabaseService.checkForChange(widget.currentUserId);
+//    var s = DatabaseService().chatsStream;
+//    print("${s.map((event) => event.chatId ?? "SSS")}");
+    print("getStreamOfChats3 : ${widget.currentUserId} ");
 
 //   DatabaseService.ChatsFromStream(widget.currentUserId);
 //    _collectionReference = CHATS.document(widget.currentUserId).collection(USERCHATS);
@@ -116,18 +126,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     currentUserId = Provider.of<UserData>(context).currentUserId;
-
     print("currentUserId value : $currentUserId ");
+
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await DatabaseService.CreateFakeChatFuture(
-            channelName: channelName,
-            currentUserId: currentUserId,
-//            reciver: reviver,
-//            sender: sender,
-          );
+//          await DatabaseService.CreateFakeChatFuture(
+//            channelName: channelName,
+//            currentUserId: currentUserId,
+////            reciver: reviver,
+////            sender: sender,
+//          );
         },
       ),
       appBar: PreferredSize(
@@ -135,7 +145,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         child: Column(
           children: <Widget>[
             CustomAppBar(
-              title: "المحادثات ",
+              title: "المحادثات",
               IsBack: false,
               color: Colors.white,
               isImageVisble: true,
@@ -150,7 +160,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ],
         ),
       ),
-      body: buildFutureBuilder(),
+      body: chatRoomList(),
 //
 
       /// SearchBar
@@ -226,18 +236,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
   getStreamOfChats2() {
 //    var pos =  DatabaseService().chatsStream;
 //    pos.listen((event) {event.})
-
-
   }
 
-  String downloadUrlFinal;
-  String bioOfUser;
-  String receiverToken;
+  Future<QuerySnapshot> getCurrentUserChats(String chattingFromId) {
+    return CHATS.where("users", arrayContains: chattingFromId).getDocuments();
+  }
 
   Widget buildFutureBuilder() {
-    var screenSize = MediaQuery
-        .of(context)
-        .size;
+    var screenSize = MediaQuery.of(context).size;
 //    var chat = Provider.of<Chat>(context).chatId;
     QuerySnapshot empty;
     return StreamBuilder<QuerySnapshot>(
@@ -295,6 +301,155 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   texts.add(text);
                   return Column(children: texts);
 //                  return chatRow(screenSize);
+//
+//                  final messagedUsers = userSnapshot.data.documents;
+//                  List<Container> listOfViewHolder = [];
+//                  for (var userDoc in messagedUsers) {
+//                    final String userUid = userDoc.data['uid'];
+//                    var listOfDocuments = snapshot.data.documents;
+//                    for (var dc in listOfDocuments) {
+//                      if (dc["uid"] == userUid) {
+//                        downloadUrlFinal = dc["imageDownloadUrl"];
+//                        bioOfUser = dc["bio"];
+//                        receiverToken = dc['token'];
+//                      }
+//                    }
+//
+//                  }
+//                  users.add(user);
+//                  print("getStreamOfUsers  : ${users.length} ");m
+//                  return Column(children: listOfViewHolder);
+                },
+              );
+            },
+          );
+        });
+  }
+
+  List<User> getUsersIds2(String uid) {
+    List<User> users = [];
+    User user = getUserFromUid(uid);
+    users.add(user);
+    for (User u in users) {
+      var name = u.name;
+      print(name);
+    }
+    return users;
+  }
+
+  User getUserFromUid(String uid) {
+//    User user;
+    Query query;
+    query = usersRef.where("uid", isEqualTo: uid);
+    var s = query.snapshots();
+    var users = [];
+    s.forEach((element) {
+      var docs = element.documents;
+      for (var doc in docs) {
+        print("query snapshots ${docs.length}");
+
+        chattingWithUser = User.fromFirestore(doc);
+        users.add(chattingWithUser);
+        print("users ${users.length}");
+      }
+    });
+    return chattingWithUser;
+//
+//  var q = await usersRef.where("uid", isEqualTo: uid).getDocuments();
+//    var docs = q.documents;
+//    for (var doc in docs) {
+//      chattingWithUser = User.fromFirestore(doc);
+//    }
+////    setState(() {
+////      chattingWithUser = user;
+////    });
+////    return chattingWithUser;
+//    return chattingWithUser;
+  }
+
+  Widget chatRoomList() {
+    var screenSize = MediaQuery
+        .of(context)
+        .size;
+//    var chat = Provider.of<Chat>(context).chatId;
+    QuerySnapshot empty;
+    return StreamBuilder<QuerySnapshot>(
+        stream: usersRef.snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> userSnapshot) {
+          if (!userSnapshot.hasData) {
+            return Container(
+              color: Colors.amber,
+            );
+          }
+
+          return StreamBuilder<QuerySnapshot>(
+            initialData: empty,
+            stream: chatListStream,
+            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              print("stream value : ${snapshot.data.documents.length} ");
+//        print("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
+
+              if (!snapshot.hasData) {
+                return Center(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      mStatlessWidgets().mLoading(),
+                    ],
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                print('u have error in future');
+              } else if (snapshot.data.documents.length == 0) {
+                return Center(
+                  child: Text('No Chats'),
+                );
+              }
+              return ListView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: snapshot.data.documents.length,
+                shrinkWrap: true,
+                itemBuilder: (context, i) {
+                  List<User> users = [];
+                  var snapshots = [];
+                  snapshots = snapshot.data.documents;
+                  List<String> chatRoomIDS = [];
+
+                  chatId = snapshot.data.documents[i].data['chatRoomId'];
+
+                  chatRoomIDS.add(chatId);
+//
+
+                  var chattingWith = getChattingWith(chatId);
+                  print("chatRoomIDS:  ${chatRoomIDS.length}");
+                  var userInfo;
+                  for (var snap in snapshots) {
+                    userInfo = getUserFromUid(chattingWith);
+
+                    print("userInfo:   ${userInfo}");
+                  }
+                  userInfo = getUserFromUid(chattingWith);
+
+//                  var userInfo = getUserFromUid(chattingWith);
+//                  var u = getUsersIds2(chattingWith);
+//                  print("u:  ${u.length}");
+//
+//                  users.add(userInfo);
+
+                  return chatRow2(screenSize, chattingWith);
+
+//                  var txt = snapshot.data.documents
+//                      .map((e) => e.documentID)
+//                      .toString();
+//
+//                  texts = [];
+//                  String tx = txt;
+//                  Text text = Text(tx);
+////                  Text text2 = Text("${chat}");
+//                  texts.add(text);
+//                  return Column(children: texts);
+
 //
 //                  final messagedUsers = userSnapshot.data.documents;
 //                  List<Container> listOfViewHolder = [];
@@ -603,9 +758,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //      ),
 //    );
 //  }
-  Container chatRow(var screenSize,) {
-    var fUser = Provider.of<FirebaseUser>(context);
+  String getChattingWith(String chatRoomId) {
+    var chattinWith = chatRoomId
+        .toString()
+        .replaceAll("_", "")
+        .replaceAll(widget.currentUserId.toString(), "");
+    print("chatting From : ${widget.currentUserId}");
+    print("chatting With : $chattinWith");
+    return chattinWith;
+  }
 
+  Container chatRow(var screenSize, User user) {
     return Container(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -638,6 +801,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         mainAxisAlignment:
                                         MainAxisAlignment.center,
                                         children: <Widget>[
+
                                           /// Icons
                                           Container(
                                             width: 30,
@@ -696,7 +860,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                               AlignmentDirectional.center,
                                               child: Container(
                                                 child: Text(
-                                                  fUser.displayName,
+                                                  user.name ?? "SS",
                                                   style: TextStyle(
                                                       fontSize: 11,
                                                       fontWeight:
@@ -714,12 +878,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                 child: CircleAvatar(
                                                   radius: 15.0,
                                                   backgroundColor: Colors.white,
-                                                  backgroundImage: fUser
-                                                      .photoUrl.isEmpty
+                                                  backgroundImage: user
+                                                      .profileImageUrl
+                                                      .isEmpty
                                                       ? AssetImage(
                                                       'assets/images/user_placeholder.jpg')
                                                       : CachedNetworkImageProvider(
-                                                      fUser.photoUrl),
+                                                      user.profileImageUrl),
                                                 ),
                                               ),
                                             ),
@@ -740,6 +905,163 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget chatRow2(var screenSize, String user) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    ChatScreen(
+                      chatRoomId: chatId,
+                      loggedInUserUid: widget.currentUserId,
+                    )));
+      },
+      child: Container(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: <Widget>[
+              Container(
+                width: screenSize.width,
+                child: Visibility(
+                  visible: true,
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: new BorderRadius.circular(2.0),
+                    ),
+                    child: Stack(
+                      children: <Widget>[
+                        Align(
+                          alignment: AlignmentDirectional.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Align(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Container(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                        Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                          children: <Widget>[
+
+                                            /// Icons
+                                            Container(
+                                              width: 30,
+                                              child: IconButton(
+                                                icon: Icon(
+                                                  CupertinoIcons.left_chevron,
+                                                  color: Colors.black54,
+                                                  size: 16,
+                                                ),
+                                                onPressed: () {},
+                                              ),
+                                            ),
+
+//                                            Container(
+//                                              child: Align(
+//                                                alignment:
+//                                                    AlignmentDirectional.center,
+//                                                child: Padding(
+//                                                  padding: const EdgeInsets
+//                                                          .symmetric(
+//                                                      vertical: 8.0,
+//                                                      horizontal: 8.0),
+//                                                  child: Container(
+//                                                    width: 20,
+//                                                    child: IconButton(
+//                                                      icon: Icon(
+//                                                        FontAwesomeIcons.flag,
+//                                                        color: Colors.black54,
+//                                                        size: 16,
+//                                                      ),
+//                                                      onPressed: () {},
+//                                                    ),
+//                                                  ),
+//                                                ),
+//                                              ),
+//                                            ),
+                                          ],
+                                        ),
+
+                                        /// Space
+                                        Padding(
+                                          padding: const EdgeInsets.all(1.0),
+                                          child: Container(
+                                            child: SizedBox(
+                                              width: 10,
+                                            ),
+                                          ),
+                                        ),
+
+                                        Row(
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.all(
+                                                  1.0),
+                                              child: Align(
+                                                alignment:
+                                                AlignmentDirectional.center,
+                                                child: Container(
+                                                  child: Text(
+                                                    user ?? "SS",
+                                                    style: TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                        FontWeight.bold),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(
+                                                  1.0),
+                                              child: Align(
+                                                alignment:
+                                                AlignmentDirectional.center,
+                                                child: Container(
+                                                  color: Colors.amber,
+//                                                child: CircleAvatar(
+//                                                  radius: 15.0,
+//                                                  backgroundColor: Colors.white,
+//                                                  backgroundImage: user
+//                                                          .profileImageUrl
+//                                                          .isEmpty
+//                                                      ? AssetImage(
+//                                                          'assets/images/user_placeholder.jpg')
+//                                                      : CachedNetworkImageProvider(
+//                                                          user.profileImageUrl),
+//                                                ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

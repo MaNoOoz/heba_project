@@ -36,7 +36,7 @@ class Dialogs {
               ),
             ),
             OutlineButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(DialogAction.yes);
               },
               child: const Text(

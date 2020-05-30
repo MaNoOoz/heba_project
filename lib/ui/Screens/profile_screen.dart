@@ -8,12 +8,15 @@ import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
+import 'package:heba_project/ui/Screens/ChatScreen.dart';
 import 'package:heba_project/ui/Views/post_view.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/MyClipper.dart';
 import 'package:heba_project/ui/shared/constants.dart';
+import 'package:heba_project/ui/shared/helperFuncs.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'edit_profile_screen.dart';
 
@@ -107,6 +110,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return result;
+  }
+
+  getChatRoomId(String a, String b) {
+    if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
+      return "$b\_$a";
+    } else {
+      return "$a\_$b";
+    }
+  }
+
+  createChatRoomAndStartChatting(String targetUser) async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    var loggedUser =
+        preferences.getBool(helperFunctions.sharedPrefUserLoggedInKey);
+    targetUser = widget.userId;
+    var loggedUser2 = widget.currentUserId;
+
+    print("loggedUser ${loggedUser.toString()}"
+        " \n And Target USER : ${targetUser}"
+        " \n And Current USER ${loggedUser2}");
+
+    var chatRoomId = getChatRoomId(targetUser, loggedUser2);
+
+    List<String> users = [targetUser, loggedUser2];
+    Map<String, dynamic> chatMap = {"users": users, "chatRoomId": chatRoomId};
+
+    var ss = await DatabaseService.CreateChatRoomWithMap(chatRoomId, chatMap);
+    print("ss ${ss.toString()}");
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ChatScreen(
+                  chatRoomId: ss,
+                  loggedInUserUid: widget.currentUserId,
+                )));
   }
 
   /// Widgets ======================
@@ -221,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Align(
                 alignment: Alignment.bottomRight,
                 child: GestureDetector(
-                  onTap: () {
+                  onTap: () async {
 //                          Navigator.push(
 //                              context,
 //                              MaterialPageRoute(
@@ -232,7 +270,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 ////                                  chat: widget.chat,
 //                                ),
 //                              ));
-//                        todo
+                    await createChatRoomAndStartChatting(
+                        widget.currentUserId);
                   },
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),

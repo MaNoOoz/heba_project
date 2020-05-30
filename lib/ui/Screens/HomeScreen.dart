@@ -9,6 +9,7 @@ import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/Screens/search_screen.dart';
+import 'package:heba_project/ui/shared/helperFuncs.dart';
 import 'package:provider/provider.dart';
 
 import 'ChatListScreen.dart';
@@ -32,27 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentTab = 0;
   PageController _pageController;
 
-  Future<bool> _onWillPop() async {
-    return (await showDialog(
-          context: context,
-          builder: (context) => new AlertDialog(
-            title: Expanded(child: Text('Are you sure?')),
-            content: new Text('Do you want to exit an App'),
-            actions: <Widget>[
-              new FlatButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: new Text('No'),
-              ),
-              new FlatButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: new Text('Yes'),
-              ),
-            ],
-          ),
-        )) ??
-        false;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -61,15 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String currentUserId = Provider
-        .of<UserData>(context)
-        .currentUserId;
-    final ChatModel conversation = Provider
-        .of<UserData>(context)
-        .conver;
-    final User user = Provider
-        .of<UserData>(context)
-        .user;
+    final String currentUserId = Provider.of<UserData>(context).currentUserId;
+    final ChatModel conversation = Provider.of<UserData>(context).conver;
+    final User user = Provider.of<UserData>(context).user;
 //    var currentLocation = Provider.of<UserLocation>(context);
 //    var currentUser = Provider.of<FirebaseUser>(context);
 //     currentLocation = Us;
@@ -77,7 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 //    UniqueKey key;
     return WillPopScope(
-      onWillPop: _onWillPop,
+      onWillPop: () async {
+        return helperFunctions.OnWillPop(context);
+      },
       child: Scaffold(
         backgroundColor: Colors.white,
         body: PageView(
@@ -95,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ChatListScreen(
               currentUserId: currentUserId,
+              userID: currentUserId,
             ),
             ProfileScreen(
               currentUserId: currentUserId,

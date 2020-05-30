@@ -54,6 +54,8 @@ dependencies:
   logger:
   http:
   json_serializable:
+  flutter_svg:
+  adobe_xd:
 
   get_it:  # add this line
   rxdart:  # add this line

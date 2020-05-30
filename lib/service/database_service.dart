@@ -75,8 +75,7 @@ class DatabaseService {
     });
 
     /// Logs
-    documents.map((e) =>
-        e.data.forEach((key, value) {
+    documents.map((e) => e.data.forEach((key, value) {
           print("HebaPostsFromDb : Key : $key, Value : $value");
         }));
 
@@ -226,6 +225,7 @@ class DatabaseService {
   }
 
   /// Chat  ==================================================
+
   static Future<Message> CreateFakeMessageFuture(
       {String senderID, String channelName, String reciverID}) async {
     var ts = Timestamp.fromDate(DateTime.now());
@@ -240,11 +240,11 @@ class DatabaseService {
         chatId: channelName,
         message: "TEST FROM CreateFakeMessageFuture",
         senderName: "",
-        receiverId: reciverID,
+        idFrom: senderID,
         createdAt: DateTime.now().toIso8601String().toString(),
         seen: false,
         timestamp: ts,
-        senderId: senderID);
+        idTo: reciverID);
     var mapFromMessage = message.toMap();
     CHATS.add(mapFromMessage);
 
@@ -272,6 +272,44 @@ class DatabaseService {
         .map((doc) => Message.fromFirestore(doc))
         .toList();
     return messages;
+  }
+
+  static Future<String> CreateChatRoomWithMap(String chatRoomId,
+      Map<String, dynamic> chatRoomMap) async {
+    await CHATS.document(chatRoomId).setData(chatRoomMap).catchError((onError) {
+      print(onError.toString());
+    });
+    return chatRoomId;
+  }
+
+  static CreateChatRoomWithObject(String chatRoomId, Map chatRoomMap) {
+    CHATS.document(chatRoomId).setData(chatRoomMap).catchError((onError) {
+      print(onError.toString());
+    });
+  }
+
+  /// todo
+  static Future<Message> CreateFakeMessageFuture2(
+      {String senderID, String charRoomId, String reciverID}) async {
+    print("CreateFakeMessageFuture Called ${charRoomId}");
+
+    var ts = Timestamp.fromDate(DateTime.now());
+
+    var ref = CHATS.document(charRoomId).collection(CHAT);
+
+    Message message = Message(
+        chatId: charRoomId,
+        message: "TEST FROM CreateFakeMessageFuture2",
+        senderName: "",
+        idFrom: senderID,
+        createdAt: DateTime.now().toIso8601String().toString(),
+        seen: false,
+        timestamp: ts,
+        idTo: reciverID);
+    var mapFromMessage = message.toMap();
+    ref.add(mapFromMessage);
+
+    return message;
   }
 
   /// Chats Page ==================================================
@@ -377,58 +415,58 @@ class DatabaseService {
 //    });
   }
 
-  /// Create new Chat
-  static void CreateFakeChat({
-    String currentUserId,
-    String channelName,
-  }) async {
-    print("_CreateChat Called");
-
-    CHATS
-        .document(currentUserId)
-        .collection(USERCHATS)
-        .document(channelName)
-        .collection(channelName);
-
-    Chat mChat = Chat(
-      chatId: "@@@@",
-      messages: [],
-    );
-
-    /// database
-    //    createFakeChat(mChat, _collectionReference);
-    Map map = mChat.ToMap();
-
-    CHATS.add(map);
-  }
-
-  static Future<List<Chat>> CreateFakeChatFuture({
-    String currentUserId,
-    String channelName,
-    User sender,
-    User reciver,
-  }) async {
-    print("_CreateChat Called");
-    List<Chat> chats;
-
-    var ref = CHATS.document(currentUserId).collection(USERCHATS);
+//  /// Create new Chat
+//  static void CreateFakeChat({
+//    String currentUserId,
+//    String channelName,
+//  }) async {
+//    print("_CreateChat Called");
+//
+//    CHATS
+//        .document(currentUserId)
+//        .collection(USERCHATS)
 //        .document(channelName)
 //        .collection(channelName);
-
-    Chat mChat = Chat(
-      chatId: "@@@@",
-      messages: [],
-      chatingFrom: User(),
-      chatingWith: User(),
-    );
-
-    /// database
-    //    createFakeChat(mChat, _collectionReference);
-    Map map = mChat.ToMap();
-
-    ref.add(map);
-    return chats;
-  }
+//
+//    Chat mChat = Chat(
+//      chatId: "@@@@",
+//      messages: [],
+//    );
+//
+//    /// database
+//    //    createFakeChat(mChat, _collectionReference);
+//    Map map = mChat.ToMap();
+//
+//    CHATS.add(map);
+//  }
+//
+//  static Future<List<Chat>> CreateFakeChatFuture({
+//    String currentUserId,
+//    String channelName,
+//    User sender,
+//    User reciver,
+//  }) async {
+//    print("_CreateChat Called");
+//    List<Chat> chats;
+//
+//    var ref = CHATS.document(currentUserId).collection(USERCHATS);
+////        .document(channelName)
+////        .collection(channelName);
+//
+//    Chat mChat = Chat(
+//      chatId: "@@@@",
+//      messages: [],
+//      chatingFrom: User(),
+//      chatingWith: User(),
+//    );
+//
+//    /// database
+//    //    createFakeChat(mChat, _collectionReference);
+//    Map map = mChat.ToMap();
+//
+//    ref.add(map);
+//    return chats;
+//  }
 
 //  static void CreateFakeMessage({String senderID, String channelId, String reciverID}) {
 //    var ts = Timestamp.fromDate(DateTime.now());
@@ -451,75 +489,75 @@ class DatabaseService {
 //    var Fakemessages = [];
 //    Fakemessages.add(message);
 //  }
-  static void CreateChatAndFakeMessage(
-      {String senderID, String channelId, String reciverID}) async {
-    var ts = Timestamp.fromDate(DateTime.now());
+//  static void CreateChatAndFakeMessage(
+//      {String senderID, String channelId, String reciverID}) async {
+//    var ts = Timestamp.fromDate(DateTime.now());
+//
+//    /// todo loop on messages in firestore
+//    CollectionReference chatSnapshot = CHATS
+//        .document(senderID)
+//        .collection(USERCHATS)
+//        .document(channelId)
+//        .collection(channelId);
+//    var messagesSnapshots = await chatSnapshot.getDocuments();
+//    var msgs =
+//    messagesSnapshots.documents.map((e) =>
+//        e.data.forEach((key, value) {
+//          var mMap = {key, value};
+//          print(" SSSSSSS $mMap");
+//        }));
+//    print(msgs);
+//
+//    Message message = Message(
+//        chatId: channelId,
+//        message: "TEST FROM createMesageForUser",
+//        senderName: "",
+//        receiverId: reciverID,
+//        createdAt: DateTime.now().toIso8601String().toString(),
+//        seen: false,
+//        timestamp: ts,
+//        senderId: senderID);
+//    var mapFromMessage = message.toMap();
+//    chatSnapshot.add(mapFromMessage);
+//
+////    var Fakemessages = msgs;
+////    msgs.add(message);
+//
+//  }
+//
+//  static Stream<QuerySnapshot> getStreamOfMessagesFromDocument(String senderID,
+//      String channelId, String reciverID) {
+//    print("${channelId}");
+//
+//    var chatsSnapshotStream = CHATS
+//        .document(senderID)
+//        .collection(USERCHATS)
+//        .document(channelId)
+//        .collection(channelId)
+//        .snapshots();
+//
+//    chatsSnapshotStream.map((QuerySnapshot msg) {
+//      msg.documents.map((DocumentSnapshot e) {
+//        return Message.fromFirestore(e);
+//      });
+//    });
+//    return chatsSnapshotStream;
+//  }
 
-    /// todo loop on messages in firestore
-    CollectionReference chatSnapshot = CHATS
-        .document(senderID)
-        .collection(USERCHATS)
-        .document(channelId)
-        .collection(channelId);
-    var messagesSnapshots = await chatSnapshot.getDocuments();
-    var msgs =
-    messagesSnapshots.documents.map((e) =>
-        e.data.forEach((key, value) {
-          var mMap = {key, value};
-          print(" SSSSSSS $mMap");
-        }));
-    print(msgs);
-
-    Message message = Message(
-        chatId: channelId,
-        message: "TEST FROM createMesageForUser",
-        senderName: "",
-        receiverId: reciverID,
-        createdAt: DateTime.now().toIso8601String().toString(),
-        seen: false,
-        timestamp: ts,
-        senderId: senderID);
-    var mapFromMessage = message.toMap();
-    chatSnapshot.add(mapFromMessage);
-
-//    var Fakemessages = msgs;
-//    msgs.add(message);
-
-  }
-
-  static Stream<QuerySnapshot> getStreamOfMessagesFromDocument(String senderID,
-      String channelId, String reciverID) {
-    print("${channelId}");
-
-    var chatsSnapshotStream = CHATS
-        .document(senderID)
-        .collection(USERCHATS)
-        .document(channelId)
-        .collection(channelId)
-        .snapshots();
-
-    chatsSnapshotStream.map((QuerySnapshot msg) {
-      msg.documents.map((DocumentSnapshot e) {
-        return Message.fromFirestore(e);
-      });
-    });
-    return chatsSnapshotStream;
-  }
-
-
-  static List<String> createChatIdsForUser(
-      {String currentUserId, String userId}) {
-    CollectionReference messagesSnapshots = contacts
-        .document(currentUserId)
-        .collection('userContacts')
-        .document(userId)
-        .collection("chats")
-        .orderBy('timestamp', descending: true);
-
-    Chat message = Chat(chatId: "test");
-    messagesSnapshots.add({"": ""});
-    var messages = [];
-    messages.add(message);
-    return messages;
-  }
+//
+//  static List<String> createChatIdsForUser(
+//      {String currentUserId, String userId}) {
+//    CollectionReference messagesSnapshots = contacts
+//        .document(currentUserId)
+//        .collection('userContacts')
+//        .document(userId)
+//        .collection("chats")
+//        .orderBy('timestamp', descending: true);
+//
+//    Chat message = Chat(chatId: "test");
+//    messagesSnapshots.add({"": ""});
+//    var messages = [];
+//    messages.add(message);
+//    return messages;
+//  }
 }

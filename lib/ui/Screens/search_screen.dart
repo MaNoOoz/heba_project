@@ -32,27 +32,26 @@ class _SearchScreenState extends State<SearchScreen> {
     return ListTile(
         leading: CircleAvatar(
           radius: 20.0,
-          backgroundImage: user.profileImageUrl.isEmpty ? AssetImage(
-              'assets/images/uph.jpg') : CachedNetworkImageProvider(
-              user.profileImageUrl),
+          backgroundImage: user.profileImageUrl.isEmpty
+              ? AssetImage('assets/images/uph.jpg')
+              : CachedNetworkImageProvider(user.profileImageUrl),
         ),
         title: Text(user.name),
-        onTap: () {
+        onTap: () async {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    ProfileScreen(
-                      currentUserId: widget.currentUserId,
-                      userId: user.uid,
-                    ),
+                builder: (_) => ProfileScreen(
+                  currentUserId: widget.currentUserId,
+                  userId: user.uid,
+                ),
               ));
         });
   }
 
   _clearSearch() {
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        _searchController.clear());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _searchController.clear());
     setState(() {
       _users = null;
     });

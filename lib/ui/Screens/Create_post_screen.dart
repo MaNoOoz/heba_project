@@ -11,7 +11,6 @@ import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
-import 'package:heba_project/service/LocationService.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/service/storage_service.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
@@ -100,16 +99,15 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   @override
   Widget build(BuildContext context) {
-    fuser = Provider
-        .of<FirebaseUser>(context)
-        .displayName;
-    fuserImage = Provider
-        .of<FirebaseUser>(context)
-        .photoUrl;
+    fuser = Provider.of<FirebaseUser>(context).displayName;
+    fuserImage = Provider.of<FirebaseUser>(context).photoUrl;
 
     return Scaffold(
       key: _scaffoldKey,
       body: ModalProgressHUD(
+        color: Colors.black,
+        progressIndicator:
+        mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
         inAsyncCall: showSpinner,
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -534,7 +532,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     var gePoint = GeoPoint(lat, long);
 //    var geFirePoint = GeoFirePoint(lat, long);
 
-
     publicFeed = HebaModel(
         oName: fuser,
         oImage: fuserImage,
@@ -637,12 +634,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     var fieldsRested = await _Resetdata();
     print('fieldsRested $fieldsRested');
 
-    var finalCheck =
-        dataChecked == false || postCreated != null || fieldsRested == true;
+    var finalCheck = dataChecked == false || postCreated != null ||
+        fieldsRested == true;
 //        userLocationCreated != null;
 
     if (finalCheck == true) {
-      dataUploaded = false;
+//      todo
+//      dataUploaded = false;
 
       showSpinner = false;
       _displaySnackBar(context, " تم إضافة الهبة بنجاح");
@@ -651,8 +649,11 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           "userLocationCreated From _CreatePost $postCreated " +
           "dataChecked  $dataChecked     " +
           "fieldsRested $fieldsRested   ");
+
+      Navigator.pushNamed(context, HomeScreen.id);
+
+
     }
-//    Navigator.pop(context);
 
     return dataUploaded;
   }
@@ -744,7 +745,21 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ],
               ),
               onPressed: () async {
-                return submit();
+                try {
+                  var s = await submit();
+                  print("submit Value in  ${s}");
+
+                  if (s == true) {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => HomeScreen()));
+                  } else {
+                    print("submit Value in else ${s}");
+                  }
+                } catch (ss) {
+                  print("submit Value in catch ${ss}");
+                } finally {
+                  print("Submit END");
+                }
               }),
 
           UIHelper.verticalSpace(10),
@@ -754,16 +769,20 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  submit() async {
+  Future<bool> submit() async {
+    print("Submit called ");
+
     if (_name.isNotEmpty && !_loading) {
       final action = await Dialogs.addNewHebaDialog(
           context, ' Add Heba', 'Are You Sure You Want To Add This Post');
       if (action == DialogAction.yes) {
         showLoadingDialog(context);
         await _SendToServer();
+
         setState(() {
           tappedYes = true;
         });
+        return true;
       } else {
         setState(
               () {
@@ -775,6 +794,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     } else if (_name.isNotEmpty == false) {
       _displaySnackBar(context, " أدخل إسم للهبة $_name");
     }
+    return false;
   }
 }
 //Future<UserLocation> _GetUserLocation() async {

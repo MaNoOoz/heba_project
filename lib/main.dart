@@ -20,6 +20,7 @@ import 'package:heba_project/ui/Screens/MapScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/shared/AppNavigation.dart';
+import 'package:heba_project/ui/shared/helperFuncs.dart';
 import 'package:heba_project/ui/shared/theme.dart';
 import 'package:provider/provider.dart';
 
@@ -39,8 +40,17 @@ class MyApp extends StatelessWidget {
       builder: (BuildContext context, AsyncSnapshot map) {
 //        todo make sure this is the right way to check user
         if (!map.hasData == false) {
-          Provider.of<UserData>(context, listen: true).currentUserId =
+          var cU = Provider.of<UserData>(context, listen: true).currentUserId =
               map.data.uid;
+          var fUser = Provider.of<FirebaseUser>(context);
+
+          var checkUserUid = cU == cU;
+
+          // ADDED
+          helperFunctions.SaveUserUid(checkUserUid);
+          helperFunctions.SaveUserEmail(fUser.email);
+          helperFunctions.SaveUserName(fUser.displayName);
+
           Provider.of<UserData>(context, listen: true).currentChatId =
               map.data.uid.toString().substring(0, 14);
 

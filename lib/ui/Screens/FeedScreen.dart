@@ -43,14 +43,15 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-
   /// VARS
-  List<HebaModel> _HebatListFromUsers = [];
+  List<HebaModel> staticHebatListFromUser = [];
+  List<HebaModel> tempList = [];
   HebaModel heba;
 
   /// ViewMode :  0-grid,1-row,2-map
   var mDataViewMode = 1;
-  var isMine = false;
+  var isMine;
+
   var featured = false;
 
   var data;
@@ -87,8 +88,8 @@ class _FeedScreenState extends State<FeedScreen>
   /// Sorting Values : 0 =  popular
   /// "Default" , 1 = low to high
   /// , 2 = high to low
-  int _selectedFilter;
-  int _selectedSort;
+  int _selectedFilter = 1;
+  int _selectedSort = 1;
 
   QuerySnapshot qn;
 
@@ -136,18 +137,16 @@ class _FeedScreenState extends State<FeedScreen>
 
   @override
   void initState() {
+    init();
+
     super.initState();
     _tabController = new TabController(length: 3, vsync: this);
-    getHebatFromFirestore();
-    setMarckerIcon();
-    _getLocationAndGoToIt();
-//    startQuery();
+  }
 
-//    sub = DatabaseService().hebatStream.listen((event) {
-//      v = event.hName;
-//    });
-
-//    DatabaseService.HebaPostsFromDb(heba);
+  init() async {
+    await getHebatFromFirestore();
+    await setMarckerIcon();
+    await _getLocationAndGoToIt();
   }
 
   @override
@@ -162,7 +161,7 @@ class _FeedScreenState extends State<FeedScreen>
     return buildScaffold(context);
   }
 
-  Scaffold buildScaffold(BuildContext context) {
+  Widget buildScaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
@@ -202,7 +201,7 @@ class _FeedScreenState extends State<FeedScreen>
                           Directionality(
                               textDirection: TextDirection.rtl,
                               child: Text("النتائج")),
-                          Text("  ${_HebatListFromUsers.length}"),
+                          Text("  ${staticHebatListFromUser.length}"),
                         ],
                       ),
                     ),
@@ -211,7 +210,7 @@ class _FeedScreenState extends State<FeedScreen>
                   color: Colors.white),
             ),
           ),
-          mData(context, _HebatListFromUsers),
+          mData(context, staticHebatListFromUser),
         ],
       ),
     );
@@ -236,7 +235,9 @@ class _FeedScreenState extends State<FeedScreen>
     print("getHebatFromFirestore Called:");
 
     List<HebaModel> hebat = [];
-    QuerySnapshot qn = await publicpostsRef.getDocuments();
+    QuerySnapshot qn = await publicpostsRef
+        .orderBy("timestamp", descending: false)
+        .getDocuments();
 
     List<DocumentSnapshot> documents = qn.documents;
     documents.forEach((DocumentSnapshot doc) {
@@ -244,18 +245,19 @@ class _FeedScreenState extends State<FeedScreen>
       hebat.add(postModel);
     });
 
-    var mMap = documents.map((e) => e.data.forEach((key, value) {
-//          print("Map From Firestore :$key,$value");
-        }));
-    print("Map:$mMap");
-
     setState(() {
-      _HebatListFromUsers = hebat;
-      _PostsStream = publicpostsRef.snapshots();
+      _PostsStream =
+          publicpostsRef.orderBy("timestamp", descending: false).snapshots();
+      staticHebatListFromUser = hebat;
     });
-    print("Map:${_HebatListFromUsers.length}");
 
-    return hebat;
+//        var mMap =  documents.map((e) => e.data.forEach((key, value) {
+//          print("Map From Firestore :$key,$value");
+//        }));
+
+    print("Map:${staticHebatListFromUser.length}");
+
+    return staticHebatListFromUser;
   }
 
   startQuery() async {
@@ -273,47 +275,41 @@ class _FeedScreenState extends State<FeedScreen>
   /// Marker Icon From Assets
   setMarckerIcon() async {
     await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(), AvailableImages.appIconsmall2)
+            ImageConfiguration(), AvailableImages.appIconsmall2)
         .then((d) {
       ico = d;
     });
   }
 
+  filterList(selected) async {
+    List<HebaModel> filterdHebat = [];
+    filterdHebat.addAll(staticHebatListFromUser);
+    var me;
+    var s = filterdHebat.where((i) {
+      me = i.authorId == widget.currentUserId;
+      return me;
+    }).toList();
+
+    if (me == true)
+      setState(() {
+        _selectedFilter = selected;
+        print("selected :${selected}");
+        staticHebatListFromUser = s;
+      });
+
+    print("me :${s}");
+    return staticHebatListFromUser;
+  }
+
   /// Filters
-  _selctedFilterType(int selected) {
+  _selctedFilterType(int selected) async {
     if (selected == 0) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        List<HebaModel> filterdHebat = [];
-        for (var Heba in _HebatListFromUsers) {
-          if (Heba.isMine == true) {
-            filterdHebat.add(Heba);
-            print("filterdHebat :${filterdHebat.length}");
-
-            setState(() {
-              _selectedFilter = selected;
-              print("filterdHebat :${selected}");
-            });
-          }
-        }
-
-        print("filterdHebat :${filterdHebat.length}");
+        filterList(selected);
       });
     } else if (selected == 1) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        List<HebaModel> filterdHebat = [];
-        for (var Heba in _HebatListFromUsers) {
-          if (Heba.isMine == true) {
-            filterdHebat.add(Heba);
-            print("filterdHebat :${filterdHebat.length}");
-
-            setState(() {
-              _selectedFilter = selected;
-              print("filterdHebat :${selected}");
-            });
-          }
-        }
-
-        print("filterdHebat :${filterdHebat.length}");
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        await getHebatFromFirestore();
       });
     }
 
@@ -321,7 +317,7 @@ class _FeedScreenState extends State<FeedScreen>
     setState(() {
       _selectedFilter = selected;
       print("selected :${selected}");
-      this._HebatListFromUsers = _HebatListFromUsers;
+      this.staticHebatListFromUser = staticHebatListFromUser;
     });
 //    setState(() {
 //      _selected = selected;
@@ -332,16 +328,18 @@ class _FeedScreenState extends State<FeedScreen>
   _selctedSortingType(int selected) {
     if (selected == 0) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        _HebatListFromUsers.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        staticHebatListFromUser
+            .sort((a, b) => b.timestamp.compareTo(a.timestamp));
         setState(() {
           _selectedSort = selected;
         });
-        print("selected :${_HebatListFromUsers.length}");
+        print("selected :${staticHebatListFromUser.length}");
       });
     }
     if (selected == 1) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        _HebatListFromUsers.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        staticHebatListFromUser
+            .sort((a, b) => a.timestamp.compareTo(b.timestamp));
         setState(() {
           _selectedSort = selected;
         });
@@ -351,7 +349,7 @@ class _FeedScreenState extends State<FeedScreen>
     Navigator.of(context).pop();
     setState(() {
       _selectedSort = selected;
-      this._HebatListFromUsers = _HebatListFromUsers;
+      this.staticHebatListFromUser = staticHebatListFromUser;
     });
     print("selected :$selected");
   }
@@ -560,7 +558,7 @@ class _FeedScreenState extends State<FeedScreen>
                                       onChanged: _selctedFilterType,
                                       title: Directionality(
                                         child: Text(
-                                          "هباتي",
+                                          "الكل",
                                           style: TextStyle(
                                               fontWeight: _selectedFilter == 1
                                                   ? FontWeight.bold
@@ -1167,8 +1165,12 @@ class _FeedScreenState extends State<FeedScreen>
       initialData: emptyList,
       stream: _PostsStream,
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> map) {
-        if (map.hasData && _HebatListFromUsers.length > 0) {
-          return hebat(context);
+        if (map.hasData && staticHebatListFromUser.length > 0) {
+          return StreamBuilder<HebaModel>(
+            builder: (context, snapshot) {
+              return hebat(context);
+            },
+          );
 
 //          final names = map.data.documents;
 //          List<Text> messagesWidgets = [];
@@ -1225,7 +1227,7 @@ class _FeedScreenState extends State<FeedScreen>
           scrollDirection: Axis.vertical,
           shrinkWrap: true,
           reverse: true,
-          itemCount: _HebatListFromUsers.length,
+          itemCount: staticHebatListFromUser.length,
           padding: const EdgeInsets.only(top: 15.0),
           itemBuilder: (context, index) {
 //                DocumentSnapshot ds = map.data.documents[index];
@@ -1235,14 +1237,14 @@ class _FeedScreenState extends State<FeedScreen>
 //                _HebaPostsFromDb(widget.post);
 //                return rowView(_docsList[index], index);
             return GestureDetector(
-              child: rowView(_HebatListFromUsers[index], index),
+              child: rowView(staticHebatListFromUser[index], index),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
                         HebaDetails(
-                            post: _HebatListFromUsers[index],
+                            post: staticHebatListFromUser[index],
                             isMe: false,
                             userId: widget.userId),
                   ),
@@ -1418,13 +1420,13 @@ class _FeedScreenState extends State<FeedScreen>
     setState(() {
       markers.clear();
     });
-    if (_HebatListFromUsers.isNotEmpty) {
+    if (staticHebatListFromUser.isNotEmpty) {
       setState(() {
 //        clientsToggle = true;
       });
     }
 
-    for (var i in _HebatListFromUsers) {
+    for (var i in staticHebatListFromUser) {
       print(
           "getMarkersFromList2 :${i.geoPoint.latitude} - ${i.geoPoint
               .longitude}");
@@ -1535,14 +1537,14 @@ class _FeedScreenState extends State<FeedScreen>
 //                  key: _listKey,
                   shrinkWrap: true,
                   scrollDirection: Axis.horizontal,
-                  itemCount: _HebatListFromUsers.length,
+                  itemCount: staticHebatListFromUser.length,
                   itemBuilder: (context, index) {
 //    SchedulerBinding.instance.addPostFrameCallback((_) {
 //                      _HebatListFromUsers.sort(
 //                          (a, b) => a.timestamp.compareTo(b.timestamp));
 //                    });
-                    print(_HebatListFromUsers);
-                    return hebatCards(_HebatListFromUsers[index]);
+                    print(staticHebatListFromUser);
+                    return hebatCards(staticHebatListFromUser[index]);
                   },
                   padding: EdgeInsets.all(8.0),
                 ),

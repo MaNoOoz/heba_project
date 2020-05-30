@@ -68,7 +68,10 @@ class mStatlessWidgets {
             padding: const EdgeInsets.all(8.0),
             child: Center(child: CircularProgressIndicator()),
           ),
-          Text(title)
+          Text(
+            title,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          )
         ],
       ),
     );
@@ -82,7 +85,6 @@ class mStatlessWidgets {
       ),
     );
   }
-
 }
 
 class mLables extends StatelessWidget {
@@ -174,7 +176,7 @@ class ButtonMessage extends StatelessWidget {
                       color: Color(0xFF1287BA), shape: BoxShape.circle),
                   child: Center(
                     child:
-                    Text(text, style: TextStyle(color: Color(0xFFFFFFFF))),
+                        Text(text, style: TextStyle(color: Color(0xFFFFFFFF))),
                   ),
                 ),
               ],

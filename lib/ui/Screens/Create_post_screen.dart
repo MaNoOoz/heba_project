@@ -105,9 +105,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return Scaffold(
       key: _scaffoldKey,
       body: ModalProgressHUD(
-        color: Colors.black,
+        color: Colors.green,
         progressIndicator:
-        mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
+            mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
         inAsyncCall: showSpinner,
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -590,6 +590,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return publicFeed;
   }
 
+  var finalCheck;
+
   /// Reset data
   Future<bool> _Resetdata() async {
     var dateRested = true;
@@ -613,7 +615,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   Future<bool> _SendToServer() async {
     showSpinner = true;
 
-//    await Future.delayed(Duration(seconds: 4));
     var dataUploaded = false;
 
     /// Check Inputs
@@ -634,37 +635,48 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     var fieldsRested = await _Resetdata();
     print('fieldsRested $fieldsRested');
 
-    var finalCheck = dataChecked == false || postCreated != null ||
-        fieldsRested == true;
-//        userLocationCreated != null;
+    finalCheck =
+        dataChecked == false || postCreated != null || fieldsRested == true;
 
     if (finalCheck == true) {
 //      todo
-//      dataUploaded = false;
-
-      showSpinner = false;
-      _displaySnackBar(context, " تم إضافة الهبة بنجاح");
+//      _displaySnackBar(context, " تم إضافة الهبة بنجاح");
 
       print("fieldsRested $fieldsRested     " +
           "userLocationCreated From _CreatePost $postCreated " +
           "dataChecked  $dataChecked     " +
           "fieldsRested $fieldsRested   ");
-
-      Navigator.pushNamed(context, HomeScreen.id);
-
-
     }
 
     return dataUploaded;
   }
 
   /// Confirm data
-  void _displaySnackBar(BuildContext context, var s) async {
+  void _displaySnackBar(BuildContext context, var title) {
     print("_displaySnackBar Called");
 
 //    if (mImagesPath = null || _name.isEmpty) {
-    final snackBar = SnackBar(content: Text(s));
-    _scaffoldKey.currentState.showSnackBar(snackBar);
+    if (finalCheck == true) {
+      final snackBar = SnackBar(
+        content: Text(title),
+        duration: Duration(seconds: 3),
+      );
+      var s = _scaffoldKey.currentState.showSnackBar(snackBar);
+      s.closed.whenComplete(() {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => HomeScreen()));
+      });
+
+//      Navigator.pushNamed(context, HomeScreen.id);
+
+    } else {
+      final snackBar = SnackBar(
+        content: Text(" أدخل إسم للهبة $_name"),
+        duration: Duration(seconds: 3),
+      );
+      _scaffoldKey.currentState.showSnackBar(snackBar);
+    }
+
 //    } else if (mImagesPath.length < mSelectedImage) {
 //      final snackBar = SnackBar(
 //        content: Text('جاري رفع الإعلان'),
@@ -745,21 +757,15 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ],
               ),
               onPressed: () async {
-                try {
-                  var s = await submit();
-                  print("submit Value in  ${s}");
+                await submit();
 
-                  if (s == true) {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()));
-                  } else {
-                    print("submit Value in else ${s}");
-                  }
-                } catch (ss) {
-                  print("submit Value in catch ${ss}");
-                } finally {
-                  print("Submit END");
-                }
+                // or
+//                var s = submit().whenComplete(() {
+//                  print("submit whenComplete ");
+//
+//                  Navigator.push(context,
+//                      MaterialPageRoute(builder: (context) => HomeScreen()));
+//                });
               }),
 
           UIHelper.verticalSpace(10),
@@ -769,20 +775,25 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  Future<bool> submit() async {
+  submit() async {
     print("Submit called ");
 
     if (_name.isNotEmpty && !_loading) {
       final action = await Dialogs.addNewHebaDialog(
           context, ' Add Heba', 'Are You Sure You Want To Add This Post');
       if (action == DialogAction.yes) {
-        showLoadingDialog(context);
+        print("Before _SendToServer ");
+
         await _SendToServer();
+        await Future.delayed(Duration(seconds: 5)).whenComplete(() {
+          _displaySnackBar(context, " تم إضافة الهبة بنجاح");
+        });
+
+        print("after _SendToServer ");
 
         setState(() {
           tappedYes = true;
         });
-        return true;
       } else {
         setState(
               () {
@@ -794,7 +805,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     } else if (_name.isNotEmpty == false) {
       _displaySnackBar(context, " أدخل إسم للهبة $_name");
     }
-    return false;
   }
 }
 //Future<UserLocation> _GetUserLocation() async {

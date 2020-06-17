@@ -57,6 +57,8 @@ dependencies:
   flutter_svg:
   adobe_xd:
 
+  bloc:
+  flutter_bloc:
   get_it:  # add this line
   rxdart:  # add this line
   flutter_emoji:

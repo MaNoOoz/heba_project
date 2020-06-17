@@ -136,6 +136,7 @@ class DatabaseService {
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
       'oName': post.oName,
+      'hCity': post.hCity,
       'isFeatured': post.isFeatured,
       'isMine': post.isMine ?? false,
       "location": post.location,
@@ -210,6 +211,7 @@ class DatabaseService {
         .collection('userPosts')
         .orderBy('timestamp', descending: true)
         .getDocuments();
+
     List<HebaModel> posts = userPostsSnapshot.documents
         .map((doc) => HebaModel.fromFirestore(doc))
         .toList();

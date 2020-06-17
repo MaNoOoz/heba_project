@@ -14,6 +14,7 @@ import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/service/storage_service.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
+import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/Dialogs.dart';
 import 'package:heba_project/ui/shared/UtilsImporter.dart';
 import 'package:heba_project/ui/shared/ui_helpers.dart';
@@ -66,6 +67,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   bool _autoValidate = false;
   String _name;
   String _desc;
+  String _city;
   bool showSpinner = false;
 
   /// Map ====================================================
@@ -89,7 +91,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //        currentPosition = value;
 //      });
 //    });
-
     _loading = false;
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
@@ -235,13 +236,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                           iconSize: 42.0,
                           icon: _readyToUploadImages.length > 0
                               ? Icon(
-                            Icons.edit,
-                            color: Colors.blueAccent,
-                          )
+                                  Icons.edit,
+                                  color: Colors.blueAccent,
+                                )
                               : Icon(
-                            Icons.add_circle,
-                            color: Colors.blueAccent,
-                          ),
+                                  Icons.add_circle,
+                                  color: Colors.blueAccent,
+                                ),
                           onPressed: () async {
                             await _loadAssets();
                           },
@@ -284,14 +285,34 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //
   }
 
-  Container FormUi(BuildContext context) {
+
+  List<DropdownMenuItem<String>> _dropDownMenuItems;
+  String _currentCity;
+
+  List<DropdownMenuItem<String>> getDropDownMenuItems() {
+    List<DropdownMenuItem<String>> items = new List();
+    for (String city in cities) {
+      items.add(new DropdownMenuItem(value: city, child: new Text(city)));
+    }
+    return items;
+  }
+
+  void changedDropDownItem(String selectedCity) {
+    setState(() {
+      _currentCity = selectedCity;
+    });
+  }
+
+  Widget FormUi(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(15.0),
       child: Form(
         key: _formkey,
         autovalidate: _autoValidate,
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
+
             /// Name OF Heba
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -341,58 +362,98 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             ),
 
             /// Location
-            Container(
-              width: double.infinity,
-              child: FlatButton(
-                splashColor: Colors.black12,
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(5.0),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  textDirection: TextDirection.rtl,
-                  children: <Widget>[
-                    currentPosition == null
-                        ? Center(
-                      child: CircularProgressIndicator(),
-                    )
-                        : Flexible(
-                      flex: 2,
-                      child: Text(
-                        currentPosition.latitude == null
-                            ? ""
-                            : "${currentPosition.latitude}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blueAccent,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+//            Row(
+//              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//              children: [
+//                Expanded(
+//                  flex: 2,
+//                  child: Container(
+//                    width: MediaQuery.of(context).size.width / 6,
+//                    child: Row(
+//                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+//                      crossAxisAlignment: CrossAxisAlignment.start,
+//                      textDirection: TextDirection.rtl,
+//                      children: <Widget>[
+//                        currentPosition == null
+//                            ? Center(
+//                                child: CircularProgressIndicator(),
+//                              )
+//                            : Flexible(
+//                                flex: 2,
+//                                child: Text(
+//                                  currentPosition.latitude == null
+//                                      ? ""
+//                                      : "${currentPosition.latitude}",
+//                                  style: TextStyle(
+//                                    fontSize: 12,
+//                                    color: Colors.blueAccent,
+//                                    fontWeight: FontWeight.bold,
+//                                  ),
+//                                ),
+//                              ),
+//                        Flexible(
+//                          flex: 1,
+//                          child: Align(
+//                              alignment: AlignmentDirectional.centerEnd,
+//                              child: Text(
+//                                "تحديد الموقع الحالي",
+//                                style: TextStyle(
+//                                    fontSize: 12,
+//                                    color: Colors.black45,
+//                                    fontWeight: FontWeight.bold),
+//                              )),
+//                        ),
+//                        const Icon(
+//                          Icons.location_on,
+//                          color: Colors.blueAccent,
+//                        ),
+//                      ],
+//                    ),
+//                  ),
+//                ),
+//              ],
+//            ),
+            Divider(),
+//            https://codingwithjoe.com/building-forms-with-flutter/
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Flexible(
+                    flex: 3,
+                    child: new FormField<String>(
+                      builder: (FormFieldState<String> state) {
+                        return InputDecorator(
+                          decoration: InputDecoration(
+                            icon: const Icon(Icons.location_city),
+                            labelText: 'المدينة',
+                          ),
+                          isEmpty: _currentCity == '',
+                          child: new DropdownButtonHideUnderline(
+                            child: new DropdownButton<String>(
+                              value: _currentCity,
+                              isDense: true,
+                              onChanged: (String newValue) {
+                                setState(() {
+//                                newContact.favoriteColor = newValue;
+                                  _city = newValue;
+                                  _currentCity = newValue;
+                                  state.didChange(newValue);
+                                });
+                              },
+                              items: cities.map((String value) {
+                                return new DropdownMenuItem<String>(
+                                  value: value,
+                                  child: new Text(value),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    Flexible(
-                      flex: 1,
-                      child: Align(
-                          alignment: AlignmentDirectional.centerEnd,
-                          child: Text(
-                            "تحديد الموقع الحالي",
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black45,
-                                fontWeight: FontWeight.bold),
-                          )),
-                    ),
-                    const Icon(
-                      Icons.location_on,
-                      color: Colors.blueAccent,
-                    ),
-                  ],
-                ),
-                onPressed: () {
-                  var s = currentPosition;
-                  print(s);
-                },
+                  ),
+                ],
               ),
             ),
 
@@ -542,6 +603,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         geoPoint: gePoint,
 //        geoFirePoint: geFirePoint,
         hDesc: _desc,
+        hCity: _city,
         authorId: widget.currentUserId,
         timestamp: ts);
 
@@ -605,6 +667,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     setState(() {
       _desc = '';
       _name = '';
+      _city = '';
 
 //      listOfImageLinks.length = -1;
     });

@@ -27,6 +27,7 @@ class HebaModel {
   String oName;
   String oImage;
   String hDesc;
+  String hCity;
   String authorId;
   Timestamp timestamp;
   bool isFeatured;
@@ -46,6 +47,7 @@ class HebaModel {
     this.oImage,
     this.oName,
     this.isMine,
+    this.hCity,
     @required this.hName,
     @required this.hDesc,
     this.location,
@@ -66,6 +68,7 @@ class HebaModel {
       imageUrls: List<String>.from(doc['imagesUrls'] ?? ["ss", "ss"]),
       hName: doc['hName'] ?? "noName",
       oName: doc['oName'] ?? "noName",
+      hCity: doc['hCity'] ?? "hCity",
       geoPoint: doc['geoPoint'],
       isFeatured: doc['isFeatured'] ?? false,
       oImage: doc['oImage'] ?? "noImage",
@@ -97,6 +100,7 @@ class HebaModel {
       imageUrls: List.from(map['imagesUrls'] ?? ["ss", "ss"]),
       hName: map['hName'] ?? "noName",
       oName: map['oName'] ?? "noName",
+      hCity: map['hCity'] ?? "hCity",
 //      location: UserLocation.fromJson(map['location']),
       isFeatured: map['isFeatured'] ?? false,
       isMine: map['isMine'] ?? true,

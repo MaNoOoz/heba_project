@@ -16,7 +16,6 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:heba_project/models/models.dart';
@@ -43,24 +42,18 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  /// VARS
+  /// VARS ===================================================================
   List<HebaModel> staticHebatListFromUser = [];
-  List<HebaModel> tempList = [];
+  List<HebaModel> currentList = [];
   HebaModel heba;
 
   /// ViewMode :  0-grid,1-row,2-map
   var mDataViewMode = 1;
   var isMine;
-
   var featured = false;
-
-  var data;
-  var v;
-  StreamSubscription<HebaModel> sub;
-
   Position currentLocation;
 
-  Geoflutterfire geo = Geoflutterfire();
+  String _city;
 
   @override
   bool get wantKeepAlive => true;
@@ -82,6 +75,8 @@ class _FeedScreenState extends State<FeedScreen>
   /// 0 = Filter [showBtnSheetForFiltiring]
   /// , 1 = Sort  [showBtnSheetForSorting]
   var mBottomSheetForFiltiring;
+  List<DropdownMenuItem<String>> _dropDownMenuItems;
+  String _currentCity;
 
   /// Sorting Database based on
   /// This [_selectedFilter]  :
@@ -91,49 +86,7 @@ class _FeedScreenState extends State<FeedScreen>
   int _selectedFilter = 1;
   int _selectedSort = 1;
 
-  QuerySnapshot qn;
-
-  ///  Methods ==============================================================
-  ///
-  /// Query DATABASE Based On [_selectedFilter]
-  Stream querDbWith({String tag}) {
-    Query query = publicpostsRef.where(tag);
-    query.snapshots();
-//    slids = query.snapshots().map((docsList) {
-//      docsList.documents.map((doc) {
-//        return doc.data;
-//      });
-//    }).toList();
-//    return slids;
-  }
-
-//  Stream queryNear({String tag}) {
-//    Query query = publicpostsRef.where('geoPoint',whereIn: );
-//    query.snapshots();
-////    slids = query.snapshots().map((docsList) {
-////      docsList.documents.map((doc) {
-////        return doc.data;
-////      });
-////    }).toList();
-////    return slids;
-//
-//  sub = publicpostsRef.w
-//  }
-
-//  Stream<QuerySnapshot> queryLocations({String tag}) {
-//    _iceCreamStores = Firestore.instance.collection('locations').orderBy('name').snapshots();
-//  }
-
-//  Stream convertQuerySnapshotToStream() async* {
-//    Stream stream;
-//    var q = await _getQueryPosts(postFromFuture).then((s) {
-//      print("convertQuerySnapshotToStream  ${s.documents.toList().length}");
-//
-//      return s;
-//    });
-////    stream = q.asStream();
-//    yield stream;
-//  }
+  /// METHODS ===================================================================
 
   @override
   void initState() {
@@ -141,6 +94,8 @@ class _FeedScreenState extends State<FeedScreen>
 
     super.initState();
     _tabController = new TabController(length: 3, vsync: this);
+    _dropDownMenuItems = getDropDownMenuItems();
+    _currentCity = _dropDownMenuItems[0].value;
   }
 
   init() async {
@@ -153,67 +108,6 @@ class _FeedScreenState extends State<FeedScreen>
   void dispose() {
     super.dispose();
     _tabController.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return buildScaffold(context);
-  }
-
-  Widget buildScaffold(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(130),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            CustomAppBar(
-//              user: widget.user, /// todo  create method to override the image from google in [] in order to fix null
-              title: "Heba ",
-              IsBack: false,
-              color: Colors.white,
-              isImageVisble: true,
-              flexSpace: 50,
-              flexColor: Colors.black12,
-            ),
-            Divider(),
-            FilterCard(context),
-          ],
-        ),
-      ),
-      body: ListView(
-        shrinkWrap: true,
-        children: <Widget>[
-          Center(
-            child: Visibility(
-              /// todo
-              visible: true,
-              child: Container(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Align(
-                      alignment: AlignmentDirectional.topCenter,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Directionality(
-                              textDirection: TextDirection.rtl,
-                              child: Text("النتائج")),
-                          Text("  ${staticHebatListFromUser.length}"),
-                        ],
-                      ),
-                    ),
-                  ),
-                  height: 40,
-                  color: Colors.white),
-            ),
-          ),
-          mData(context, staticHebatListFromUser),
-        ],
-      ),
-    );
   }
 
   List<dynamic> _getListOfImagesFromUser(HebaModel post2) {
@@ -230,6 +124,8 @@ class _FeedScreenState extends State<FeedScreen>
     return result;
   }
 
+  /// DATA ====================================
+  ///
   /// init methodes
   getHebatFromFirestore() async {
     print("getHebatFromFirestore Called:");
@@ -272,53 +168,90 @@ class _FeedScreenState extends State<FeedScreen>
     _PostsStream = publicpostsRef.snapshots();
   }
 
-  /// Marker Icon From Assets
-  setMarckerIcon() async {
-    await BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(), AvailableImages.appIconsmall2)
-        .then((d) {
-      ico = d;
-    });
+  filterListMe(int selected) async {
+    List<HebaModel> filterdHebat = [];
+
+    if (selected == 0) {
+      filterdHebat.addAll(staticHebatListFromUser);
+      var me;
+      var s = filterdHebat.where((i) {
+        me = i.authorId == widget.currentUserId;
+        return me;
+      }).toList();
+
+      if (me == true) {
+        setState(() {
+          _selectedFilter = selected;
+          print("selected :${selected}");
+          staticHebatListFromUser = s;
+        });
+
+        print("me :${s}");
+        return staticHebatListFromUser;
+      }
+    }
   }
 
-  filterList(selected) async {
+  filterListCity(int selected) async {
+    var cityFilter;
     List<HebaModel> filterdHebat = [];
     filterdHebat.addAll(staticHebatListFromUser);
-    var me;
-    var s = filterdHebat.where((i) {
-      me = i.authorId == widget.currentUserId;
-      return me;
+
+    var resultList = filterdHebat.where((i) {
+      cityFilter = i.hCity == _currentCity;
+//        print("cityFilter :${cityFilter}");
+      return cityFilter;
     }).toList();
-
-    if (me == true)
-      setState(() {
-        _selectedFilter = selected;
-        print("selected :${selected}");
-        staticHebatListFromUser = s;
-      });
-
-    print("me :${s}");
+    setState(() {
+      _selectedFilter = selected;
+      print("sadasdasdas :${selected} ${_currentCity}");
+      staticHebatListFromUser = resultList;
+    });
     return staticHebatListFromUser;
   }
 
-  /// Filters
+  /// Filters ====================================
   _selctedFilterType(int selected) async {
+    var filterdList;
+
     if (selected == 0) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        filterList(selected);
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        filterdList = await filterListMe(selected);
+        Navigator.of(context).pop();
+        setState(() {
+          _selectedFilter = 0;
+//          this.staticHebatListFromUser = staticHebatListFromUser;
+          print("_selectedFilter Value :${_selectedFilter}");
+        });
+        return filterdList;
       });
     } else if (selected == 1) {
       SchedulerBinding.instance.addPostFrameCallback((_) async {
         await getHebatFromFirestore();
+        Navigator.of(context).pop();
+        setState(() {
+          _selectedFilter = 1;
+          this.staticHebatListFromUser = staticHebatListFromUser;
+          print("_selectedFilter Value :${_selectedFilter}");
+        });
       });
+    } else if (selected == 2) {
+      var filterdList;
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        await getHebatFromFirestore();
+
+        filterdList = await filterListCity(selected);
+        Navigator.of(context).pop();
+        setState(() {
+          _selectedFilter = 2;
+          print("_selectedFilter Value :${_selectedFilter}");
+          staticHebatListFromUser = filterdList;
+        });
+      });
+
+      return staticHebatListFromUser;
     }
 
-    Navigator.of(context).pop();
-    setState(() {
-      _selectedFilter = selected;
-      print("selected :${selected}");
-      this.staticHebatListFromUser = staticHebatListFromUser;
-    });
 //    setState(() {
 //      _selected = selected;
 //      print("$_selected");
@@ -354,157 +287,24 @@ class _FeedScreenState extends State<FeedScreen>
     print("selected :$selected");
   }
 
-  ///  Widgets ==============================================================
-
-  /// HEADER
-  Widget FilterCard(BuildContext context) {
-    return Container(
-      width: MediaQuery
-          .of(context)
-          .size
-          .width,
-      child: Card(
-        elevation: 2,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            /// Filter
-            Padding(
-              padding: const EdgeInsets.only(left: 18.0),
-              child: GestureDetector(
-                onTap: () async {
-                  return showBtnSheetForFiltiring(context, _tabController);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Container(
-                    height: 40,
-                    child: Row(
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: Text(
-                              "تصفية",
-                              style: TextStyle(
-                                  fontWeight: _selectedFilter == 0
-                                      ? FontWeight.bold
-                                      : FontWeight.normal),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          child: Center(
-                            child: Icon(
-                              FontAwesomeIcons.filter,
-                              size: 14,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            /// Sort
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: GestureDetector(
-                onTap: () {
-//                  todo
-                  return showBtnSheetForSorting(context, _tabController);
-                },
-                child: Container(
-                  height: 40,
-                  child: Row(
-                    children: <Widget>[
-                      Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          " ترتيب",
-                          style: TextStyle(
-                              fontWeight: _selectedFilter == 0
-                                  ? FontWeight.bold
-                                  : FontWeight.normal),
-                        ),
-                      ),
-                      Container(
-                        child: Center(
-                          child: Icon(
-                            FontAwesomeIcons.sort,
-                            size: 14,
-                            color: Colors.black45,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            /// Near
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: GestureDetector(
-                onTap: () {
-//                  todo query the database
-
-//                  return showBtnSheetForSorting(context, _tabController);
-                },
-                child: Container(
-                  height: 40,
-                  child: Row(
-                    children: <Widget>[
-                      Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          "  القريب",
-                          style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 14,
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                      Container(
-                        child: Center(
-                          child: Icon(
-                            FontAwesomeIcons.locationArrow,
-                            size: 14,
-                            color: Colors.black45,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            /// View
-            getIcon(),
-          ],
-        ),
-      ),
-    );
+  List<DropdownMenuItem<String>> getDropDownMenuItems() {
+    List<DropdownMenuItem<String>> items = new List();
+    for (String city in cities) {
+      items.add(new DropdownMenuItem(value: city, child: new Text(city)));
+    }
+    return items;
   }
 
-  /// todo Still Not Work
+  void changedDropDownItem(String selectedCity) {
+    setState(() {
+      _currentCity = selectedCity;
+      _city = selectedCity;
+    });
+  }
+
   showBtnSheetForFiltiring(BuildContext context, TabController _tabController) {
-    var w = MediaQuery
-        .of(context)
-        .size
-        .width * 0.1;
-    var h = MediaQuery
-        .of(context)
-        .size
-        .height * 0.2;
+    var w = MediaQuery.of(context).size.width * 0.1;
+    var h = MediaQuery.of(context).size.height * 0.2;
     mBottomSheetForFiltiring = showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
@@ -551,6 +351,7 @@ class _FeedScreenState extends State<FeedScreen>
                                       ),
                                     ),
                                   ),
+
                                   Flexible(
                                     child: RadioListTile(
                                       value: 1,
@@ -567,6 +368,86 @@ class _FeedScreenState extends State<FeedScreen>
                                         textDirection: TextDirection.rtl,
                                       ),
                                     ),
+                                  ),
+
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Container(
+                                          child: RadioListTile(
+                                            value: 2,
+                                            groupValue: _selectedFilter,
+                                            onChanged: _selctedFilterType,
+                                            title: Directionality(
+                                              child: Text(
+                                                "${_currentCity}",
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                    _selectedFilter == 2
+                                                        ? FontWeight.bold
+                                                        : FontWeight
+                                                        .normal),
+                                              ),
+                                              textDirection: TextDirection.rtl,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Spacer(),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: FormField<String>(builder:
+                                            (FormFieldState<String> state) {
+                                          return Container(
+                                            width: 100,
+                                            child:
+                                            new DropdownButtonHideUnderline(
+                                              child: new DropdownButton<String>(
+                                                value: _currentCity,
+                                                isDense: false,
+                                                isExpanded: false,
+                                                onChanged:
+                                                    (String newValue) async {
+                                                  setState(() {
+                                                    _currentCity = newValue;
+                                                    state.didChange(newValue);
+                                                    _city = state.value;
+                                                  });
+                                                  await _selctedFilterType(2);
+                                                },
+                                                items:
+                                                cities.map((String value) {
+                                                  return new DropdownMenuItem<
+                                                      String>(
+                                                    value: value,
+                                                    child: new Text(value),
+                                                  );
+                                                }).toList(),
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+
+//                                      Expanded(
+//                                        flex: 1,
+//                                        child:  Padding(
+//                                          padding: const EdgeInsets.only(right:16.0),
+//                                          child: Container(
+//                                            child: Directionality(
+//                                              textDirection: TextDirection.rtl,
+//                                              child: Text(
+//                                                "المدينة",
+//                                                style: TextStyle(
+//                                                    fontWeight:
+//                                                         FontWeight.normal),
+//                                              ),
+//                                            ),
+//                                          ),
+//                                        ),
+//                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -716,6 +597,329 @@ class _FeedScreenState extends State<FeedScreen>
         });
 
     return mBottomSheetForFiltiring;
+  }
+
+  /// MAP ====================================
+  getMarkres() {
+    print("getMarkres :Called");
+    List<Marker> _markers = [];
+
+    setState(() {
+      markers.clear();
+    });
+    if (staticHebatListFromUser.isNotEmpty) {
+      setState(() {
+//        clientsToggle = true;
+      });
+    }
+
+    for (var i in staticHebatListFromUser) {
+      print(
+          "getMarkersFromList2 :${i.geoPoint.latitude} - ${i.geoPoint
+              .longitude}");
+
+      _markers.add(Marker(
+        markerId: MarkerId(i.id),
+        infoWindow: InfoWindow(title: i.hName, snippet: i.hDesc),
+        icon: ico,
+        //            position: LatLng(doc.data['geoPoint']['Latitude'], doc.data['geoPoint']['Longitude']),
+        position: LatLng(i.geoPoint.latitude, i.geoPoint.longitude),
+      ));
+    }
+
+    setState(() {
+      markers = _markers;
+    });
+    print("getMarkersFromList2 : _markers lenght${_markers.length.toString()}");
+
+    return markers;
+  }
+
+  void editPost(DocumentSnapshot documentSnapshot) {
+//    documentSnapshot.reference.updateData(data);
+  }
+
+  _getLocationAndGoToIt() async {
+    print("_getLocationAndGoToIt :  Called");
+
+    /// CurrentLocation
+    currentLocation = await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+    print("userLocation :  $currentLocation");
+
+    /// CameraPosition
+    CameraPosition currentPosition = CameraPosition(
+        bearing: 15.0,
+        target: LatLng(currentLocation.latitude, currentLocation.longitude),
+        tilt: 75.00,
+        zoom: 12.0);
+    GoogleMapController controller = await mapController.future;
+
+    controller.animateCamera(CameraUpdate.newCameraPosition(currentPosition));
+  }
+
+  Future<void> _getLocationOfHebaThenGoToIt(HebaModel post) async {
+    print("_getLocationOfHebaThenGoToIt :  Called");
+    setState(() {
+      currentHeba = post;
+    });
+    GoogleMapController controller = await mapController.future;
+
+    /// Heba Position Cords
+    LatLng latLng = new LatLng(
+        currentHeba.geoPoint.latitude, currentHeba.geoPoint.longitude);
+
+    /// Heba Position
+    CameraPosition hebaPosition =
+    CameraPosition(bearing: 15.0, target: latLng, tilt: 45.00, zoom: 14.0);
+
+    /// Heba Camera Update
+    CameraUpdate cameraUpdate = CameraUpdate.newLatLngZoom(latLng, 14);
+    CameraUpdate cameraUpdate2 = CameraUpdate.newCameraPosition(hebaPosition);
+
+    controller.animateCamera(cameraUpdate);
+    //              print("_getLocationOfHebaThenGoToIt :  Called");
+//              final controller = await mapController.future;
+//              var currentLocation = await Geolocator()
+//                  .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+//              print("userLocation :  $currentLocation");
+//
+//              /// CameraPosition
+//              CameraPosition hebaPosition = CameraPosition(
+//                  bearing: 15.0,
+//                  target: LatLng(23.22, 22.11),
+//                  tilt: 45.00,
+//                  zoom: 14.0);
+//              LatLng latLng = new LatLng(post.geoPoint.latitude, post.geoPoint.longitude);
+//              CameraUpdate cameraUpdate = CameraUpdate.newLatLngZoom(latLng, 15);
+//              controller.animateCamera(cameraUpdate);
+////
+//////              setState(() {
+//////                resetToggle = true;
+//////              });
+  }
+
+  /// Marker Icon From Assets
+  setMarckerIcon() async {
+    await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(), AvailableImages.appIconsmall2)
+        .then((d) {
+      ico = d;
+    });
+  }
+
+  /// WIDGETS ===================================================================
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return buildScaffold(context);
+  }
+
+  Widget buildScaffold(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(130),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            CustomAppBar(
+//              user: widget.user, /// todo  create method to override the image from google in [] in order to fix null
+              title: "Heba ",
+              IsBack: false,
+              color: Colors.white,
+              isImageVisble: true,
+              flexSpace: 50,
+              flexColor: Colors.black12,
+            ),
+            Divider(),
+            FilterCard(context),
+          ],
+        ),
+      ),
+      body: ListView(
+        shrinkWrap: true,
+        children: <Widget>[
+          Center(
+            child: Visibility(
+
+              /// todo
+              visible: true,
+              child: Container(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Align(
+                      alignment: AlignmentDirectional.topCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          staticHebatListFromUser.length == 0
+                              ? Text(" لا يوجد نتائج ")
+                              : Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text(
+                                  "  النتائج ${staticHebatListFromUser
+                                      .length} ")),
+                        ],
+                      ),
+                    ),
+                  ),
+                  height: 40,
+                  color: Colors.white),
+            ),
+          ),
+          mData(context, staticHebatListFromUser),
+        ],
+      ),
+    );
+  }
+
+  /// HEADER
+  Widget FilterCard(BuildContext context) {
+    return Container(
+      width: MediaQuery
+          .of(context)
+          .size
+          .width,
+      child: Card(
+        elevation: 2,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+
+            /// Filter
+            Padding(
+              padding: const EdgeInsets.only(left: 18.0),
+              child: GestureDetector(
+                onTap: () async {
+                  return showBtnSheetForFiltiring(context, _tabController);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Container(
+                    height: 40,
+                    child: Row(
+                      textDirection: TextDirection.rtl,
+                      children: <Widget>[
+                        Container(
+                          child: Center(
+                            child: Icon(
+                              FontAwesomeIcons.filter,
+                              size: 14,
+                              color: _selectedFilter != 1
+                                  ? Colors.blueAccent
+                                  : Colors.black54,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Text(
+                              "تصفية",
+                              style: TextStyle(fontWeight: FontWeight.normal),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            /// Sort
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                onTap: () {
+//                  todo
+                  return showBtnSheetForSorting(context, _tabController);
+                },
+                child: Container(
+                  height: 40,
+                  child: Row(
+                    children: <Widget>[
+                      Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Text(
+                          " ترتيب",
+//                          style: TextStyle(
+//                              fontWeight: _selectedFilter == 0
+//                                  ? FontWeight.bold
+//                                  : FontWeight.normal),
+                          style: TextStyle(fontWeight: FontWeight.normal),
+                        ),
+                      ),
+                      Container(
+                        child: Center(
+                          child: _selectedSort == 0
+                              ? Icon(
+                            FontAwesomeIcons.sortUp,
+                            size: 14,
+                            color: Colors.blueAccent,
+                          )
+                              : Icon(
+                            FontAwesomeIcons.sortDown,
+                            size: 14,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            /// Near
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                onTap: () {
+//                  todo query the database
+
+//                  return showBtnSheetForSorting(context, _tabController);
+                },
+                child: Container(
+                  height: 40,
+                  child: Row(
+                    children: <Widget>[
+                      Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Text(
+                          "  القريب",
+                          style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 14,
+                              fontWeight: FontWeight.normal),
+                        ),
+                      ),
+                      Container(
+                        child: Center(
+                          child: Icon(
+                            FontAwesomeIcons.locationArrow,
+                            size: 14,
+                            color: Colors.black45,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            /// View
+            getIcon(),
+          ],
+        ),
+      ),
+    );
   }
 
   /// LIST-ITEM
@@ -932,8 +1136,8 @@ class _FeedScreenState extends State<FeedScreen>
       height: 150,
 //      color: Colors.blueAccent,
       child: InkWell(
-        focusColor: Colors.green,
-        splashColor: Colors.black54,
+//        focusColor: Colors.cyan,
+//        splashColor: Colors.cyan,
         onTap: () {
           print("${index} ");
 
@@ -969,6 +1173,7 @@ class _FeedScreenState extends State<FeedScreen>
             color: Colors.grey,
           ),
           Row(
+            textDirection: TextDirection.rtl,
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
 //        mainAxisSize: MainAxisSize.max,
@@ -1035,11 +1240,16 @@ class _FeedScreenState extends State<FeedScreen>
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0, left: 8),
+                child: Icon(FontAwesomeIcons.clock,
+                    size: 14, color: Colors.black38),
+              ),
               Expanded(
                 flex: 1,
                 child: GestureDetector(
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0, bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: Container(
                       height: 30.0,
                       width: 30.0,
@@ -1122,40 +1332,92 @@ class _FeedScreenState extends State<FeedScreen>
           .width - 130,
 //      color: Colors.cyan,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Text(
-            post.hName,
-            overflow: TextOverflow.ellipsis,
-            style: new TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Text(
+              post.hName,
+              maxLines: 1,
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.start,
+              overflow: TextOverflow.ellipsis,
+              style: new TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          Text(
-            post.hDesc,
-            overflow: TextOverflow.ellipsis,
-            style: new TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Text(
+              post.hDesc,
+              maxLines: 1,
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.start,
+              overflow: TextOverflow.ellipsis,
+              style: new TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+              ),
             ),
+          ),
+
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(FontAwesomeIcons.city,
+                    size: 14, color: Colors.black38),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(
+                  post.hCity,
+                  overflow: TextOverflow.ellipsis,
+                  style: new TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+              ),
+              Spacer(
+                flex: 1,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(Icons.location_on, size: 14, color: Colors.black38),
+              ),
+//              todo calculate distance
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(
+                  post.geoPoint.longitude.toString(),
+                  overflow: TextOverflow.ellipsis,
+                  style: new TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+              ),
+            ],
           ),
           // todo change
-          Text(
-            post.geoPoint.longitude.toString() ?? "SSS",
-            overflow: TextOverflow.ellipsis,
-            style: new TextStyle(
-              color: Colors.blue,
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
+//          Text(
+//            post.hCity ?? "SSS",
+//            overflow: TextOverflow.ellipsis,
+//            style: new TextStyle(
+//              color: Colors.blue,
+//              fontSize: 14,
+//              fontWeight: FontWeight.normal,
+//            ),
+//          ),
         ],
       ),
     );
   }
-
-  /// test ========================================================
 
   /// DATA ========================================================
 
@@ -1261,7 +1523,7 @@ class _FeedScreenState extends State<FeedScreen>
     return SingleChildScrollView(
       physics: NeverScrollableScrollPhysics(),
       child: Container(
-        color: Colors.cyan,
+        color: Colors.black26,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1412,51 +1674,12 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-  /// MAP ====================================
-  getMarkres() {
-    print("getMarkres :Called");
-    List<Marker> _markers = [];
-
-    setState(() {
-      markers.clear();
-    });
-    if (staticHebatListFromUser.isNotEmpty) {
-      setState(() {
-//        clientsToggle = true;
-      });
-    }
-
-    for (var i in staticHebatListFromUser) {
-      print(
-          "getMarkersFromList2 :${i.geoPoint.latitude} - ${i.geoPoint
-              .longitude}");
-
-      _markers.add(Marker(
-        markerId: MarkerId(i.id),
-        infoWindow: InfoWindow(title: i.hName, snippet: i.hDesc),
-        icon: ico,
-        //            position: LatLng(doc.data['geoPoint']['Latitude'], doc.data['geoPoint']['Longitude']),
-        position: LatLng(i.geoPoint.latitude, i.geoPoint.longitude),
-      ));
-    }
-
-    setState(() {
-      markers = _markers;
-    });
-    print("getMarkersFromList2 : _markers lenght${_markers.length.toString()}");
-
-    return markers;
-  }
-
   Widget mMapView(context) {
-//    final docs = querySnapshot.data.documents;
-//    final docslENGH = querySnapshot.data.documents.length;
-
-    final GlobalKey<AnimatedListState> _listKey = GlobalKey();
     var h = MediaQuery
         .of(context)
         .size
         .height / 1.5;
+
     return Container(
       height: h,
       child: Stack(
@@ -1556,14 +1779,6 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-//  getGeo(HebaModel hebaModel)async{
-//
-//    final Geoflutterfire geoflutterfire = Geoflutterfire() ;
-//    var geoRef = geoflutterfire.collection(collectionRef: publicpostsRef);
-//     await geoRef.setPoint(hebaModel.id, "postion", hebaModel.geoFirePoint.latitude, hebaModel.geoFirePoint.longitude);
-//
-//  }
-
   Widget hebatCards(HebaModel post) {
     return Card(
       child: InkWell(
@@ -1595,77 +1810,5 @@ class _FeedScreenState extends State<FeedScreen>
         ),
       ),
     );
-  }
-
-  void _onMapCreated(GoogleMapController controller, HebaModel post) async {
-//    await getMarkersFromList(post);
-
-//    setState(() {
-//      mapController = controller;
-//    });
-  }
-
-  void editPost(DocumentSnapshot documentSnapshot) {
-//    documentSnapshot.reference.updateData(data);
-  }
-
-  _getLocationAndGoToIt() async {
-    print("_getLocationAndGoToIt :  Called");
-
-    /// CurrentLocation
-    currentLocation = await Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-    print("userLocation :  $currentLocation");
-
-    /// CameraPosition
-    CameraPosition currentPosition = CameraPosition(
-        bearing: 15.0,
-        target: LatLng(currentLocation.latitude, currentLocation.longitude),
-        tilt: 75.00,
-        zoom: 12.0);
-    GoogleMapController controller = await mapController.future;
-
-    controller.animateCamera(CameraUpdate.newCameraPosition(currentPosition));
-  }
-
-  Future<void> _getLocationOfHebaThenGoToIt(HebaModel post) async {
-    print("_getLocationOfHebaThenGoToIt :  Called");
-    setState(() {
-      currentHeba = post;
-    });
-    GoogleMapController controller = await mapController.future;
-
-    /// Heba Position Cords
-    LatLng latLng = new LatLng(
-        currentHeba.geoPoint.latitude, currentHeba.geoPoint.longitude);
-
-    /// Heba Position
-    CameraPosition hebaPosition =
-    CameraPosition(bearing: 15.0, target: latLng, tilt: 45.00, zoom: 14.0);
-
-    /// Heba Camera Update
-    CameraUpdate cameraUpdate = CameraUpdate.newLatLngZoom(latLng, 14);
-    CameraUpdate cameraUpdate2 = CameraUpdate.newCameraPosition(hebaPosition);
-
-    controller.animateCamera(cameraUpdate);
-    //              print("_getLocationOfHebaThenGoToIt :  Called");
-//              final controller = await mapController.future;
-//              var currentLocation = await Geolocator()
-//                  .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-//              print("userLocation :  $currentLocation");
-//
-//              /// CameraPosition
-//              CameraPosition hebaPosition = CameraPosition(
-//                  bearing: 15.0,
-//                  target: LatLng(23.22, 22.11),
-//                  tilt: 45.00,
-//                  zoom: 14.0);
-//              LatLng latLng = new LatLng(post.geoPoint.latitude, post.geoPoint.longitude);
-//              CameraUpdate cameraUpdate = CameraUpdate.newLatLngZoom(latLng, 15);
-//              controller.animateCamera(cameraUpdate);
-////
-//////              setState(() {
-//////                resetToggle = true;
-//////              });
   }
 }

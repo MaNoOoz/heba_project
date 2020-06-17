@@ -11,9 +11,27 @@ const googleMapsApiKey = 'AIzaSyDRMvVRVlma0gjFhELTtESq53WsVqvllGw';
 
 /// sup collication
 const USERMESSAGES = "USER-MESSAGES";
-const USERCHATS = "userChats";
+const USERCHATS = "chat";
 const CHAT = "chat";
-
+const List<String> cities = [
+  "القصيم",
+  "الرياض",
+  "الشرقيه",
+  "جده",
+  "مكه",
+  "ينبع",
+  "حفر الباطن",
+  "المدينة",
+  "الطايف",
+  "تبوك",
+  "حائل",
+  "أبها",
+  "الباحة",
+  "جيزان",
+  "نجران",
+  "الجوف",
+  "عرعر"
+];
 final themeColor = Color(0xfff5a623);
 final primaryColor = Color(0xff203152);
 final greyColor = Color(0xffaeaeae);
@@ -28,7 +46,7 @@ final contacts = _firestore.collection('contacts');
 final CHATS = _firestore.collection('chats');
 
 final Query publicpostsRefWtihQuery =
-_firestore.collection('publicposts').where("hName", isEqualTo: "uyyhh");
+    _firestore.collection('publicposts').where("hName", isEqualTo: "uyyhh");
 final locations = _firestore.collection('locations');
 final followersRef = _firestore.collection('followers');
 final followingRef = _firestore.collection('following');

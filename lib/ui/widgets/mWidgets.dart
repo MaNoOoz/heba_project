@@ -70,7 +70,7 @@ class mStatlessWidgets {
           ),
           Text(
             title,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
           )
         ],
       ),
@@ -207,7 +207,8 @@ class MessageBorder extends ShapeBorder {
       ..addRRect(
           RRect.fromRectAndRadius(rect, Radius.circular(rect.height / 2)))
       ..moveTo(rect.bottomCenter.dx - 10, rect.bottomCenter.dy)
-      ..relativeLineTo(10, 20)..relativeLineTo(20, -20)
+      ..relativeLineTo(10, 20)
+      ..relativeLineTo(20, -20)
       ..close();
   }
 

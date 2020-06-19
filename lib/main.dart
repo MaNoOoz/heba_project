@@ -34,8 +34,11 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  FirebaseUser firebaseUser;
+
   Widget _getScreenId() {
     return StreamBuilder<FirebaseUser>(
+      initialData: firebaseUser,
       stream: FirebaseAuth.instance.onAuthStateChanged,
       builder: (BuildContext context, AsyncSnapshot map) {
 //        todo make sure this is the right way to check user

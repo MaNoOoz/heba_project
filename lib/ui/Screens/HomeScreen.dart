@@ -2,13 +2,11 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/Chat.dart';
 import 'package:heba_project/models/user_data.dart';
-import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
-import 'package:heba_project/ui/Screens/search_screen.dart';
 import 'package:heba_project/ui/shared/helperFuncs.dart';
 import 'package:provider/provider.dart';
 
@@ -32,148 +30,110 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentTab = 0;
   PageController _pageController;
+  PageController pageController = PageController(
+    initialPage: 0,
+    keepPage: true,
+  );
+
+  var bottomSelectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    init();
     _pageController = PageController();
   }
 
   @override
   Widget build(BuildContext context) {
     final String currentUserId = Provider.of<UserData>(context).currentUserId;
-    final ChatModel conversation = Provider.of<UserData>(context).conver;
-    final User user = Provider.of<UserData>(context).user;
-//    var currentLocation = Provider.of<UserLocation>(context);
-//    var currentUser = Provider.of<FirebaseUser>(context);
-//     currentLocation = Us;
-//    log(' home Screen : currentLocation.address value is currentLocationFrom stream = ${currentLocation.address}');
-
-//    UniqueKey key;
     return WillPopScope(
       onWillPop: () async {
         return helperFunctions.OnWillPop(context);
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: PageView(
-          controller: _pageController,
-          children: <Widget>[
-            FeedScreen(
-              currentUserId: currentUserId,
-              userId: currentUserId,
-            ),
-            SearchScreen(
-              currentUserId: currentUserId,
-            ),
-            CreatePostScreen(
-              currentUserId: currentUserId,
-            ),
-            ChatListScreen(
-              currentUserId: currentUserId,
-              userID: currentUserId,
-            ),
-            ProfileScreen(
-              currentUserId: currentUserId,
-              userId: currentUserId,
-//              user: user,
-//              chat: chat,
-            ),
+        body: buildPageView(currentUserId),
+        bottomNavigationBar: CurvedNavigationBar(
+          index: bottomSelectedIndex,
+          height: 50,
+          buttonBackgroundColor: Colors.blue,
+          backgroundColor: Colors.white,
+          color: Colors.blue,
+          items: <Widget>[
+            Icon(Icons.home, color: Colors.white, size: 30),
+//            Icon(Icons.search, color: Colors.white, size: 30),
+            Icon(Icons.add, color: Colors.white, size: 30),
+            Icon(Icons.comment, color: Colors.white, size: 30),
+            Icon(Icons.account_circle, color: Colors.white, size: 30),
           ],
-          onPageChanged: (int index) {
-            setState(() {
-              _currentTab = index;
-            });
-          },
-        ),
-        bottomNavigationBar: CupertinoTabBar(
-//          key: key,
-          inactiveColor: Colors.grey,
-          border: Border.all(color: Colors.grey, width: 1),
-          currentIndex: _currentTab,
           onTap: (int index) {
-            if (index == 2) {
-//            openDialog();
-            }
-            setState(() {
-              _currentTab = index;
-            });
-            _pageController.animateToPage(
-              index,
-              duration: Duration(milliseconds: 200),
-              curve: Curves.easeIn,
-            );
+            bottomTapped(index);
+//            if (index == 2) {
+////            openDialog();
+//            }
+//            setState(() {
+//              _currentTab = index;
+//            });
           },
-          activeColor: Colors.black45,
-          items: [
-            BottomNavigationBarItem(
-              activeIcon: Icon(
-                Icons.home,
-                color: Colors.green,
-                size: 42.0,
-              ),
-              icon: Icon(
-                Icons.home,
-                size: 32.0,
-//              color: Colors.green,
-              ),
-            ),
-            BottomNavigationBarItem(
-              activeIcon: Icon(
-                Icons.search,
-                color: Colors.green,
-                size: 42.0,
-              ),
-              icon: Icon(
-                Icons.search,
-                size: 32.0,
-//              color: Colors.amber,
-              ),
-            ),
-            BottomNavigationBarItem(
-              activeIcon: Icon(
-                Icons.add_circle,
-                color: Colors.green,
-                size: 52.0,
-              ),
-              icon: Icon(
-                Icons.add_circle,
-                color: Colors.orange,
-
-                size: 50.0,
-//              color: Colors.blue,
-              ),
-            ),
-            BottomNavigationBarItem(
-              activeIcon: Icon(
-                Icons.comment,
-
-//              FontAwesomeIcons.commentAlt,
-                color: Colors.green,
-                size: 42.0,
-              ),
-              icon: Icon(
-                Icons.comment,
-                size: 32.0,
-//              color: Colors.blue,
-              ),
-            ),
-            BottomNavigationBarItem(
-              activeIcon: Icon(
-                Icons.account_circle,
-                color: Colors.green,
-                size: 42.0,
-              ),
-              icon: Icon(
-                Icons.account_circle,
-                size: 32.0,
-//              color: Colors.deepOrangeAccent,
-              ),
-            ),
-          ],
         ),
       ),
     );
+  }
+
+  PageView buildPageView(String currentUserId) {
+    return PageView(
+      controller: pageController,
+      children: <Widget>[
+        FeedScreen(
+          currentUserId: currentUserId,
+          userId: currentUserId,
+        ),
+//          SearchScreen(
+//            currentUserId: currentUserId,
+//          ),
+        CreatePostScreen(
+          currentUserId: currentUserId,
+        ),
+        ChatListScreen(
+          currentUserId: currentUserId,
+          userID: currentUserId,
+        ),
+        ProfileScreen(
+          currentUserId: currentUserId,
+          userId: currentUserId,
+//              user: user,
+//              chat: chat,
+        ),
+      ],
+      onPageChanged: (int index) {
+        pageChanged(index);
+      },
+    );
+  }
+
+  void pageChanged(int index) {
+    setState(() {
+      bottomSelectedIndex = index;
+      print("Current Tap : $bottomSelectedIndex");
+    });
+  }
+
+  void bottomTapped(int index) {
+    setState(() {
+      bottomSelectedIndex = index;
+      pageController.animateToPage(index,
+          duration: Duration(milliseconds: 500), curve: Curves.ease);
+    });
+  }
+
+  void init() async {
+    var status = await helperFunctions.checkNetwork();
+    if (status == true) {
+      print("NetWork is  :$status");
+    } else {
+      print("NetWork is  :$status");
+    }
   }
 
   /// Methods

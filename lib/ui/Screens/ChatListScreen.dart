@@ -15,7 +15,6 @@ import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
-import 'package:heba_project/ui/shared/helperFuncs.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
 import 'package:provider/provider.dart';
@@ -68,12 +67,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     print("init Called");
     print("init : ${widget.currentUserId.length} ");
     print("init : ${widget.currentUserId} ");
-    var status = await helperFunctions.checkNetwork();
-    if (status == true) {
-      print("NetWork is  :$status");
-    } else {
-      print("NetWork is  :$status");
-    }
+
     chatListStream = getCurrentUserChats(widget.currentUserId).asStream();
     streamController = StreamController.broadcast();
     streamController.stream.listen((event) {

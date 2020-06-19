@@ -58,6 +58,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   bool isMine;
   Position currentPosition;
   Geoflutterfire geo = Geoflutterfire();
+  List<DropdownMenuItem<String>> _dropDownMenuItems;
+  List<String> _dropDownMenuItemsStrings = [];
+  String _currentCity;
 
   /// Form ====================================================
   GlobalKey<FormState> _formkey = GlobalKey();
@@ -79,23 +82,34 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   @override
   void initState() {
-    super.initState();
-    Geolocator().getCurrentPosition().then((currloc) {
-      setState(() {
-        currentPosition = currloc;
-      });
-    });
-
-//    LocationService().getPosition().then((value) {
-//      setState(() {
-//        currentPosition = value;
-//      });
-//    });
+    init();
     _loading = false;
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
     this._name = _textFieldControllerName.text;
     this._desc = _textFieldControllerDesc.text;
+    super.initState();
+  }
+
+  init() async {
+    /// init Data
+    if (this.mounted == true) {
+      print("this.mounted");
+
+      _dropDownMenuItemsStrings = cities;
+      _currentCity = _dropDownMenuItemsStrings.elementAt(0);
+      print("_dropDownMenuItemsStrings : $_currentCity");
+
+//      await Geolocator().getCurrentPosition().then((currloc) {
+//        setState(() {
+//          currentPosition = currloc;
+//          print(" currentPosition :  ${currentPosition.longitude}");
+//
+//        });
+//
+//      });
+
+    }
   }
 
   @override
@@ -106,9 +120,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     return Scaffold(
       key: _scaffoldKey,
       body: ModalProgressHUD(
-        color: Colors.green,
+        color: Colors.white,
         progressIndicator:
-            mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
+        mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
         inAsyncCall: showSpinner,
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -117,12 +131,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               Stack(
                 children: <Widget>[
                   Container(
-                    transform: Matrix4.translationValues(0.0, -50.0, 0.0),
+                    transform: Matrix4.translationValues(0.0, -30.0, 0.0),
                     child: Hero(
                       tag: "s",
                       child: ClipShadowPath(
                         clipper: CircularClipper(),
-                        shadow: Shadow(blurRadius: 20.0),
+                        shadow: Shadow(blurRadius: 10.0, color: Colors.teal),
                         child: Image(
                           height: 400.0,
                           width: double.infinity,
@@ -286,8 +300,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
 
-  List<DropdownMenuItem<String>> _dropDownMenuItems;
-  String _currentCity;
+
 
   List<DropdownMenuItem<String>> getDropDownMenuItems() {
     List<DropdownMenuItem<String>> items = new List();
@@ -300,6 +313,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   void changedDropDownItem(String selectedCity) {
     setState(() {
       _currentCity = selectedCity;
+      print("changedDropDownItem _currentCity is :$_currentCity");
     });
   }
 
@@ -434,14 +448,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                               value: _currentCity,
                               isDense: true,
                               onChanged: (String newValue) {
-                                setState(() {
-//                                newContact.favoriteColor = newValue;
-                                  _city = newValue;
-                                  _currentCity = newValue;
-                                  state.didChange(newValue);
-                                });
+                                changedDropDownItem(newValue);
                               },
-                              items: cities.map((String value) {
+                              items: _dropDownMenuItemsStrings.map((
+                                  String value) {
                                 return new DropdownMenuItem<String>(
                                   value: value,
                                   child: new Text(value),
@@ -603,7 +613,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         geoPoint: gePoint,
 //        geoFirePoint: geFirePoint,
         hDesc: _desc,
-        hCity: _city,
+        hCity: _currentCity,
         authorId: widget.currentUserId,
         timestamp: ts);
 
@@ -791,8 +801,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           FlatButton(
               shape: new RoundedRectangleBorder(
                   borderRadius: new BorderRadius.circular(10.0)),
-              splashColor: Colors.lightGreen,
-              color: Colors.green,
+              splashColor: Colors.blueAccent,
+              color: Colors.blue,
               child: new Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -841,7 +851,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   submit() async {
     print("Submit called ");
 
-    if (_name.isNotEmpty && !_loading) {
+    if (_name.isNotEmpty && !_loading && this.mounted == true) {
       final action = await Dialogs.addNewHebaDialog(
           context, ' Add Heba', 'Are You Sure You Want To Add This Post');
       if (action == DialogAction.yes) {
@@ -854,9 +864,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
         print("after _SendToServer ");
 
-        setState(() {
-          tappedYes = true;
-        });
+        if (this.mounted) {
+          setState(() {
+            tappedYes = true;
+            print("tappedYes $tappedYes ");
+          });
+        }
       } else {
         setState(
               () {

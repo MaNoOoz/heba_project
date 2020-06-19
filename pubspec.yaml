@@ -19,14 +19,41 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core:
-  rubber:
+  #    UI ============================================
+  curved_navigation_bar:
   flutter_images_slider:
   solid_bottom_sheet:
-  firebase_analytics:
   rounded_floating_app_bar:
   image_picker:
   ansicolor:
+  rubber:
+  image_cropper:
+  animator:
+  rflutter_alert:
+  flutter_spinkit:
+  flutter_reaction_button:
+  ff_navigation_bar:
+  google_fonts_arabic:
+  toast:
+  material_segmented_control:
+  dashed_container:
+  logger:
+  cupertino_icons: ^0.1.2
+  flash:
+  flutter_emoji:
+  custom_radio_grouped_button:
+  flutter_form_builder:
+  grouped_buttons:
+  outline_material_icons:
+  carousel_slider:
+  font_awesome_flutter:
+  sticky_headers:
+  modal_progress_hud:
+  fluttertoast:
+  flutter_staggered_grid_view:
+  #    DATA ============================================
+  firebase_core:
+  firebase_analytics:
   cached_network_image: ^2.0.0-rc
   intl:
   firebase_storage:
@@ -35,57 +62,33 @@ dependencies:
   location:
   flutter_image_compress:
   uuid:
-  image_cropper:
-  animator:
   cloud_firestore:
   multi_image_picker:
   firebase_auth: ^0.15.4
   popup_menu:
   google_sign_in:
   provider:
-  flutter_spinkit:
-  rflutter_alert:
-  flutter_reaction_button:
-  ff_navigation_bar:
-  google_fonts_arabic:
-  toast:
-  material_segmented_control:
-  dashed_container:
-  logger:
   http:
   json_serializable:
   flutter_svg:
   adobe_xd:
-
   bloc:
   flutter_bloc:
   get_it:  # add this line
   rxdart:  # add this line
-  flutter_emoji:
-  custom_radio_grouped_button:
   scoped_model:
-  flutter_form_builder:
-  grouped_buttons:
   timeago:
-  outline_material_icons:
-  carousel_slider:
-  font_awesome_flutter:
   connectivity:
-  sticky_headers:
   sqflite:
   path_provider:
   google_maps_place_picker:
   url_launcher:
-  modal_progress_hud:
   geolocator:
   tuple:
   shared_preferences:
-  fluttertoast:
-  flutter_staggered_grid_view:
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.2
-flash:
+
+
+
 firebase_database:
 dev_dependencies:
   pedantic: ^1.4.0

@@ -93,13 +93,20 @@ class DatabaseService {
 
   static Future<QuerySnapshot> searchUsers(String keyword) {
     Future<QuerySnapshot> users =
-    usersRef.where('name', isGreaterThanOrEqualTo: keyword).getDocuments();
+        usersRef.where('name', isGreaterThanOrEqualTo: keyword).getDocuments();
+    return users;
+  }
+
+  static Future<QuerySnapshot> searchUsers2(String keyword) {
+    Future<QuerySnapshot> users = usersRef
+        .where('name', isEqualTo: keyword.substring(0, 1))
+        .getDocuments();
     return users;
   }
 
   /// todo Fix
-  static Future<QuerySnapshot> searchChats(String keyword, User user,
-      Chat chat) {
+  static Future<QuerySnapshot> searchChats(
+      String keyword, User user, Chat chat) {
     Future<QuerySnapshot> chats = contacts
         .document(user.uid)
         .collection('userChats')

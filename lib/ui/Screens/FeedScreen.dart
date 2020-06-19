@@ -17,6 +17,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts_arabic/fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
@@ -46,6 +47,7 @@ class _FeedScreenState extends State<FeedScreen>
   List<HebaModel> staticHebatListFromUser = [];
   List<HebaModel> currentList = [];
   HebaModel heba;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   /// ViewMode :  0-grid,1-row,2-map
   var mDataViewMode = 1;
@@ -53,7 +55,7 @@ class _FeedScreenState extends State<FeedScreen>
   var featured = false;
   Position currentLocation;
 
-  String _city;
+//  String _city;
 
   @override
   bool get wantKeepAlive => true;
@@ -86,28 +88,63 @@ class _FeedScreenState extends State<FeedScreen>
   int _selectedFilter = 1;
   int _selectedSort = 1;
 
+  /// Search Card
+  final TextEditingController _searchController = TextEditingController();
+
+//  FocusNode focusNode;
+  List<HebaModel> duplicateItems = [];
+
   /// METHODS ===================================================================
 
   @override
   void initState() {
-    init();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      init();
+    });
 
-    super.initState();
+    getHebatFromFirestoreList().then((value) {
+      print("result: $value");
+      setState(() {
+//        duplicateItems = List.of(value);
+//        print("duplicateItems in initState setState List.of:${duplicateItems.length}");
+
+        /// or
+        duplicateItems = value;
+        print(
+            "duplicateItems in initState  setState =:${duplicateItems.length}");
+      });
+    });
+// Start listening to changes.
+//    _searchController.addListener(_printLatestValue);
+//    duplicateItems = hebat;
+//    duplicateItems = duplicateItems.addAll(hebat);
+
     _tabController = new TabController(length: 3, vsync: this);
     _dropDownMenuItems = getDropDownMenuItems();
     _currentCity = _dropDownMenuItems[0].value;
+//    focusNode = FocusNode();
+
+    super.initState();
   }
 
   init() async {
-    await getHebatFromFirestore();
+    print("init : CALLED");
+
+//    List<HebaModel> hebat = await getHebatFromFirestore();
+
     await setMarckerIcon();
     await _getLocationAndGoToIt();
   }
 
   @override
   void dispose() {
-    super.dispose();
+    // Clean up the focus node when the Form is disposed.
+    // Clean up the controller when the widget is removed from the widget tree.
+    // This also removes the _printLatestValue listener.
+//    focusNode.dispose();
     _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   List<dynamic> _getListOfImagesFromUser(HebaModel post2) {
@@ -145,6 +182,36 @@ class _FeedScreenState extends State<FeedScreen>
       _PostsStream =
           publicpostsRef.orderBy("timestamp", descending: false).snapshots();
       staticHebatListFromUser = hebat;
+    });
+
+//        var mMap =  documents.map((e) => e.data.forEach((key, value) {
+//          print("Map From Firestore :$key,$value");
+//        }));
+
+    print("Map:${staticHebatListFromUser.length}");
+
+    return staticHebatListFromUser;
+  }
+
+  Future<List<HebaModel>> getHebatFromFirestoreList() async {
+    print("getHebatFromFirestore Called:");
+
+    List<HebaModel> hebat = [];
+    QuerySnapshot qn = await publicpostsRef
+        .orderBy("timestamp", descending: false)
+        .getDocuments();
+
+    List<DocumentSnapshot> documents = qn.documents;
+    documents.forEach((DocumentSnapshot doc) {
+      HebaModel postModel = new HebaModel.fromFirestore(doc);
+      hebat.add(postModel);
+    });
+
+    setState(() {
+      _PostsStream =
+          publicpostsRef.orderBy("timestamp", descending: false).snapshots();
+      staticHebatListFromUser = hebat;
+      duplicateItems = staticHebatListFromUser;
     });
 
 //        var mMap =  documents.map((e) => e.data.forEach((key, value) {
@@ -208,6 +275,61 @@ class _FeedScreenState extends State<FeedScreen>
       staticHebatListFromUser = resultList;
     });
     return staticHebatListFromUser;
+  }
+
+  searchList(String keyword) async {
+    var cityFilter;
+    List<HebaModel> filterdHebat = [];
+    filterdHebat.addAll(staticHebatListFromUser);
+    if (keyword.isNotEmpty) {
+      var resultList = filterdHebat.where((i) {
+        cityFilter = i.hName.toLowerCase().contains(keyword.toLowerCase());
+//        print("cityFilter :${cityFilter}");
+        return cityFilter;
+      }).toList();
+      setState(() {
+        print("keyword :${keyword}  is ${cityFilter}");
+        staticHebatListFromUser = resultList;
+      });
+      return staticHebatListFromUser;
+    } else {
+      setState(() {
+        staticHebatListFromUser = duplicateItems;
+      });
+    }
+  }
+
+  searchList2(String keyword) async {
+//    https://blog.usejournal.com/flutter-search-in-listview-1ffa40956685
+
+    List<HebaModel> filterdHebat = [];
+    filterdHebat.addAll(duplicateItems);
+    print("filterdHebat :${filterdHebat.length}");
+
+    var searchFilter = keyword.length > 0;
+    if (keyword.isNotEmpty) {
+      print("keyword length:${keyword.length}");
+      print("searchFilter:${searchFilter}");
+
+      List<HebaModel> dummyListData = List<HebaModel>();
+      filterdHebat.forEach((item) {
+        if (item.hName.contains(keyword)) {
+          dummyListData.add(item);
+        }
+      });
+      setState(() {
+        staticHebatListFromUser.clear();
+        staticHebatListFromUser.addAll(dummyListData);
+      });
+      return;
+    } else {
+      setState(() {
+        staticHebatListFromUser.clear();
+        staticHebatListFromUser.addAll(duplicateItems);
+        print("duplicateItems :${duplicateItems.length}");
+        print("staticHebatListFromUser :${staticHebatListFromUser.length}");
+      });
+    }
   }
 
   /// Filters ====================================
@@ -298,7 +420,7 @@ class _FeedScreenState extends State<FeedScreen>
   void changedDropDownItem(String selectedCity) {
     setState(() {
       _currentCity = selectedCity;
-      _city = selectedCity;
+//      _city = selectedCity;
     });
   }
 
@@ -384,10 +506,10 @@ class _FeedScreenState extends State<FeedScreen>
                                                 "${_currentCity}",
                                                 style: TextStyle(
                                                     fontWeight:
-                                                    _selectedFilter == 2
-                                                        ? FontWeight.bold
-                                                        : FontWeight
-                                                        .normal),
+                                                        _selectedFilter == 2
+                                                            ? FontWeight.bold
+                                                            : FontWeight
+                                                                .normal),
                                               ),
                                               textDirection: TextDirection.rtl,
                                             ),
@@ -412,7 +534,7 @@ class _FeedScreenState extends State<FeedScreen>
                                                   setState(() {
                                                     _currentCity = newValue;
                                                     state.didChange(newValue);
-                                                    _city = state.value;
+//                                                    _city = state.value;
                                                   });
                                                   await _selctedFilterType(2);
                                                 },
@@ -718,23 +840,31 @@ class _FeedScreenState extends State<FeedScreen>
 
   Widget buildScaffold(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(130),
+        preferredSize: Size.fromHeight(140),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          textDirection: TextDirection.rtl,
+//          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            CustomAppBar(
+            Container(
+              height: 80,
+              child: CustomAppBar(
 //              user: widget.user, /// todo  create method to override the image from google in [] in order to fix null
-              title: "Heba ",
-              IsBack: false,
-              color: Colors.white,
-              isImageVisble: true,
-              flexSpace: 50,
-              flexColor: Colors.black12,
+                title: "Heba ",
+                IsBack: false,
+//                color: Colors.white,
+                isImageVisble: true,
+//              flexSpace: 50,
+//              flexColor: Colors.blue,
+              ),
             ),
-            Divider(),
+//            Divider(),
             FilterCard(context),
+            Container(color: Colors.blueGrey, child: SearchCard(context)),
+//            FilterCard(context),
           ],
         ),
       ),
@@ -775,6 +905,114 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
+//  _printLatestValue() {
+//    print("Second text field: ${_searchController.text}");
+//
+//    searchList2(_searchController.text);
+//  }
+
+  Widget SearchCard(BuildContext context) {
+//    var txtFeild = CupertinoTextField(
+//      maxLines: 1,
+//      onChanged: (input) {
+//
+//        searchList2(input);
+//      },
+//      placeholder: "بحث عن هبة",
+//      autofocus: false,
+//      controller: _searchController,
+//      focusNode: focusNode,
+//      style: productRowTotal,
+//      cursorColor: Colors.blueGrey,
+//      onSubmitted: (input) {
+//        searchList2(input);
+//      },
+//    );
+
+    var txtFeild2 = TextFormField(
+      style: TextStyle(
+        color: Colors.white,
+      ),
+      textAlign: TextAlign.start,
+//      textDirection: TextDirection.rtl,
+      onChanged: (input) {
+        searchList(input);
+      },
+      onSaved: (input) {
+        searchList(input);
+      },
+
+      cursorColor: Colors.white,
+      controller: _searchController,
+      decoration: InputDecoration(
+        hintText: "بحث عن هبة",
+        hintStyle: TextStyle(
+          decorationColor: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white.withOpacity(0.5),
+        ),
+        border: InputBorder.none,
+      ),
+    );
+
+    return Container(
+      height: 30,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          textDirection: TextDirection.rtl,
+          children: [
+            SizedBox(
+              width: 10,
+            ),
+            GestureDetector(
+//              todo search query
+              onTap: () async {
+                FocusScope.of(context).unfocus();
+                _searchController.clear();
+              },
+
+              child: const Icon(
+                CupertinoIcons.search,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(
+              width: 10,
+            ),
+            Expanded(
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Center(
+                  child: txtFeild2,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 10,
+            ),
+            GestureDetector(
+              onTap: () async {
+                FocusScope.of(context).unfocus();
+                _searchController.clear();
+              },
+              child: const Icon(
+                CupertinoIcons.clear_thick_circled,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(
+              width: 10,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// HEADER
   Widget FilterCard(BuildContext context) {
     return Container(
@@ -782,8 +1020,10 @@ class _FeedScreenState extends State<FeedScreen>
           .of(context)
           .size
           .width,
+      height: 40,
       child: Card(
         elevation: 2,
+        color: Colors.white,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -810,7 +1050,7 @@ class _FeedScreenState extends State<FeedScreen>
                               FontAwesomeIcons.filter,
                               size: 14,
                               color: _selectedFilter != 1
-                                  ? Colors.blueAccent
+                                  ? Colors.blue
                                   : Colors.black54,
                             ),
                           ),
@@ -861,12 +1101,12 @@ class _FeedScreenState extends State<FeedScreen>
                               ? Icon(
                             FontAwesomeIcons.sortUp,
                             size: 14,
-                            color: Colors.blueAccent,
+                            color: Colors.blue,
                           )
                               : Icon(
                             FontAwesomeIcons.sortDown,
                             size: 14,
-                            color: Colors.blueAccent,
+                            color: Colors.blue,
                           ),
                         ),
                       ),
@@ -1134,7 +1374,7 @@ class _FeedScreenState extends State<FeedScreen>
       int index) {
     return Container(
       height: 150,
-//      color: Colors.blueAccent,
+//      color: Colors.blue,
       child: InkWell(
 //        focusColor: Colors.cyan,
 //        splashColor: Colors.cyan,
@@ -1506,7 +1746,7 @@ class _FeedScreenState extends State<FeedScreen>
                   MaterialPageRoute(
                     builder: (context) =>
                         HebaDetails(
-                            post: staticHebatListFromUser[index],
+                            heba: staticHebatListFromUser[index],
                             isMe: false,
                             userId: widget.userId),
                   ),
@@ -1522,14 +1762,17 @@ class _FeedScreenState extends State<FeedScreen>
   Widget hebat(BuildContext context) {
     return SingleChildScrollView(
       physics: NeverScrollableScrollPhysics(),
-      child: Container(
-        color: Colors.black26,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            mListViewMode(),
-          ],
+      child: Padding(
+        padding: const EdgeInsets.all(0.0),
+        child: Container(
+          color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              mListViewMode(),
+            ],
+          ),
         ),
       ),
     );
@@ -1564,7 +1807,7 @@ class _FeedScreenState extends State<FeedScreen>
                             FontAwesomeIcons.thLarge,
                             size: 14,
                             color: mDataViewMode == 0
-                                ? Colors.blueAccent
+                                ? Colors.blue
                                 : Colors.grey[400],
                           ),
                           onPressed: () {
@@ -1607,7 +1850,7 @@ class _FeedScreenState extends State<FeedScreen>
                             FontAwesomeIcons.list,
                             size: 14,
                             color: mDataViewMode == 1
-                                ? Colors.blueAccent
+                                ? Colors.blue
                                 : Colors.grey[400],
                           ),
                           onPressed: () {
@@ -1650,7 +1893,7 @@ class _FeedScreenState extends State<FeedScreen>
                             FontAwesomeIcons.map,
                             size: 14,
                             color: mDataViewMode == 2
-                                ? Colors.blueAccent
+                                ? Colors.blue
                                 : Colors.grey[400],
                           ),
                           onPressed: () {
@@ -1812,3 +2055,10 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 }
+
+const TextStyle productRowTotal = TextStyle(
+    color: Color.fromRGBO(0, 0, 0, 0.8),
+    fontSize: 14,
+    fontStyle: FontStyle.normal,
+    fontWeight: FontWeight.normal,
+    fontFamily: ArabicFonts.Cairo);

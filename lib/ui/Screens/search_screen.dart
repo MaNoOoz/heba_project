@@ -58,20 +58,23 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget searchFun() {
-    return Container(
-      margin: EdgeInsets.only(top: 5.0),
-      height: 50.0,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.0), color: Colors.transparent),
-      child: TextField(
-        onChanged: (input) {
-          if (input.isNotEmpty) {
-            setState(() {
-              _users = DatabaseService.searchUsers(input);
-              _users = DatabaseService.searchUsers(input);
-            });
-          }
-        },
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            margin: EdgeInsets.only(top: 5.0),
+            height: 50.0,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12.0),
+                color: Colors.transparent),
+            child: TextField(
+              onChanged: (input) {
+                if (input.isNotEmpty) {
+                  setState(() {
+                    _users = DatabaseService.searchUsers(input);
+                  });
+                }
+              },
 //        onSubmitted: (input) {
 //          if (input.isNotEmpty) {
 //            setState(() {
@@ -79,29 +82,36 @@ class _SearchScreenState extends State<SearchScreen> {
 //            });
 //          }
 //        },
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: "Search for name",
-          hintStyle: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.withOpacity(0.6),
-          ),
-          border: InputBorder.none,
-          suffixIcon: IconButton(
-            icon: Icon(
-              CupertinoIcons.clear,
-              size: 30.0,
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: "Search for name",
+                hintStyle: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.withOpacity(0.6),
+                ),
+                border: InputBorder.none,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    CupertinoIcons.clear,
+                    size: 30.0,
+                  ),
+                  onPressed: _clearSearch,
+                ),
+                filled: true,
+                prefixIcon: Icon(
+                  CupertinoIcons.search,
+                  color: Colors.black,
+                  size: 30.0,
+                ),
+              ),
             ),
-            onPressed: _clearSearch,
-          ),
-          filled: true,
-          prefixIcon: Icon(
-            CupertinoIcons.search,
-            color: Colors.black,
-            size: 30.0,
           ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(CupertinoIcons.gear),
+        )
+      ],
     );
   }
 
@@ -133,8 +143,8 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget mBody() {
     return _users == null
         ? Center(
-      child: Text('Search for a user'),
-    )
+            child: Text('Search for a user'),
+          )
         : FutureBuilder<QuerySnapshot>(
       future: _users,
       builder: (context, map) {

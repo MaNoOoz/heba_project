@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
-import 'package:google_fonts_arabic/fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
@@ -46,6 +46,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      init();
+    });
+  }
+
+  init() async {
     _initProfileInfo();
     _initUserPosts();
   }
@@ -61,9 +67,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
         isImageVisble: true,
-        IsBack: false,
-        title: "Profile ",
-        color: Colors.white,
+        IsBack: true,
+        title: "Profile",
+        color: Colors.blueGrey,
       ),
       body: mBody(),
     );
@@ -72,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Methods ======================
   _initUserPosts() async {
     print("_initUserPosts Called : ");
-    List<HebaModel> posts = await DatabaseService.getUserPosts(widget.userId);
+    List<HebaModel> posts = await DatabaseService.getUserPosts2(widget.userId);
 
     setState(() {
       _posts = posts;
@@ -159,8 +165,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       clipper: MyClipper(),
       child: Container(
         padding: EdgeInsets.only(top: 4),
-        decoration: BoxDecoration(color: Colors.blueAccent, boxShadow: [
-          BoxShadow(color: Colors.blue, blurRadius: 20, offset: Offset(0, 0))
+        decoration: BoxDecoration(color: Colors.white, boxShadow: [
+          BoxShadow(color: Colors.black, blurRadius: 20, offset: Offset(0, 0))
         ]),
         child: Column(
           children: <Widget>[
@@ -191,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     Text(
                       user.name,
-                      style: TextStyle(color: Colors.white, fontSize: 20),
+                      style: TextStyle(color: Colors.black54, fontSize: 20),
                     )
                   ],
                 ),
@@ -199,15 +205,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: <Widget>[
                     Text(
                       "هبات",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontFamily: ArabicFonts.Cairo,
-                      ),
+                      style: TextStyle(fontSize: 26, color: Colors.black54),
                     ),
                     Text(
                       "${_posts.length}",
-                      style: TextStyle(fontSize: 26, color: Colors.white),
+                      style: TextStyle(fontSize: 26, color: Colors.black54),
                     )
                   ],
                 ),
@@ -298,9 +300,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             Divider(
-              color: Colors.white,
+              color: Colors.black,
             ),
             _switchButtons(),
+            Divider(
+              color: Colors.black,
+            ),
           ],
         ),
       ),
@@ -312,20 +317,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: <Widget>[
         IconButton(
-          icon: Icon(Icons.grid_on),
-          iconSize: 30.0,
-          color: _displayPosts == 0 ? Colors.white : Colors.grey[400],
-          onPressed: () => setState(() {
-            _displayPosts = 0;
-          }),
+          icon: Icon(FontAwesomeIcons.thLarge),
+          iconSize: 24.0,
+          color: _displayPosts == 0 ? Colors.grey : Colors.grey[400],
+          onPressed: () =>
+              setState(() {
+                _displayPosts = 0;
+              }),
+        ),
+        Container(
+          width: 1,
+          height: 20,
+          color: Colors.black26,
         ),
         IconButton(
-          icon: Icon(Icons.list),
-          iconSize: 30.0,
-          color: _displayPosts == 1 ? Colors.white : Colors.grey[400],
-          onPressed: () => setState(() {
-            _displayPosts = 1;
-          }),
+          icon: Icon(FontAwesomeIcons.thList),
+          iconSize: 24.0,
+          color: _displayPosts == 1 ? Colors.grey : Colors.grey[400],
+          onPressed: () =>
+              setState(() {
+                _displayPosts = 1;
+              }),
         ),
       ],
     );
@@ -340,41 +352,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     int _current = 0;
 
     return GridTile(
-      child: Stack(
+      child: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 10.0),
-            child: listFromFirebase.isEmpty
-                ? Center(child: Text("No Image Bro"))
-                : ImagesSlider(
-              items: map<Widget>(listFromFirebase, (index, i) {
-                print("listFromFirebase ${listFromFirebase.length}");
-                return Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: post.imageUrls.isEmpty
-                            ? Image.asset(AvailableImages.uph)
-                            : NetworkImage(i),
-                        fit: BoxFit.cover),
-                  ),
-                );
-              }),
-              autoPlay: false,
-              viewportFraction: 1.0,
-              aspectRatio: 2.0,
-              distortion: false,
-              align: IndicatorAlign.bottom,
-              indicatorWidth: 5,
-              updateCallback: (index) {
-                setState(
-                      () {
-                    _current = index;
-                  },
-                );
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                print("Clicked");
               },
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 00.0),
+                  child: listFromFirebase.isEmpty
+                      ? mStatlessWidgets().EmptyView()
+                      : ImagesSlider(
+                    items: map<Widget>(listFromFirebase, (index, i) {
+                      print(
+                          "listFromFirebase ${listFromFirebase.length}");
+                      return Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                              image: post.imageUrls.isEmpty
+                                  ? Image.asset(AvailableImages.uph)
+                                  : NetworkImage(i),
+                              fit: BoxFit.cover),
+                        ),
+                      );
+                    }),
+                    autoPlay: false,
+                    viewportFraction: 1.0,
+                    aspectRatio: 2.0,
+                    distortion: false,
+                    align: IndicatorAlign.bottom,
+                    indicatorWidth: 5,
+                    updateCallback: (index) {
+                      setState(
+                            () {
+                          _current = index;
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
           ),
-
+//          Padding(
+//            padding: const EdgeInsets.all(8.0),
+//            child: Text(post.hName),
+//          ),
 //          Padding(
 //            padding: const EdgeInsets.all(8.0),
 //            child: Card(
@@ -441,6 +466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget mBody() {
     return FutureBuilder<DocumentSnapshot>(
+      initialData: null,
       future: usersRef.document(widget.userId).get(),
       builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> map) {
         if (!map.hasData) {

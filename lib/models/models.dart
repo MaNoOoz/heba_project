@@ -59,24 +59,23 @@ class HebaModel {
 //  Post2.fromSnapshot(DocumentSnapshot map)
 //      : this.fromMap(map.data, reference: map.reference);
 
-
   factory HebaModel.fromFirestore(DocumentSnapshot doc) {
 //
 
     return HebaModel(
-      id: doc.documentID,
-      imageUrls: List<String>.from(doc['imagesUrls'] ?? ["ss", "ss"]),
-      hName: doc['hName'] ?? "noName",
-      oName: doc['oName'] ?? "noName",
-      hCity: doc['hCity'] ?? "hCity",
-      geoPoint: doc['geoPoint'],
-      isFeatured: doc['isFeatured'] ?? false,
-      oImage: doc['oImage'] ?? "noImage",
-      isMine: doc['isMine'],
-      hDesc: doc['hDesc'] ?? "noDesc",
-      authorId: doc['authorId'] ?? "noAuthorId",
-      timestamp: doc['timestamp' ?? "noDate"],
-    );
+        id: doc.documentID,
+        imageUrls: List<String>.from(doc['imagesUrls'] ?? ["ss", "ss"]),
+        hName: doc['hName'] ?? "noName",
+        oName: doc['oName'] ?? "noName",
+        hCity: doc['hCity'] ?? "hCity",
+        geoPoint: doc['geoPoint'],
+        isFeatured: doc['isFeatured'] ?? false,
+        oImage: doc['oImage'] ?? "noImage",
+        isMine: doc['isMine'],
+        hDesc: doc['hDesc'] ?? "noDesc",
+        authorId: doc['authorId'] ?? "noAuthorId",
+        timestamp: doc['timestamp' ?? "noDate"],
+        reference: doc.reference);
   }
 
 //  HebaModel.fromSnapshot(DocumentSnapshot map)
@@ -94,26 +93,25 @@ class HebaModel {
 //        authorId = map['authorId'] ?? "noAuthorId",
 //        timestamp = map['timestamp' ?? "noDate"];
 
-  factory HebaModel.fromMap(Map<dynamic, dynamic> map, {reference}) {
+  factory HebaModel.fromMap(Map<dynamic, dynamic> map) {
     return HebaModel(
-      id: map['id'],
+//      id: map['id'],
       imageUrls: List.from(map['imagesUrls'] ?? ["ss", "ss"]),
       hName: map['hName'] ?? "noName",
       oName: map['oName'] ?? "noName",
       hCity: map['hCity'] ?? "hCity",
-//      location: UserLocation.fromJson(map['location']),
+      geoPoint: map['geoPoint'] ?? "geoPoint",
       isFeatured: map['isFeatured'] ?? false,
       isMine: map['isMine'] ?? true,
       oImage: map['oImage'] ?? "noImage",
       hDesc: map['hDesc'] ?? "noDesc",
       authorId: map['authorId'] ?? "noAuthorId",
       timestamp: map['timestamp' ?? "noDate"],
-      reference: map['reference' ?? "reference"],
     );
   }
 
   @override
-  String toString() => "Record<$hName:$hDesc>";
+  String toString() => "Record<$id:>";
 
   factory HebaModel.fromDb(Map<String, dynamic> mapDb) {
     return HebaModel(
@@ -150,9 +148,12 @@ class HebaModel {
       "id": this.id,
       "oName": this.oName,
       "oImage": this.oImage,
+      "hCity": this.hCity,
       "hDesc": this.hDesc,
+      "geoPoint": this.geoPoint,
       "authorId": this.authorId,
-      "isFeatured": this.isFeatured ? 1 : 0,
+      "isFeatured": this.isFeatured,
+      "isMine": this.isMine,
     };
   }
 }

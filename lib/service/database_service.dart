@@ -3,6 +3,7 @@
  */
 
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:heba_project/models/Chat.dart';
@@ -129,16 +130,14 @@ class DatabaseService {
       'hDesc': post.hDesc,
       'authorId': post.authorId,
       'timestamp': post.timestamp,
+      'reference': post.reference,
     });
   }
 
-  static void createPublicPosts(HebaModel post) {
-//    Map<dynamic, dynamic> sd = {
-//      'lat': 12.0,
-//      'long': 12.9,
-//    };
-
+  static Future<bool> createPublicPosts(HebaModel post) async {
+    var done = false;
     publicpostsRef.add({
+      'id': post.id,
       'geoPoint': post.geoPoint,
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
@@ -147,13 +146,36 @@ class DatabaseService {
       'isFeatured': post.isFeatured,
       'isMine': post.isMine ?? false,
       "location": post.location,
-//      "geFirePoint": post.geoFirePoint,
       'oImage': post.oImage,
       'hDesc': post.hDesc,
       'authorId': post.authorId,
       'timestamp': post.timestamp,
+      'reference': post.reference,
     });
+    done = true;
   }
+
+//  static Future<HebaModel> CreatNote(HebaModel heba) async {
+//    final TransactionHandler createTransaction = (Transaction tx) async {
+//      final DocumentSnapshot ds = await tx.get(publicpostsRef.document());
+//
+//      var dataMap = heba.toMapAsJson();
+//
+//      await tx.set(ds.reference, dataMap);
+//      print('reference: ${ds.reference.path}');
+//
+//      return dataMap;
+//    };
+//
+//    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+//      return HebaModel.fromMap(mapData);
+//    }).catchError((error) {
+//      print('error: $error');
+//      return null;
+//    });
+//  }
+
+  /// Edit Post Page ===============================================================================
 
   //  static Future<bool> createPublicPosts2(Post2 post) async {
   //    var tt = true;
@@ -176,18 +198,95 @@ class DatabaseService {
   //    return tt;
   //  }
 
-  static void editPublicPosts(HebaModel post) {
-    publicpostsRef.add({
-      'imagesUrls': post.imageUrls,
-      'hName': post.hName,
-      'oName': post.oName,
-      'isFeatured': post.isFeatured,
-      //      'location': post.location,
-      'oImage': post.oImage,
-      'hDesc': post.hDesc,
-      'authorId': post.authorId,
-      'timestamp': post.timestamp,
+// static Future<dynamic> updateUsingTransaction(HebaModel heba) async {
+//    final DocumentReference postRef = publicpostsRef.document("${heba.id}");
+//
+//    final TransactionHandler updateTransaction = (Transaction tx) async {
+//      final DocumentSnapshot ds = await tx.get(postRef);
+//
+//      await tx.update(ds.reference, heba.toMapAsJson());
+//      print('await tx.update: ${ds.reference}');
+//      return {'updated': true};
+//    };
+//
+//    return Firestore.instance
+//        .runTransaction(updateTransaction)
+//        .then((result) => result['updated'])
+//        .catchError((error) {
+//      print('error: $error');
+//      return false;
+//    });
+//  }
+
+//  Future<HebaModel> CreatNote(HebaModel note) async {
+//    final TransactionHandler createTransaction = (Transaction tx) async {
+//      final DocumentSnapshot ds = await tx.get(publicpostsRef.document());
+//
+//      var dataMap = new Map<String, dynamic>();
+//      dataMap = note.toMapAsJson();
+//
+//      await tx.set(ds.reference, dataMap);
+//      print('error: ${ds.reference.path}');
+//
+//      return dataMap;
+//    };
+//
+//    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+//      return HebaModel.fromMap(mapData);
+//    }).catchError((error) {
+//      print('error: $error');
+//      return null;
+//    });
+//  }
+
+  static updatePublicPosts(Map<String, dynamic> map) async {
+    HebaModel resultObject;
+    final TransactionHandler createTransaction = (Transaction tx) async {
+      final DocumentSnapshot ds =
+          await tx.get(publicpostsRef.document(map['id']));
+      if (ds.exists) {
+        await tx.update(ds.reference, map);
+      } else {
+        print(' result 1 : ${ds.exists}');
+        return null;
+      }
+
+//      await tx.set(ds.reference, map);
+//      print('error: ${ds.reference.path}');
+
+      return map;
+    };
+
+    var result = Firestore.instance.runTransaction(createTransaction);
+    print(' result 2: ${result}');
+
+    result.whenComplete(() {
+      log('Transaction success!');
+      resultObject = HebaModel.fromMap(map);
+      log('heba ${resultObject.hName} success!');
     });
+
+    return resultObject;
+
+//    final DocumentReference postRef = publicpostsRef.document("${heba.id}");
+//    print("${postRef.path}");
+//
+//    Firestore.instance.runTransaction((Transaction transaction) async {
+//      final DocumentSnapshot postSnapshot = await transaction.get(postRef);
+//      await transaction.set(postSnapshot.reference, map);
+//
+//      if (postSnapshot.exists) {
+//        await transaction.update(postRef, map);
+//      }
+//    }).whenComplete(() {
+//      log('Transaction success!');
+//      log('heba ${heba.hName} success!');
+////      heba = HebaModel.fromMap(map);
+////      print("heba ${heba.hName}");
+////      return heba;
+//    }).catchError((err) {
+//      log("Transaction failure: ', $err");
+//    });
   }
 
   //  static Stream<List<Post2>> getAllPosts() {
@@ -212,11 +311,22 @@ class DatabaseService {
   //  }
 
   /// Profile Page ===============================================================================
-  static Future<List<HebaModel>> getUserPosts(String userId) async {
-    QuerySnapshot userPostsSnapshot = await postsRef
-        .document(userId)
-        .collection('userPosts')
+//  static Future<List<HebaModel>> getUserPosts(String userId) async {
+//    QuerySnapshot userPostsSnapshot = await postsRef
+//        .document(userId)
+//        .collection('userPosts')
+//        .orderBy('timestamp', descending: true)
+//        .getDocuments();
+//
+//    List<HebaModel> posts = userPostsSnapshot.documents
+//        .map((doc) => HebaModel.fromFirestore(doc))
+//        .toList();
+//    return posts;
+//  }
+  static Future<List<HebaModel>> getUserPosts2(String userId) async {
+    QuerySnapshot userPostsSnapshot = await publicpostsRef
         .orderBy('timestamp', descending: true)
+        .where("authorId", isEqualTo: userId)
         .getDocuments();
 
     List<HebaModel> posts = userPostsSnapshot.documents
@@ -338,10 +448,11 @@ class DatabaseService {
     return chatIds;
   }
 
-  static String getDocId({String docID, String currentUserId}) {
-    var curentChats =
-    CHATS.document(currentUserId).collection(USERCHATS).snapshots();
-    var docId = curentChats.forEach((documentSnapshot) {
+  static String getDocId() {
+    String docID;
+//    var curentChats = CHATS.document(currentUserId).collection(USERCHATS).snapshots();
+    var snapshots = publicpostsRef.snapshots();
+    var docId = snapshots.forEach((documentSnapshot) {
       var docs = documentSnapshot.documents;
       for (var doc in docs) {
         docID = doc.documentID;
@@ -389,26 +500,26 @@ class DatabaseService {
     });
   }
 
-  static changes(QuerySnapshot querySnapshot, String currentUserId) {
-//    var chatStream =  ChatsFromStream(currentUserId);
-    var docId = getDocId(currentUserId: currentUserId);
-
-//    todo
-    for (var docChange in querySnapshot.documentChanges) {
-      if (docChange.type == DocumentChangeType.added) {
-        var channelName = "";
-        docId = docId
-            .substring(0, 5)
-            .compareTo(currentUserId.substring(0, 5))
-            .toString();
-        channelName = docId;
-        print("channelName  ${channelName}");
-
-        if (currentUserId == docId) {}
-        print("DATA CHANGED ${docChange.document.data}");
-      }
-    }
-  }
+//  static changes(QuerySnapshot querySnapshot, String currentUserId) {
+////    var chatStream =  ChatsFromStream(currentUserId);
+////    var docId = getDocId(currentUserId: currentUserId);
+//
+////    todo
+//    for (var docChange in querySnapshot.documentChanges) {
+//      if (docChange.type == DocumentChangeType.added) {
+//        var channelName = "";
+//        docId = docId
+//            .substring(0, 5)
+//            .compareTo(currentUserId.substring(0, 5))
+//            .toString();
+//        channelName = docId;
+//        print("channelName  ${channelName}");
+//
+//        if (currentUserId == docId) {}
+//        print("DATA CHANGED ${docChange.document.data}");
+//      }
+//    }
+//  }
 
   /// check if changed ==================================== Listener ======================
   static checkForChange(String currentUserId) {
@@ -423,6 +534,7 @@ class DatabaseService {
 //      return result;
 //    });
   }
+}
 
 //  /// Create new Chat
 //  static void CreateFakeChat({
@@ -569,4 +681,3 @@ class DatabaseService {
 //    messages.add(message);
 //    return messages;
 //  }
-}

@@ -51,6 +51,7 @@ dependencies:
   modal_progress_hud:
   fluttertoast:
   flutter_staggered_grid_view:
+  google_fonts:
   #    DATA ============================================
   firebase_core:
   firebase_analytics:
@@ -63,7 +64,7 @@ dependencies:
   flutter_image_compress:
   uuid:
   cloud_firestore:
-  multi_image_picker:
+  multi_image_picker: ^4.6.7
   firebase_auth: ^0.15.4
   popup_menu:
   google_sign_in:
@@ -112,7 +113,8 @@ flutter:
   assets:
     #    - assets/student.json
     - assets/images/
-    - assets/
+    - assets/fonts/google_fonts/
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
@@ -125,16 +127,4 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  fonts:
-    - family: Cairo
-      fonts:
-        - asset: assets/fonts/ca.ttf
-        - style: italic
-        - asset: assets/fonts/Cairo-Black.ttf
-        - style: italic
-        - asset: assets/fonts/Cairo-ExtraLight.ttf
-        - style: italic
-        - asset: assets/fonts/Cairo-Light.ttf
-        - style: italic
-        - asset: assets/fonts/Cairo-Regular.ttf
 

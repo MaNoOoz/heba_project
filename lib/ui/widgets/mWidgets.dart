@@ -81,7 +81,8 @@ class mStatlessWidgets {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Image(
-        image: AssetImage(AvailableImages.building),
+        color: Colors.grey.withOpacity(0.4),
+        image: AssetImage(AvailableImages.appIcon),
       ),
     );
   }

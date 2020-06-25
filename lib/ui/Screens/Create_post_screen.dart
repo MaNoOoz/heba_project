@@ -14,6 +14,7 @@ import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/service/storage_service.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
+import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/Dialogs.dart';
 import 'package:heba_project/ui/shared/UtilsImporter.dart';
@@ -45,6 +46,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   /// Multi Image Picker ====================================
   List<Asset> _readyToUploadImages = List<Asset>();
+  List<Asset> _placeHolders = List<Asset>();
   var uploadingState;
   var mSelectedImage;
   List<dynamic> mImagesPath;
@@ -82,33 +84,33 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   @override
   void initState() {
-    init();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      init();
+    });
     _loading = false;
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
     this._name = _textFieldControllerName.text;
     this._desc = _textFieldControllerDesc.text;
+
+    Geolocator().getCurrentPosition().then((currloc) {
+      setState(() {
+        currentPosition = currloc;
+        print(" currentPosition :  ${currentPosition.longitude}");
+      });
+    });
+
     super.initState();
   }
 
   init() async {
+    _dropDownMenuItemsStrings = cities;
+    _currentCity = _dropDownMenuItemsStrings.elementAt(0);
+    print("_dropDownMenuItemsStrings : $_currentCity");
+
     /// init Data
     if (this.mounted == true) {
       print("this.mounted");
-
-      _dropDownMenuItemsStrings = cities;
-      _currentCity = _dropDownMenuItemsStrings.elementAt(0);
-      print("_dropDownMenuItemsStrings : $_currentCity");
-
-//      await Geolocator().getCurrentPosition().then((currloc) {
-//        setState(() {
-//          currentPosition = currloc;
-//          print(" currentPosition :  ${currentPosition.longitude}");
-//
-//        });
-//
-//      });
-
     }
   }
 
@@ -122,7 +124,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       body: ModalProgressHUD(
         color: Colors.white,
         progressIndicator:
-        mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
+            mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
         inAsyncCall: showSpinner,
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -238,36 +240,59 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //                ),
 //              ),
 
-              /// Added Images
-              Card(
-                child: Center(
-                  child: Container(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        IconButton(
-                          splashColor: Colors.teal,
-                          iconSize: 42.0,
-                          icon: _readyToUploadImages.length > 0
-                              ? Icon(
-                                  Icons.edit,
-                                  color: Colors.blueAccent,
-                                )
-                              : Icon(
-                                  Icons.add_circle,
-                                  color: Colors.blueAccent,
-                                ),
-                          onPressed: () async {
-                            await _loadAssets();
-                          },
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  Expanded(flex: 5, child: buildGridView()),
+
+//                  Expanded(flex: 5, child: buildGridView2()),
+
+                  /// Added Images
+                  GestureDetector(
+                    onTap: () async {
+                      await _loadAssets();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(2.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.white30,
+                            borderRadius: BorderRadius.all(Radius.circular(3)),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black12, blurRadius: 20)
+                            ]),
+                        height: 50,
+                        width: 75,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+//                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(
+                              _readyToUploadImages.length == 0
+                                  ? Icons.add_circle
+                                  : Icons.edit,
+                              color: Colors.blueGrey,
+                            ),
+                            Spacer(),
+                            Expanded(
+                                flex: 4,
+                                child: Text(
+                                  _readyToUploadImages.length == 0
+                                      ? 'أضف صور'
+                                      : 'تعديل الصور',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.black45),
+                                ))
+                          ],
                         ),
-                        Text('أضف صورة')
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-              buildGridView(),
 
               UIHelper.verticalSpace(10),
 
@@ -299,9 +324,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //
   }
 
-
-
-
   List<DropdownMenuItem<String>> getDropDownMenuItems() {
     List<DropdownMenuItem<String>> items = new List();
     for (String city in cities) {
@@ -326,7 +348,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-
             /// Name OF Heba
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -355,10 +376,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextFormField(
-                maxLength: 64,
+                maxLength: 400,
                 keyboardType: TextInputType.text,
                 controller: _textFieldControllerDesc,
-                maxLines: 1,
+                maxLines: 10,
                 style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
                 decoration:
                 UtilsImporter().uStyleUtils.textFieldDecorationCircle(
@@ -375,58 +396,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               ),
             ),
 
-            /// Location
-//            Row(
-//              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//              children: [
-//                Expanded(
-//                  flex: 2,
-//                  child: Container(
-//                    width: MediaQuery.of(context).size.width / 6,
-//                    child: Row(
-//                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-//                      crossAxisAlignment: CrossAxisAlignment.start,
-//                      textDirection: TextDirection.rtl,
-//                      children: <Widget>[
-//                        currentPosition == null
-//                            ? Center(
-//                                child: CircularProgressIndicator(),
-//                              )
-//                            : Flexible(
-//                                flex: 2,
-//                                child: Text(
-//                                  currentPosition.latitude == null
-//                                      ? ""
-//                                      : "${currentPosition.latitude}",
-//                                  style: TextStyle(
-//                                    fontSize: 12,
-//                                    color: Colors.blueAccent,
-//                                    fontWeight: FontWeight.bold,
-//                                  ),
-//                                ),
-//                              ),
-//                        Flexible(
-//                          flex: 1,
-//                          child: Align(
-//                              alignment: AlignmentDirectional.centerEnd,
-//                              child: Text(
-//                                "تحديد الموقع الحالي",
-//                                style: TextStyle(
-//                                    fontSize: 12,
-//                                    color: Colors.black45,
-//                                    fontWeight: FontWeight.bold),
-//                              )),
-//                        ),
-//                        const Icon(
-//                          Icons.location_on,
-//                          color: Colors.blueAccent,
-//                        ),
-//                      ],
-//                    ),
-//                  ),
-//                ),
-//              ],
-//            ),
             Divider(),
 //            https://codingwithjoe.com/building-forms-with-flutter/
             Padding(
@@ -442,16 +411,17 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                             icon: const Icon(Icons.location_city),
                             labelText: 'المدينة',
                           ),
-                          isEmpty: _currentCity == '',
+                          isEmpty: false,
                           child: new DropdownButtonHideUnderline(
                             child: new DropdownButton<String>(
-                              value: _currentCity,
+                              value:
+                              _currentCity == "" ? "القصيم" : _currentCity,
                               isDense: true,
                               onChanged: (String newValue) {
                                 changedDropDownItem(newValue);
                               },
-                              items: _dropDownMenuItemsStrings.map((
-                                  String value) {
+                              items:
+                              _dropDownMenuItemsStrings.map((String value) {
                                 return new DropdownMenuItem<String>(
                                   value: value,
                                   child: new Text(value),
@@ -530,6 +500,25 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   /// Multi Image Picker ======================================================
+  /// test
+//  Map<String, String> _paths;
+//  String _extension;
+//  void openFileExplorer() async {
+//    try {
+//      _path = null;
+//      if (_multiPick) {
+//        _paths = await FilePicker.getMultiFilePath(
+//            type: _pickType, fileExtension: _extension);
+//      } else {
+//        _path = await FilePicker.getFilePath(
+//            type: _pickType, fileExtension: _extension);
+//      }
+//    } on PlatformException catch (e) {
+//      print("Unsupported operation" + e.toString());
+//    }
+//    if (!mounted) return;
+//  }
+
   /// Selected Images
   Future<void> _loadAssets() async {
     List<Asset> resultList = List<Asset>();
@@ -542,8 +531,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         selectedAssets: _readyToUploadImages,
         cupertinoOptions: CupertinoOptions(takePhotoIcon: "chat"),
         materialOptions: MaterialOptions(
-          actionBarColor: "#a"
-              "bcdef",
+          actionBarColor: "#abcdef",
           actionBarTitle: "Example App",
           allViewTitle: "All Photos",
           useDetailsView: false,
@@ -585,9 +573,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   Future<HebaModel> _CreatePost() async {
     print("_CreatePost Called");
-    HebaModel publicFeed;
-    HebaModel privateFeed;
-
+    HebaModel hebaObject;
     mImagesPath = await _listOfImageLinks();
     print("mImagesPath: ${mImagesPath.length} ");
 
@@ -601,9 +587,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     var lat = currentPosition.latitude;
     var long = currentPosition.longitude;
     var gePoint = GeoPoint(lat, long);
-//    var geFirePoint = GeoFirePoint(lat, long);
-
-    publicFeed = HebaModel(
+    if (_currentCity == "") {
+      _currentCity = "غير معروف";
+    }
+    hebaObject = HebaModel(
         oName: fuser,
         oImage: fuserImage,
         isFeatured: false,
@@ -611,62 +598,18 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         imageUrls: mImagesPath,
         hName: _name,
         geoPoint: gePoint,
-//        geoFirePoint: geFirePoint,
         hDesc: _desc,
         hCity: _currentCity,
         authorId: widget.currentUserId,
         timestamp: ts);
 
-//    print("geFirePoint :${geFirePoint.geoPoint}");
-
-    /// database
-    DatabaseService.createPublicPosts(publicFeed);
-
-    /// private Post Object
-//    privateFeed = Post2(
-//          imageUrls: mImagesPath,
-//          oName: fuser,
-//          oImage: fuserImage,
-//          isFeatured: false,
-//          isMine: isMine,
-////          location: fetchedLocation,
-////          geoPoint: GeoPoint(fetchedLocation.latitude, fetchedLocation.longitude),
-//          hName: _name,
-//          hDesc: _desc,
-//          authorId: widget.currentUserId,
-//          timestamp: ts);
-
-    /// database
-//      DatabaseService.createPrivatePost(publicFeed);
-
-//    /// public Post Object
-
-//    current_location = post2.location;
-
-    //    setState(() {
-//      var mLocation = cl;
-//    });
-//
-////    print(" _CreatePost :_GetUserCar  Called ${mCar.id}");
-//    Map<String, dynamic> sd = {
-//      'lat': 12.0,
-//      'long': 12.9,
-//    };
-//    mCar = Car(id: "from 548");
-//    print("car before map ${mCar.id}  ${mCar.drive()}");
-//    mCar = Car.fromJson(sd);
-//    var ts = Timestamp.fromDate(DateTime.now());
-//    print("car after map ${mCar.id} ${sd['id']} ${mCar.drive().toString()}");
-//
-
-    return publicFeed;
+    return hebaObject;
   }
 
-  var finalCheck;
+  var finalCheck = false;
 
   /// Reset data
   Future<bool> _Resetdata() async {
-    var dateRested = true;
     print("_Resetdata Called");
 
     _textFieldControllerName.clear();
@@ -681,47 +624,56 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
 //      listOfImageLinks.length = -1;
     });
-    return dateRested;
   }
 
   /// Send data
   Future<bool> _SendToServer() async {
     showSpinner = true;
 
-    var dataUploaded = false;
-
     /// Check Inputs
-    var dataChecked = await _validateInputs();
-    print('dataChecked $dataChecked');
+    var dataChecked = false;
+    await _validateInputs().whenComplete(() {
+      dataChecked = true;
+      print('dataSented $dataChecked');
+    });
 
     /// Create New Post
     var postCreated = await _CreatePost();
 
-//    /// Check Location
-//    var userLocationCreated = await _GetUserLocation();
-
-    setState(() {
-      dataChecked = true;
+    /// add to database
+    var dataSented = false;
+    await DatabaseService.createPublicPosts(postCreated).whenComplete(() {
+      dataSented = true;
+      print('dataSented $dataSented');
+    }).catchError((onError) {
+      print("$onError");
     });
 
-    /// Rest Fields
-    var fieldsRested = await _Resetdata();
-    print('fieldsRested $fieldsRested');
+//    setState(() {
+//      dataChecked = true;
+//    });
 
-    finalCheck =
-        dataChecked == false || postCreated != null || fieldsRested == true;
+    /// Rest Fields
+    var fieldsRested = false;
+    await _Resetdata().whenComplete(() {
+      fieldsRested = true;
+      print('fieldsRested $fieldsRested');
+    });
+    ;
+
+    finalCheck = dataChecked == false ||
+        postCreated != null ||
+        fieldsRested == true ||
+        dataSented == false;
 
     if (finalCheck == true) {
 //      todo
 //      _displaySnackBar(context, " تم إضافة الهبة بنجاح");
 
-      print("fieldsRested $fieldsRested     " +
-          "userLocationCreated From _CreatePost $postCreated " +
-          "dataChecked  $dataChecked     " +
-          "fieldsRested $fieldsRested   ");
+      print("dataChecked  $dataChecked" + "fieldsRested $fieldsRested");
+    } else {
+      return finalCheck;
     }
-
-    return dataUploaded;
   }
 
   /// Confirm data
@@ -764,20 +716,93 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       padding: const EdgeInsets.all(3.0),
       crossAxisCount: 5,
       shrinkWrap: true,
+      crossAxisSpacing: 3,
       physics: ScrollPhysics(),
       // to disable GridView's scrolling
       children: List.generate(_readyToUploadImages.length, (index) {
         Asset images = _readyToUploadImages[index];
+        Asset image = Asset(
+            "${AvailableImages.appIcon}", "${AvailableImages.appIcon}", 100,
+            100);
         return Center(
           child: AssetThumb(
             asset: images,
             width: 100,
             height: 100,
+//            spinner: mStatlessWidgets().EmptyView(),
           ),
         );
       }),
+
+
+//      children: List.generate(_readyToUploadImages.length, (index) {
+//        Asset images = _readyToUploadImages[index];
+//        return Center(
+//          child: AssetThumb(
+//            asset: images,
+//            width: 100,
+//            height: 100,
+//            spinner: mStatlessWidgets().EmptyView(),
+//          ),
+//        );
+//      }),
     );
   }
+
+  List<dynamic> _getListOfImagesFromUser(HebaModel post2) {
+    dynamic list = post2.imageUrls;
+    return list;
+  }
+
+//  Widget buildGridView2(HebaModel post, int index) {
+//    /// fetch the list
+//    var listFromFirebase =
+//        _getListOfImagesFromUser(post).cast<String>().toList();
+//    int _current = 0;
+//
+//    return GridView.builder(
+//      itemCount: _readyToUploadImages.length,
+//      itemBuilder: (BuildContext context, int index) {
+//        Asset images = _readyToUploadImages[index];
+//
+//        return Container(
+//          child: Stack(
+//            alignment: Alignment.bottomCenter,
+//            children: <Widget>[
+//              FadeInImage(
+//                image: Image.asset(),
+//                placeholder: AssetImage(AvailableImages.appIcon),
+//                fit: BoxFit.cover,
+//                width: double.infinity,
+//                height: double.infinity,
+//              ),
+//              Container(
+//                color: Colors.black.withOpacity(0.7),
+//                height: 30,
+//                width: double.infinity,
+//                child: Center(
+//                  child: Text(
+//                    imageModel.folderName,
+//                    maxLines: 1,
+//                    overflow: TextOverflow.ellipsis,
+//                    style: TextStyle(
+//                        color: Colors.white,
+//                        fontSize: 16,
+//                        fontFamily: 'Regular'
+//                    ),
+//                  ),
+//                ),
+//              )
+//            ],
+//          ),
+//        );
+//
+//      },
+//      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+//        crossAxisCount: 5,
+//      ),
+//    );
+//  }
 
   ///  Buttons
   _Buttons() {
@@ -787,13 +812,14 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
         children: <Widget>[
+
           /// Add Images Btn
-          UIHelper.verticalSpace(10),
+//          UIHelper.verticalSpace(10),
 
-          Center(child: Text('Error: $_error}')),
-          UIHelper.verticalSpace(10),
-
-          UIHelper.verticalSpace(10),
+//          Center(child: Text('Error: $_error}')),
+//          UIHelper.verticalSpace(10),
+//
+//          UIHelper.verticalSpace(10),
 
           _loading ? mStatlessWidgets().mLoading() : SizedBox.shrink(),
 
@@ -830,7 +856,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ],
               ),
               onPressed: () async {
-                await submit();
+                await Send();
 
                 // or
 //                var s = submit().whenComplete(() {
@@ -848,10 +874,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  submit() async {
+  void Send() async {
     print("Submit called ");
-
-    if (_name.isNotEmpty && !_loading && this.mounted == true) {
+    if (await _validateInputs() == true) {
       final action = await Dialogs.addNewHebaDialog(
           context, ' Add Heba', 'Are You Sure You Want To Add This Post');
       if (action == DialogAction.yes) {
@@ -878,7 +903,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           },
         );
       }
-    } else if (_name.isNotEmpty == false) {
+    } else {
       _displaySnackBar(context, " أدخل إسم للهبة $_name");
     }
   }

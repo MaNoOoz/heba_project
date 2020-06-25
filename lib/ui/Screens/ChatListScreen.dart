@@ -13,7 +13,6 @@ import 'package:heba_project/models/Chat.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
-import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
@@ -46,6 +45,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   FirebaseUser fUser;
   StreamController<User> streamController;
   List<User> users = [];
+  List<User> duplicateItems = [];
 
   /// vars ===================================================
 
@@ -75,9 +75,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
         users.add(event);
       });
     });
-    var users3 = await load(streamController);
+//    var users3 = await load(streamController);
+    duplicateItems = await load(streamController);
     setState(() {
-      users = users3;
+      users = duplicateItems;
     });
 
     print("init : ${users.length}");
@@ -100,22 +101,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
         onPressed: () async {},
       ),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(130),
+        preferredSize: Size.fromHeight(100),
         child: Column(
           children: <Widget>[
             CustomAppBar(
               title: "المحادثات",
               IsBack: false,
-              color: Colors.white,
               isImageVisble: true,
-              flexColor: Colors.black12,
+              color: Colors.blueGrey,
             ),
-            Divider(
-              height: 10,
-              thickness: 12,
-              color: Colors.green.withAlpha(32),
-            ),
-//            searchFun3(),
+            Container(height: 40, child: SearchCard(context)),
           ],
         ),
       ),
@@ -393,58 +388,127 @@ class _ChatListScreenState extends State<ChatListScreen> {
           },
         );
       },
-
     );
   }
 
-  Widget searchFun3() {
-    return Container(
-      margin: EdgeInsets.only(top: 5.0),
-      height: 50.0,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.0),
-        color: CustomColors.unselectedCardColor,
+  searchList(String keyword) async {
+    var cityFilter;
+    List<User> filterdHebat = [];
+    filterdHebat.addAll(users);
+    if (keyword.isNotEmpty) {
+      var resultList = filterdHebat.where((i) {
+        cityFilter = i.name.toLowerCase().contains(keyword.toLowerCase());
+//        print("cityFilter :${cityFilter}");
+        return cityFilter;
+      }).toList();
+      setState(() {
+        print("keyword :${keyword}  is ${cityFilter}");
+        users = resultList;
+      });
+      return users;
+    } else {
+      setState(() {
+        users = duplicateItems;
+      });
+    }
+  }
+
+  Widget SearchCard(BuildContext context) {
+//    var txtFeild = CupertinoTextField(
+//      maxLines: 1,
+//      onChanged: (input) {
+//
+//        searchList2(input);
+//      },
+//      placeholder: "بحث عن هبة",
+//      autofocus: false,
+//      controller: _searchController,
+//      focusNode: focusNode,
+//      style: productRowTotal,
+//      cursorColor: Colors.blueGrey,
+//      onSubmitted: (input) {
+//        searchList2(input);
+//      },
+//    );
+
+    var txtFeild2 = TextFormField(
+      style: TextStyle(
+        color: Colors.blueGrey,
       ),
-      child: TextField(
-        onChanged: (input) {
-          if (input.isNotEmpty) {
-            setState(() {
-//              _users = DatabaseService.searchUsers(input);
-            });
-          }
-        },
-//        onSubmitted: (input) {
-//          if (input.isNotEmpty) {
-//            setState(() {
-//              _users = DatabaseService.searchUsers(input);
-//            });
-//          }
-//        },
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: "Search for name",
-          hintStyle: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.withOpacity(0.6),
-          ),
-          border: InputBorder.none,
-          suffixIcon: IconButton(
-            icon: Icon(
-              CupertinoIcons.clear,
-              size: 30.0,
-            ),
-//            onPressed: _clearSearch,
-          ),
-          filled: true,
-          prefixIcon: Icon(
-            CupertinoIcons.search,
-            color: Colors.black,
-            size: 30.0,
-          ),
+      textAlign: TextAlign.start,
+//      textDirection: TextDirection.rtl,
+      onChanged: (input) {
+        searchList(input);
+      },
+      onSaved: (input) {
+        searchList(input);
+      },
+
+      cursorColor: Colors.blueGrey,
+      controller: _searchController,
+      decoration: InputDecoration(
+        hintText: "بحث",
+        hintStyle: TextStyle(
+          decorationColor: Colors.blueGrey,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.blueGrey.withOpacity(0.5),
         ),
+        border: InputBorder.none,
+      ),
+    );
+
+    return Card(
+      elevation: 10,
+      color: Colors.white,
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          SizedBox(
+            width: 10,
+          ),
+          GestureDetector(
+//              todo search query
+            onTap: () async {
+              FocusScope.of(context).unfocus();
+              _searchController.clear();
+            },
+
+            child: const Icon(
+              CupertinoIcons.search,
+              color: Colors.blueGrey,
+            ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          Flexible(
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: txtFeild2,
+            ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          GestureDetector(
+            onTap: () async {
+              FocusScope.of(context).unfocus();
+              _searchController.clear();
+            },
+            child: const Icon(
+              CupertinoIcons.clear_thick_circled,
+              color: Colors.blueGrey,
+            ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+        ],
       ),
     );
   }
+
 
   Widget chatRow(var screenSize, User user) {
     return Container(

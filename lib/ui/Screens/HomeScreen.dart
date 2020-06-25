@@ -57,9 +57,9 @@ class _HomeScreenState extends State<HomeScreen> {
         bottomNavigationBar: CurvedNavigationBar(
           index: bottomSelectedIndex,
           height: 50,
-          buttonBackgroundColor: Colors.blue,
+          buttonBackgroundColor: Colors.blueGrey,
           backgroundColor: Colors.white,
-          color: Colors.blue,
+          color: Colors.blueGrey,
           items: <Widget>[
             Icon(Icons.home, color: Colors.white, size: 30),
 //            Icon(Icons.search, color: Colors.white, size: 30),

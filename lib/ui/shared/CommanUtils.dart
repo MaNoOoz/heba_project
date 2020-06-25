@@ -14,7 +14,7 @@ class CommanUtils {
   /// checkConnection -------------------------------------------------------------------------
   static Future<bool> checkConnection() async {
     ConnectivityResult connectivityResult =
-    await (new Connectivity().checkConnectivity());
+        await (new Connectivity().checkConnectivity());
     await Future.delayed(Duration(seconds: 2))
         .catchError((onError) => {print(onError)});
     debugPrint(connectivityResult.toString());
@@ -27,9 +27,8 @@ class CommanUtils {
     }
   }
 
-
-  static void showAlertForConfirmAddData(BuildContext context, String text,
-      bool function) {
+  static void showAlertForConfirmAddData(
+      BuildContext context, String text, bool function) {
     var alert = new AlertDialog(
       content: Container(
         child: Row(
@@ -95,7 +94,8 @@ class CommanUtils {
     );
   }
 
-  static String generateImagePlaceHolderUrl({int width = 200, int height = 80}) {
+  static String generateImagePlaceHolderUrl(
+      {int width = 200, int height = 80}) {
     return 'https://via.placeholder.com/${width}x${height}';
   }
 
@@ -119,11 +119,11 @@ class CommanUtils {
       return true;
   }
 
-  bool validatePassword(String value) {
+  String validatePassword(String value) {
     if (value.length < 6) {
-      return false;
+      return "Must be at least 6 characters";
     } else {
-      return true;
+      return "true";
     }
   }
 

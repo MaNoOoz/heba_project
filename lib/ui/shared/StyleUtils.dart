@@ -48,25 +48,25 @@ class StyleUtils {
 //      prefixIcon: icon,
       icon: icon,
 //      suffixIcon: icon,
-      contentPadding: EdgeInsets.all(16),
+      contentPadding: EdgeInsets.all(10),
       hintText: hint,
       labelText: lable,
       hintStyle: TextStyle(color: Colors.grey),
       focusedBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.blue),
-        borderRadius: BorderRadius.all(Radius.circular(26)),
+        borderRadius: BorderRadius.all(Radius.circular(5)),
       ),
       disabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.grey),
-        borderRadius: BorderRadius.all(Radius.circular(26)),
+        borderRadius: BorderRadius.all(Radius.circular(5)),
       ),
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.grey),
-        borderRadius: BorderRadius.all(Radius.circular(26)),
+        borderRadius: BorderRadius.all(Radius.circular(5)),
       ),
       errorBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.redAccent),
-        borderRadius: BorderRadius.all(Radius.circular(26)),
+        borderRadius: BorderRadius.all(Radius.circular(5)),
       ),
     );
   }
@@ -107,10 +107,9 @@ class StyleUtils {
   ThemeData themeData = ThemeData(
     primaryColor: Colors.blue,
     accentColor: Colors.blueAccent[500],
-    fontFamily: ArabicFonts.Cairo,
+    fontFamily: ArabicFonts.Tajawal,
     textTheme: TextTheme(
-        display1: TextStyle(
-            fontSize: 14, wordSpacing: 2, fontFamily: ArabicFonts.Cairo)),
+        display1: TextStyle(fontSize: 14, fontFamily: ArabicFonts.Tajawal)),
   );
 
 /// ========================================================================================================

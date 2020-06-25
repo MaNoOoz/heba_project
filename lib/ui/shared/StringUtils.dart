@@ -15,6 +15,7 @@ class StringUtils {
 
   //Font
   String cairo = 'Cairo';
+  String tajawal = 'Tajawal';
 
   //Labels
   String strSagmentCotnact = 'Contact';

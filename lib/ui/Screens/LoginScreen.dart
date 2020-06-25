@@ -2,16 +2,14 @@
  * Copyright (c) 2020.  Made With Love By Yaman Al-khateeb
  */
 
-import 'dart:developer';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
 import 'package:heba_project/ui/shared/UI_Helpers.dart';
+import 'package:heba_project/ui/shared/UtilsImporter.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
@@ -92,14 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _scaffoldKey,
           body: ModalProgressHUD(
             color: Colors.black,
-            progressIndicator:
-            mStatlessWidgets().mLoading(title: "جاري رفع الإعلان"),
+            progressIndicator: mStatlessWidgets().mLoading(title: "Loading"),
             inAsyncCall: showSpinner,
             child: Column(
               children: <Widget>[
-
                 /// Logo
                 Flexible(
+                  flex: 5,
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: Padding(
@@ -118,32 +115,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 UIHelper.verticalSpace(10),
 
-                /// AppName
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Text(
-                    ' هــبـة ',
-                    style: TextStyle(
-                      fontFamily: ArabicFonts.Cairo,
-                      fontSize: 32.0,
-                      letterSpacing: 5,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black45,
-                    ),
-                  ),
-                ),
-
                 /// Form
                 FormUi(),
-//                    UIHelper.verticalSpace(20),
+                UIHelper.verticalSpace(20),
+
                 /// Login btn
                 Flexible(
                   flex: 1,
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                    padding: const EdgeInsets.only(left: 10.0, right: 10.0),
                     child: FlatButton(
                       shape: new RoundedRectangleBorder(
-                          borderRadius: new BorderRadius.circular(30.0)),
+                          borderRadius: new BorderRadius.circular(5.0)),
                       splashColor: Colors.white,
                       color: Colors.teal,
                       child: new Row(
@@ -198,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           flex: 2,
                           child: FlatButton(
                             shape: new RoundedRectangleBorder(
-                                borderRadius: new BorderRadius.circular(30.0)),
+                                borderRadius: new BorderRadius.circular(10.0)),
                             splashColor: Colors.white,
                             color: Color(0xff3B5998),
                             child: new Row(
@@ -227,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           flex: 2,
                           child: FlatButton(
                             shape: new RoundedRectangleBorder(
-                                borderRadius: new BorderRadius.circular(30.0)),
+                                borderRadius: new BorderRadius.circular(10.0)),
                             splashColor: Colors.red[200],
                             color: Colors.red,
                             child: Row(
@@ -246,16 +229,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-                            onPressed: () {
+                            onPressed: () async {
                               FirestoreServiceAuth.signInWithGoogle()
                                   .then((value) {
                                 showSpinner = true;
-                                print("signInWithGoogle : ${FirestoreServiceAuth
-                                    .googleSignIn.currentUser.displayName}");
+                                print(
+                                    "signInWithGoogle : ${FirestoreServiceAuth
+                                        .googleSignIn.currentUser
+                                        .displayName}");
                                 print("signInWithGoogle : ${value}");
                               }).whenComplete(() {
-                                print("signInWithGoogle : ${FirestoreServiceAuth
-                                    .googleSignIn.currentUser.displayName}");
+                                print(
+                                    "signInWithGoogle : ${FirestoreServiceAuth
+                                        .googleSignIn.currentUser
+                                        .displayName}");
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) {
@@ -283,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         new Expanded(
                           child: FlatButton(
                             shape: new RoundedRectangleBorder(
-                                borderRadius: new BorderRadius.circular(30.0)),
+                                borderRadius: new BorderRadius.circular(10.0)),
                             color: Colors.transparent,
                             child: Container(
                               padding: const EdgeInsets.only(left: 20.0),
@@ -353,99 +340,53 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ListView(
         shrinkWrap: true,
         children: <Widget>[
-          ///
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.withOpacity(0.5),
-                width: 1.0,
-              ),
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            margin:
-            const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding:
-                  EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                  child: Icon(
-                    Icons.person_outline,
-                    color: Colors.black45,
-                  ),
-                ),
-                Container(
-                  height: 30.0,
-                  width: 1.0,
-                  color: Colors.grey.withOpacity(0.5),
-                  margin: const EdgeInsets.only(left: 00.0, right: 10.0),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      hintText: 'Enter your email',
-                    ),
-                    validator: (input) {
-                      log("$input");
-                      return !input.trim().contains('@')
-                          ? 'Please enter a valid email'
-                          : null;
-                    },
-                    onSaved: (input) => _email = input,
-                  ),
-                ),
-              ],
-            ),
-          ),
 
           ///
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.withOpacity(0.5),
-                width: 1.0,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(
+                  decoration:
+                  UtilsImporter().uStyleUtils.textFieldDecorationCircle(
+                    hint: UtilsImporter().uStringUtils.hintEmail,
+                    lable: UtilsImporter().uStringUtils.labelEmail,
+                    icon: Icon(Icons.person),
+                  ),
+//                    decoration: InputDecoration(
+//                      labelText: 'Email',
+//                      hintStyle: TextStyle(color: Colors.grey),
+//                      border: InputBorder.none,
+//                      hintText: 'Enter your email',
+//                    ),
+                  validator: UtilsImporter().uCommanUtils.validateName,
+
+//                    validator: (input) {
+//                      log("$input");
+//                      return !input.trim().contains('@')
+//                          ? 'Please enter a valid email'
+//                          : null;
+//                    },
+                  onSaved: (input) => _email = input,
+                ),
               ),
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            margin:
-            const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding:
-                  EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                  child: Icon(
-                    Icons.lock_open,
-                    color: Colors.black45,
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(
+                  decoration:
+                  UtilsImporter().uStyleUtils.textFieldDecorationCircle(
+                    hint: 'Enter your Password',
+                    lable: "Password",
+                    icon: Icon(Icons.lock_open),
                   ),
+                  validator: (input) =>
+                      UtilsImporter().uCommanUtils.validatePassword(input),
+                  obscureText: true,
                 ),
-                Container(
-                  height: 30.0,
-                  width: 1.0,
-                  color: Colors.grey.withOpacity(0.5),
-                  margin: const EdgeInsets.only(left: 00.0, right: 10.0),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      hintText: 'Enter your email',
-                    ),
-                    validator: (input) =>
-                    input.length < 6
-                        ? 'Must be at least 6 characters'
-                        : null,
-                    onSaved: (input) => _password = input,
-                    obscureText: true,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

@@ -3,6 +3,7 @@
  */
 
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,9 +18,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_fonts_arabic/fonts.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:heba_project/models/models.dart';
+import 'package:heba_project/ui/Screens/edit_heba_screen.dart';
+import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
@@ -77,6 +80,7 @@ class _FeedScreenState extends State<FeedScreen>
   /// 0 = Filter [showBtnSheetForFiltiring]
   /// , 1 = Sort  [showBtnSheetForSorting]
   var mBottomSheetForFiltiring;
+  var mBottomSheetForEditiing;
   List<DropdownMenuItem<String>> _dropDownMenuItems;
   String _currentCity;
 
@@ -129,9 +133,6 @@ class _FeedScreenState extends State<FeedScreen>
 
   init() async {
     print("init : CALLED");
-
-//    List<HebaModel> hebat = await getHebatFromFirestore();
-
     await setMarckerIcon();
     await _getLocationAndGoToIt();
   }
@@ -203,7 +204,8 @@ class _FeedScreenState extends State<FeedScreen>
 
     List<DocumentSnapshot> documents = qn.documents;
     documents.forEach((DocumentSnapshot doc) {
-      HebaModel postModel = new HebaModel.fromFirestore(doc);
+      var map = doc.data;
+      HebaModel postModel = new HebaModel.fromMap(map);
       hebat.add(postModel);
     });
 
@@ -522,9 +524,9 @@ class _FeedScreenState extends State<FeedScreen>
                                         child: FormField<String>(builder:
                                             (FormFieldState<String> state) {
                                           return Container(
-                                            width: 100,
+                                            width: 90,
                                             child:
-                                            new DropdownButtonHideUnderline(
+                                                new DropdownButtonHideUnderline(
                                               child: new DropdownButton<String>(
                                                 value: _currentCity,
                                                 isDense: false,
@@ -757,8 +759,18 @@ class _FeedScreenState extends State<FeedScreen>
     return markers;
   }
 
-  void editPost(DocumentSnapshot documentSnapshot) {
-//    documentSnapshot.reference.updateData(data);
+  editPost(HebaModel heba) async {
+//    todo
+
+    print("${heba.hName} ");
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            Edit_Heba_Screen(post: heba, currentUserId: widget.userId),
+      ),
+    );
+//
   }
 
   _getLocationAndGoToIt() async {
@@ -843,19 +855,18 @@ class _FeedScreenState extends State<FeedScreen>
       key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(140),
+        preferredSize: Size.fromHeight(150),
         child: Column(
           textDirection: TextDirection.rtl,
 //          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Container(
-              height: 80,
               child: CustomAppBar(
-//              user: widget.user, /// todo  create method to override the image from google in [] in order to fix null
-                title: "Heba ",
+                title: "هبة",
+//                title: "HEBA",
                 IsBack: false,
-//                color: Colors.white,
+                color: Colors.blueGrey,
                 isImageVisble: true,
 //              flexSpace: 50,
 //              flexColor: Colors.blue,
@@ -863,7 +874,8 @@ class _FeedScreenState extends State<FeedScreen>
             ),
 //            Divider(),
             FilterCard(context),
-            Container(color: Colors.blueGrey, child: SearchCard(context)),
+            Container(height: 40, child: SearchCard(context)),
+
 //            FilterCard(context),
           ],
         ),
@@ -873,7 +885,6 @@ class _FeedScreenState extends State<FeedScreen>
         children: <Widget>[
           Center(
             child: Visibility(
-
               /// todo
               visible: true,
               child: Container(
@@ -931,7 +942,7 @@ class _FeedScreenState extends State<FeedScreen>
 
     var txtFeild2 = TextFormField(
       style: TextStyle(
-        color: Colors.white,
+        color: Colors.blueGrey,
       ),
       textAlign: TextAlign.start,
 //      textDirection: TextDirection.rtl,
@@ -942,73 +953,67 @@ class _FeedScreenState extends State<FeedScreen>
         searchList(input);
       },
 
-      cursorColor: Colors.white,
+      cursorColor: Colors.blueGrey,
       controller: _searchController,
       decoration: InputDecoration(
         hintText: "بحث عن هبة",
         hintStyle: TextStyle(
-          decorationColor: Colors.white,
+          decorationColor: Colors.blueGrey,
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: Colors.white.withOpacity(0.5),
+          color: Colors.blueGrey.withOpacity(0.5),
         ),
         border: InputBorder.none,
       ),
     );
 
-    return Container(
-      height: 30,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          textDirection: TextDirection.rtl,
-          children: [
-            SizedBox(
-              width: 10,
-            ),
-            GestureDetector(
+    return Card(
+      elevation: 5,
+      color: Colors.white,
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          SizedBox(
+            width: 10,
+          ),
+          GestureDetector(
 //              todo search query
-              onTap: () async {
-                FocusScope.of(context).unfocus();
-                _searchController.clear();
-              },
+            onTap: () async {
+              FocusScope.of(context).unfocus();
+              _searchController.clear();
+            },
 
-              child: const Icon(
-                CupertinoIcons.search,
-                color: Colors.white,
-              ),
+            child: const Icon(
+              CupertinoIcons.search,
+              color: Colors.blueGrey,
             ),
-            SizedBox(
-              width: 10,
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          Flexible(
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: txtFeild2,
             ),
-            Expanded(
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Center(
-                  child: txtFeild2,
-                ),
-              ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          GestureDetector(
+            onTap: () async {
+              FocusScope.of(context).unfocus();
+              _searchController.clear();
+            },
+            child: const Icon(
+              CupertinoIcons.clear_thick_circled,
+              color: Colors.blueGrey,
             ),
-            SizedBox(
-              width: 10,
-            ),
-            GestureDetector(
-              onTap: () async {
-                FocusScope.of(context).unfocus();
-                _searchController.clear();
-              },
-              child: const Icon(
-                CupertinoIcons.clear_thick_circled,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(
-              width: 10,
-            ),
-          ],
-        ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+        ],
       ),
     );
   }
@@ -1277,14 +1282,14 @@ class _FeedScreenState extends State<FeedScreen>
                 color: Colors.white,
                 child: Icon(
                   FontAwesomeIcons.edit,
-                  color: Colors.black38,
+                  color: Colors.blueAccent,
                   size: 16,
                 ),
               ),
             ),
           ),
-          onTap: () {
-            print("Add edit Function");
+          onTap: () async {
+            editPost(post);
           },
         ),
       );
@@ -1376,11 +1381,20 @@ class _FeedScreenState extends State<FeedScreen>
       height: 150,
 //      color: Colors.blue,
       child: InkWell(
-//        focusColor: Colors.cyan,
-//        splashColor: Colors.cyan,
-        onTap: () {
+        focusColor: Colors.blueGrey,
+        splashColor: Colors.blueGrey,
+        onTap: () async {
           print("${index} ");
-
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  HebaDetails(
+                      heba: staticHebatListFromUser[index],
+                      isMe: false,
+                      userId: widget.userId),
+            ),
+          );
 //          Navigator.push(
 //            context,
 //            MaterialPageRoute(
@@ -1404,6 +1418,7 @@ class _FeedScreenState extends State<FeedScreen>
   }
 
   Widget rowFooter(String fUser, String fImage, HebaModel post) {
+    var isMe = post.authorId == widget.currentUserId;
     return Container(
       height: 60,
       child: Column(
@@ -1488,6 +1503,17 @@ class _FeedScreenState extends State<FeedScreen>
               Expanded(
                 flex: 1,
                 child: GestureDetector(
+                  onTap: () async {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ProfileScreen(
+                                currentUserId: widget.currentUserId,
+                                userId: post.authorId,
+                              ),
+                        ));
+                  },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: Container(
@@ -1577,17 +1603,17 @@ class _FeedScreenState extends State<FeedScreen>
         children: <Widget>[
           Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: Text(
-              post.hName,
-              maxLines: 1,
-              textDirection: TextDirection.rtl,
-              textAlign: TextAlign.start,
-              overflow: TextOverflow.ellipsis,
-              style: new TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: Text(post.hName,
+                maxLines: 1,
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.start,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.cairo(
+                    textStyle: Theme
+                        .of(context)
+                        .textTheme
+                        .subtitle1,
+                    fontSize: 16)),
           ),
           Align(
             alignment: AlignmentDirectional.centerEnd,
@@ -1597,9 +1623,12 @@ class _FeedScreenState extends State<FeedScreen>
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.start,
               overflow: TextOverflow.ellipsis,
-              style: new TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.normal,
+              style: GoogleFonts.cairo(
+                textStyle: Theme
+                    .of(context)
+                    .textTheme
+                    .caption,
+                fontSize: 14,
               ),
             ),
           ),
@@ -1741,16 +1770,15 @@ class _FeedScreenState extends State<FeedScreen>
             return GestureDetector(
               child: rowView(staticHebatListFromUser[index], index),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        HebaDetails(
-                            heba: staticHebatListFromUser[index],
-                            isMe: false,
-                            userId: widget.userId),
-                  ),
-                );
+//                Navigator.push(
+//                  context,
+//                  MaterialPageRoute(
+//                    builder: (context) => HebaDetails(
+//                        heba: staticHebatListFromUser[index],
+//                        isMe: false,
+//                        userId: widget.userId),
+//                  ),
+//                );
               },
             );
           });
@@ -2055,10 +2083,3 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 }
-
-const TextStyle productRowTotal = TextStyle(
-    color: Color.fromRGBO(0, 0, 0, 0.8),
-    fontSize: 14,
-    fontStyle: FontStyle.normal,
-    fontWeight: FontWeight.normal,
-    fontFamily: ArabicFonts.Cairo);

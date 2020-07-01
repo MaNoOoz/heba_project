@@ -6,7 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/user_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';

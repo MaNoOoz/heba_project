@@ -6,26 +6,26 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/user_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/service/database_service.dart';
-import 'package:heba_project/service/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
 
-class EditProfileScreen extends StatefulWidget {
+class SettingsScreen extends StatefulWidget {
   final User user;
 
-  EditProfileScreen({this.user});
+  SettingsScreen({this.user});
 
   @override
-  _EditProfileScreenState createState() => _EditProfileScreenState();
+  _SettingsScreenState createState() => _SettingsScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   File _profileImage;
   String _name = '';
   bool _isLoading = false;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -72,10 +72,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (_profileImage == null) {
         _profileImageUrl = widget.user.profileImageUrl;
       } else {
-        _profileImageUrl = await StorageService.uploadUserProfileImage(
-          widget.user.profileImageUrl,
-          _profileImage,
-        );
+//        _profileImageUrl = await StorageService.uploadUserProfileImage(
+//          widget.user.profileImageUrl,
+//          _profileImage,
+//        );
         _displaySnackBar(context, 'Profile Image Updated');
       }
 

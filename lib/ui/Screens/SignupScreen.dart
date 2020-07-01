@@ -7,10 +7,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:heba_project/models/user_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
-import 'package:heba_project/service/storage_service.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
+import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:image_picker/image_picker.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _scaffoldState = GlobalKey<ScaffoldState>();
 
   String _name, _email, _password;
-  String _imageUrl = "";
+  String _imageUrl = "${AvailableImages.uph}";
   File _profileImage;
   String currentUserId;
   User _profileUser;
@@ -108,10 +108,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
         /// SignUp the User In Firebase
         FirestoreServiceAuth.signUpUserFromInput(
-            context, _name, _email, _password, _imageUrl);
+                context, _name, _email, _password, _imageUrl)
+            .catchError((e) {
+          _displaySnackBarError(context, "$e");
+        }).whenComplete(() {
+//          _displaySnackBarError(context, "Hey");
+        });
 
-        _imageUrl = await StorageService.uploadUserProfileImageInSignUp(
-            _imageUrl, _profileImage);
+//        _imageUrl = await StorageService.uploadUserProfileImageInSignUp(_imageUrl, _profileImage);
       } else {}
     } catch (e) {
       var errorMessage = 'This Email Already Registerd';
@@ -180,7 +184,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                         FlatButton(
-                          onPressed: _handleImageFromGallery,
+                          onPressed: () async {
+                            _handleImageFromGallery();
+                          },
                           child: OutlineButton(
                             onPressed: () => _handleImageFromGallery,
                             child: Text(

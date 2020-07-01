@@ -8,7 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:heba_project/models/user_model.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -34,30 +34,45 @@ class FirestoreServiceAuth {
   }
 
   /// signUpUser =================================================================
-  static void signUpUserFromInput(BuildContext context, String name,
+  static Future<String> signUpUserFromInput(BuildContext context, String name,
       String email, String password, String imageUrl) async {
     try {
-      log("signUpUser Called");
+      log("signUpUserFromInput Called ");
 
       AuthResult authResult =
-      await _firebase_Auth.createUserWithEmailAndPassword(
+          await _firebase_Auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       FirebaseUser signedInUser = authResult.user;
-      if (signedInUser != null) {
-        usersRef.document(signedInUser.uid).setData({
-          'email': email,
-          'name': name,
-          'profileImageUrl': imageUrl ?? "",
-          'uid': signedInUser.uid,
-          'chats': [],
-        });
-        Navigator.pop(context);
-      }
+      print("signed in " +
+          signedInUser.displayName +
+          "\n" +
+          signedInUser.photoUrl);
+      var clonedUser = await saveDetailsFromGoogleAuth(signedInUser);
+      print("signed in " +
+          clonedUser.documentId +
+          clonedUser.name +
+          "\n" +
+//        savedUser.name +
+//        savedUser.id +
+          "\n" +
+          clonedUser.profileImageUrl);
+
+//      if (signedInUser != null) {
+//        usersRef.document(signedInUser.uid).setData({
+//          'email': email,
+//          'name': name,
+//          'profileImageUrl': imageUrl ?? "${AvailableImages.appIcon}",
+//          'uid': signedInUser.uid,
+//          'chats': [],
+//        });
+//        Navigator.pop(context);
+//      }
     } catch (e) {
-      print(e);
+      log(e.toString());
     }
+    Navigator.pop(context);
   }
 
   /// login =================================================================
@@ -89,7 +104,7 @@ class FirestoreServiceAuth {
 
   /// saveDetailsFromGoogleAuth =================================================================
   static Future<String> signInWithGoogle() async {
-    print("signInWithGoogle");
+    print("signInWithGoogle Called");
 
     loading.add(true);
     final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();

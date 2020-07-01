@@ -59,20 +59,23 @@ class mStatlessWidgets {
   }
 
   Widget mLoading({String title}) {
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          Text(
-            title,
-            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-          )
-        ],
+    return Container(
+      color: Colors.grey[900].withOpacity(0.8),
+      child: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            Text(
+              title,
+              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+            )
+          ],
+        ),
       ),
     );
   }

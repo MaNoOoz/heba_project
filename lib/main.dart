@@ -20,10 +20,8 @@ import 'package:heba_project/ui/Screens/Location_Pickup.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
-import 'package:heba_project/ui/shared/AppNavigation.dart';
 import 'package:provider/provider.dart';
 
-import 'models/Chat.dart';
 import 'models/models.dart';
 import 'models/user_data.dart';
 import 'ui/Screens/ChatListScreen.dart';
@@ -108,7 +106,7 @@ class MyApp extends StatelessWidget {
 
           darkTheme: ThemeData.dark(),
           home: _getScreenId(),
-          onGenerateRoute: Router.generateRoute,
+//          onGenerateRoute: Router.generateRoute,
           routes: {
             LoginScreen.id: (context) => LoginScreen(),
             ChatListScreen.id: (context) => ChatListScreen(),

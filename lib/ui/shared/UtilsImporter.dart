@@ -11,7 +11,4 @@ class UtilsImporter {
   StyleUtils uStyleUtils = new StyleUtils();
   CommanUtils uCommanUtils = new CommanUtils();
 
-//  StyleUtils styleUtils = new StyleUtils();
-//  WidgetUtils widgetUtils = new WidgetUtils();
-//  FirebaseAuthUtils firebaseAuthUtils = new FirebaseAuthUtils();
 }

@@ -9,13 +9,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:heba_project/models/Chat.dart';
+import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
-import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -44,16 +44,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
   String currentUserId;
   FirebaseUser fUser;
   StreamController<User> streamController;
-  List<User> users = [];
+  List<User> usersList = [];
   List<User> duplicateItems = [];
 
-  /// vars ===================================================
+  /// Log ===================================================
+  Logger logger = Logger();
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    init();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      init();
+    });
   }
 
   @override
@@ -64,24 +66,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   init() async {
-    print("init Called");
-    print("init : ${widget.currentUserId.length} ");
-    print("init : ${widget.currentUserId} ");
-
+    logger.d(
+        "init Called ${widget.currentUserId.length} ===== ${widget.currentUserId}");
     chatListStream = getCurrentUserChats(widget.currentUserId).asStream();
     streamController = StreamController.broadcast();
     streamController.stream.listen((event) {
       setState(() {
-        users.add(event);
+        usersList.add(event);
       });
     });
-//    var users3 = await load(streamController);
     duplicateItems = await load(streamController);
     setState(() {
-      users = duplicateItems;
+      usersList = duplicateItems;
     });
 
-    print("init : ${users.length}");
+    logger.d("${usersList.length}");
   }
 
   Future<List<User>> load(StreamController<User> streamController) async {
@@ -130,7 +129,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       for (var doc in userSnapshot.documents) {
         User user = new User.fromFirestore(doc);
         users.add(user);
-        print("getStreamOfUsers  : ${users.length} ");
+        logger.d("getStreamOfUsers  : ${users.length} ");
       }
     }
 //    var documents = qn.map((event) => event.documents).listen((event) {
@@ -150,13 +149,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
       var docs = userSnapshot.documents;
       for (var doc in docs) {
         List<Map> ids = doc.data['uid'];
-        print("getUsersIds  : ${ids.length} ");
+        logger.d("getUsersIds  : ${ids.length} ");
 
 //        User sender = User(uid: );
 //        User reviver = User();
 //        User user = new User.fromFirestore(doc);
 //        userIds.add(uid);
-//        print("getStreamOfUsers  : ${users.length} ");
+//        logger.d("getStreamOfUsers  : ${users.length} ");
       }
     }
 //    var documents = qn.map((event) => event.documents).listen((event) {
@@ -176,7 +175,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       for (var doc in userSnapshot.documents) {
 //        User user = new User.fromFirestore(doc);
 //        users.add(user);
-        print("getStreamOfChats  : ${userSnapshot.documents.length} ");
+        logger.d("getStreamOfChats  : ${userSnapshot.documents.length} ");
       }
     }
 //    var documents = qn.map((event) => event.documents).listen((event) {
@@ -189,13 +188,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //    });
   }
 
-
   Future<QuerySnapshot> getCurrentUserChats(String chattingFromId) {
     return CHATS.where("users", arrayContains: chattingFromId).getDocuments();
   }
 
   User getUserFromUid(String uid) {
-    print("getUserFromUid Called ");
+    logger.d("getUserFromUid Called ");
 
     Query query;
     query = usersRef.where("uid", isEqualTo: uid);
@@ -204,11 +202,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
     s.forEach((element) {
       var docs = element.documents;
       for (var doc in docs) {
-        print("docs in user ref: ${docs.length}");
+        logger.d("docs in user ref: ${docs.length}");
 
         toUser = User.fromFirestore(doc);
 //        users.add(chattingWithUser);
-//        print("users ${users.length}");
+//        logger.d("users ${users.length}");
       }
     });
 
@@ -227,7 +225,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   List<User> getUserFrom(String uid) {
-    print("getUserFromUid Called ");
+    logger.d("getUserFromUid Called ");
 
     Query query;
     query = usersRef.where("uid", isEqualTo: uid);
@@ -236,11 +234,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
     s.forEach((element) {
       var docs = element.documents;
       for (var doc in docs) {
-        print("docs in user ref: ${docs.length}");
+        logger.d("docs in user ref: ${docs.length}");
 
         toUser = User.fromFirestore(doc);
         users.add(toUser);
-        print("usersss ${users.length}");
+        logger.d("usersss ${users.length}");
       }
     });
 
@@ -259,14 +257,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   String getChattingWith(String chatRoomId) {
-    print("getChattingWith Called ");
+    logger.d("getChattingWith Called ");
 
     var chattinWith = chatRoomId
         .toString()
         .replaceAll("_", "")
         .replaceAll(widget.currentUserId.toString(), "");
-    print("chatting From : ${widget.currentUserId}");
-    print("chatting With : $chattinWith");
+    logger.d("chatting From : ${widget.currentUserId}");
+    logger.d("chatting With : $chattinWith");
     return chattinWith;
   }
 
@@ -292,8 +290,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
             stream:
             CHATS.document(currentUserId).collection(USERCHATS).snapshots(),
             builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              print("stream value : ${snapshot.data.documents.length} ");
-//        print("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
+              logger.d("stream value : ${snapshot.data.documents.length} ");
+//        logger.d("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
 
               if (!snapshot.hasData) {
                 return Center(
@@ -306,7 +304,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   ),
                 );
               } else if (snapshot.hasError) {
-                print('u have error in future');
+                logger.d('u have error in future');
               } else if (snapshot.data.documents.length == 0) {
                 return Center(
                   child: Text('No Chats'),
@@ -344,7 +342,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //
 //                  }
 //                  users.add(user);
-//                  print("getStreamOfUsers  : ${users.length} ");m
+//                  logger.d("getStreamOfUsers  : ${users.length} ");m
 //                  return Column(children: listOfViewHolder);
                 },
               );
@@ -357,17 +355,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return FutureBuilder<List<User>>(
       future: load(streamController),
       builder: (context, snapshot) {
-        print("FutureBuilder  : ${users.length} ");
-        print("FutureBuilder  : ${users.map((e) => e.name)} ");
-
-
+        logger.d(
+            "FutureBuilder  : usersList: ${usersList
+                .length} user names : ${usersList.map((e) => e.name)}");
         return ListView.builder(
           physics: NeverScrollableScrollPhysics(),
-          itemCount: users.length,
+          itemCount: usersList.length,
           shrinkWrap: true,
           itemBuilder: (context, i) {
-            print("itemBuilder  : ${users[i].name} ");
-
             return Card(
               child: ListTile(
                 subtitle: Text("${i.toString()}"),
@@ -382,7 +377,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //                                                ),
                   ),
                 ),
-                title: Text("${users[i].name ?? "SS"}"),
+                title: Text("${usersList[i].name ?? "SS"}"),
               ),
             );
           },
@@ -391,46 +386,30 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+//  todo
   searchList(String keyword) async {
     var cityFilter;
     List<User> filterdHebat = [];
-    filterdHebat.addAll(users);
+    filterdHebat.addAll(usersList);
     if (keyword.isNotEmpty) {
       var resultList = filterdHebat.where((i) {
         cityFilter = i.name.toLowerCase().contains(keyword.toLowerCase());
-//        print("cityFilter :${cityFilter}");
+//        logger.d("cityFilter :${cityFilter}");
         return cityFilter;
       }).toList();
       setState(() {
-        print("keyword :${keyword}  is ${cityFilter}");
-        users = resultList;
+        logger.d("keyword :${keyword}  is ${cityFilter}");
+        usersList = resultList;
       });
-      return users;
+      return usersList;
     } else {
       setState(() {
-        users = duplicateItems;
+        usersList = duplicateItems;
       });
     }
   }
 
   Widget SearchCard(BuildContext context) {
-//    var txtFeild = CupertinoTextField(
-//      maxLines: 1,
-//      onChanged: (input) {
-//
-//        searchList2(input);
-//      },
-//      placeholder: "بحث عن هبة",
-//      autofocus: false,
-//      controller: _searchController,
-//      focusNode: focusNode,
-//      style: productRowTotal,
-//      cursorColor: Colors.blueGrey,
-//      onSubmitted: (input) {
-//        searchList2(input);
-//      },
-//    );
-
     var txtFeild2 = TextFormField(
       style: TextStyle(
         color: Colors.blueGrey,
@@ -508,7 +487,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
     );
   }
-
 
   Widget chatRow(var screenSize, User user) {
     return Container(
@@ -824,8 +802,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //          .collection(channelName)
 //          .snapshots(),
 //      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-//        print("stream value : ${snapshot.data.documents.length} ");
-////        print("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
+//        logger.d("stream value : ${snapshot.data.documents.length} ");
+////        logger.d("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
 //
 //        if (!snapshot.hasData) {
 //          return Center(
@@ -838,7 +816,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //            ),
 //          );
 //        } else if (snapshot.hasError) {
-//          print('u have error in future');
+//          logger.d('u have error in future');
 //        } else if (snapshot.data.documents.length == 0) {
 //          return Center(
 //            child: Text('No Chats'),
@@ -882,7 +860,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //////              post = postFromFuture;
 //////              _docsList.clear();
 ////
-//////              print("${_docsList[index].hName}  + ${postFromFuture.oName}+ ${postFromFuture.hLocation}");
+//////              logger.d("${_docsList[index].hName}  + ${postFromFuture.oName}+ ${postFromFuture.hLocation}");
 //////             final uiTxt =   Text("${_docsList[0].hName} + ${postFromFuture.hLocation}");
 //////              messagesWidgets.add(uiTxt);
 ////            }
@@ -1226,7 +1204,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //            initialData: empty,
 //            stream: chatListStream,
 //            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-//              print("stream value : ${snapshot.data.documents.length} ");
+//              logger.d("stream value : ${snapshot.data.documents.length} ");
 //
 //              if (snapshot.connectionState == ConnectionState.waiting) {
 //                return mStatlessWidgets().mLoading();
@@ -1242,7 +1220,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //                  ),
 //                );
 //              } else if (snapshot.hasError) {
-//                print('u have error in future');
+//                logger.d('u have error in future');
 //              } else if (snapshot.data.documents.length == 0) {
 //                return Center(
 //                  child: Text('No Chats'),
@@ -1284,13 +1262,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
 ////                    final uid = getChattingWith(chatId);
 ////                    var chattingWith = getUserFromUid(uid);
 ////                    chatRoomIDS.add(chatId);
-////                    print(' chatRoomIDS : ${chatRoomIDS.length}');
+////                    logger.d(' chatRoomIDS : ${chatRoomIDS.length}');
 ////
 ////                    users.add(chattingWith);
-////                    print(' USERS : ${users.length}');
+////                    logger.d(' USERS : ${users.length}');
 ////                    row2 = chatRow2(user: users, i: i);
 ////                  });
-////                  print("chatRoomIDS:  ${chatRoomIDS.length}");
+////                  logger.d("chatRoomIDS:  ${chatRoomIDS.length}");
 ////                  rows.add(row2);
 ////
 ////                  return row2;
@@ -1306,7 +1284,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //
 ////                  var userInfo = getUserFromUid(chattingWith);
 ////                  var u = getUsersIds2(chattingWith);
-////                  print("u:  ${u.length}");
+////                  logger.d("u:  ${u.length}");
 ////
 ////                  users.add(userInfo);
 //
@@ -1337,7 +1315,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 ////
 ////                  }
 ////                  users.add(user);
-////                  print("getStreamOfUsers  : ${users.length} ");m
+////                  logger.d("getStreamOfUsers  : ${users.length} ");m
 ////                  return Column(children: listOfViewHolder);
 //            },
 //          );
@@ -1352,7 +1330,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //        var uid = getChattingWith(chatId);
 //        var chattingWith = getUserFromUid(uid);
 //        users1.add(chattingWith);
-//        print(' USERS : ${users.length}');
+//        logger.d(' USERS : ${users.length}');
 //        setState(() {
 //          users = users1;
 //        });

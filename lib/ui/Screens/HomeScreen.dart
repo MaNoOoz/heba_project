@@ -2,7 +2,10 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
+import 'dart:developer';
+
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/user_data.dart';
@@ -47,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final String currentUserId = Provider.of<UserData>(context).currentUserId;
+    var user = Provider.of<FirebaseUser>(context);
+
     return WillPopScope(
       onWillPop: () async {
         return helperFunctions.OnWillPop(context);
@@ -115,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void pageChanged(int index) {
     setState(() {
       bottomSelectedIndex = index;
-      print("Current Tap : $bottomSelectedIndex");
+      log("Current Tap : $bottomSelectedIndex");
     });
   }
 
@@ -130,9 +135,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void init() async {
     var status = await helperFunctions.checkNetwork();
     if (status == true) {
-      print("NetWork is  :$status");
+      log("NetWork is  :$status");
     } else {
-      print("NetWork is  :$status");
+      log("NetWork is  :$status");
     }
   }
 

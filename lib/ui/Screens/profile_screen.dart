@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/service/database_service.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
+import 'package:heba_project/ui/Screens/SettingsScreen.dart';
 import 'package:heba_project/ui/Views/post_view.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/MyClipper.dart';
@@ -16,19 +16,14 @@ import 'package:heba_project/ui/shared/constants.dart';
 import 'package:heba_project/ui/shared/helperFuncs.dart';
 import 'package:heba_project/ui/shared/mAppbar.dart';
 import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   static String id = "profile_screen";
   final String currentUserId;
   final String userId;
 
-//  final User user;
-//  final Chat chat;
-
-//  ProfileScreen({this.currentUserId, this.userId, this.user, this.chat});
   ProfileScreen({this.currentUserId, this.userId});
 
   @override
@@ -37,6 +32,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   /// vars
+  /// log
+  Logger logger = Logger();
+
   List<HebaModel> _posts = [];
   int _displayPosts = 0; // 0 - grid, 1 - column
   User _profileUser;
@@ -46,14 +44,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      init();
-    });
+    init();
   }
 
   init() async {
-    _initProfileInfo();
-    _initUserPosts();
+    await _initProfileInfo();
+    await _initUserPosts();
   }
 
   @override
@@ -76,27 +72,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// Methods ======================
-  _initUserPosts() async {
-    print("_initUserPosts Called : ");
+  Future<void> _initUserPosts() async {
+    logger.e("_initUserPosts Called : ");
     List<HebaModel> posts = await DatabaseService.getUserPosts2(widget.userId);
 
     setState(() {
       _posts = posts;
     });
 
-    print("_initUserPosts : ${_posts.length}");
+    logger.d("_initUserPosts : ${_posts.length}");
   }
 
-  _initProfileInfo() async {
+  Future<void> _initProfileInfo() async {
     isMyProfile = widget.userId == widget.currentUserId;
 
     User profileUser = await DatabaseService.getUserWithId(widget.userId);
-    print("current profileUser id :  ${profileUser.documentId}");
-    print("current profileUser email :  ${profileUser.email}");
-    print("current profileUser name :  ${profileUser.name}");
+    logger.d("current profileUser id :  ${profileUser.documentId}");
+    logger.d("current profileUser email :  ${profileUser.email}");
+    logger.d("current profileUser name :  ${profileUser.name}");
 
 //    var s = await usersRef.document(widget.userId).snapshots().length;
-//    print("map : $s");
+//    logger.d("map : $s");
 
     setState(() {
       _profileUser = profileUser;
@@ -133,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     targetUser = widget.userId;
     var loggedUser2 = widget.currentUserId;
 
-    print("loggedUser ${loggedUser.toString()}"
+    logger.d("loggedUser ${loggedUser.toString()}"
         " \n And Target USER : ${targetUser}"
         " \n And Current USER ${loggedUser2}");
 
@@ -143,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Map<String, dynamic> chatMap = {"users": users, "chatRoomId": chatRoomId};
 
     var ss = await DatabaseService.CreateChatRoomWithMap(chatRoomId, chatMap);
-    print("ss ${ss.toString()}");
+    logger.d("ss ${ss.toString()}");
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -156,10 +152,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Widgets ======================
 
   _buildProfileInfo(User user) {
-    print("_buildProfileInfo : Called");
+    logger.d("_buildProfileInfo : Called");
 
-    ///   print("widget.userId : ${widget.userId} widget.currentUserId ${widget.currentUserId}");
-    ///   print("isMyProfile : ${isMyProfile}");
+    ///   logger.d("widget.userId : ${widget.userId} widget.currentUserId ${widget.currentUserId}");
+    ///   logger.d("isMyProfile : ${isMyProfile}");
 
     return ClipPath(
       clipper: MyClipper(),
@@ -173,6 +169,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
+
                 /// image
                 Column(
                   children: <Widget>[
@@ -188,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               image: user.profileImageUrl.isEmpty
                                   ? Image.asset(AvailableImages.uph)
                                   : CachedNetworkImageProvider(
-                                      user.profileImageUrl),
+                                  user.profileImageUrl),
                             )),
                       ),
                     ),
@@ -227,8 +224,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              EditProfileScreen(
-                                user: user,
+                              SettingsScreen(
+                                user: _profileUser,
                               ),
                         ));
                   },
@@ -357,7 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: InkWell(
               onTap: () {
-                print("Clicked");
+                logger.d("Clicked");
               },
               child: Card(
                 child: Padding(
@@ -366,7 +363,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? mStatlessWidgets().EmptyView()
                       : ImagesSlider(
                     items: map<Widget>(listFromFirebase, (index, i) {
-                      print(
+                      logger.d(
                           "listFromFirebase ${listFromFirebase.length}");
                       return Container(
                         decoration: BoxDecoration(
@@ -480,7 +477,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         } else if (map.hasError) {
-          print('u have error in future');
+          logger.d('u have error in future');
         }
         User userFromDb = User.fromFirestore(map.data);
 

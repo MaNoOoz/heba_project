@@ -6,10 +6,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:heba_project/models/Chat.dart';
-import 'package:heba_project/models/Message.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/models/user_model.dart';
 import 'package:heba_project/ui/shared/Constants.dart';
 
 class DatabaseService {
@@ -134,10 +131,12 @@ class DatabaseService {
     });
   }
 
-  static Future<bool> createPublicPosts(HebaModel post) async {
-    var done = false;
-    publicpostsRef.add({
-      'id': post.id,
+  static Future<DocumentReference> createPublicPosts(HebaModel post) async {
+    DocumentReference ref = publicpostsRef.document();
+    var docId2 = ref.documentID;
+
+    var map = {
+      'id': docId2,
       'geoPoint': post.geoPoint,
       'imagesUrls': post.imageUrls,
       'hName': post.hName,
@@ -150,9 +149,24 @@ class DatabaseService {
       'hDesc': post.hDesc,
       'authorId': post.authorId,
       'timestamp': post.timestamp,
-      'reference': post.reference,
-    });
-    done = true;
+    };
+    ref.setData(map, merge: true);
+    return ref;
+
+//    return publicpostsRef.add({
+//      'geoPoint': post.geoPoint,
+//      'imagesUrls': post.imageUrls,
+//      'hName': post.hName,
+//      'oName': post.oName,
+//      'hCity': post.hCity,
+//      'isFeatured': post.isFeatured,
+//      'isMine': post.isMine ?? false,
+//      "location": post.location,
+//      'oImage': post.oImage,
+//      'hDesc': post.hDesc,
+//      'authorId': post.authorId,
+//      'timestamp': post.timestamp,
+//    });
   }
 
 //  static Future<HebaModel> CreatNote(HebaModel heba) async {
@@ -371,8 +385,8 @@ class DatabaseService {
   }
 
   ///  as a List future
-  static Future<List<Message>> GetMessagesFutureAsList(String senderID,
-      String reciverID, String channelName) async {
+  static Future<List<Message>> GetMessagesFutureAsList(
+      String senderID, String reciverID, String channelName) async {
     QuerySnapshot messagesSnapshots = await CHATS
         .document(senderID)
         .collection(USERCHATS)

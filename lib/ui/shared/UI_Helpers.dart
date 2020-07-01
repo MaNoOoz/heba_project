@@ -37,7 +37,7 @@ class UIHelper {
   }
 
   /// Returns a vertical space equal to the [height] supplied with color
-  static Widget verticalSpaceWithGrayColor(double height, Color color) {
+  static Widget verticalSpaceWithColor(double height, Color color) {
     return Container(
       height: height,
       color: color,
@@ -65,7 +65,7 @@ class UIHelper {
   }
 
   /// Returns a vertical space equal to the [height] supplied with color
-  static Widget horizontalSpaceWithGrayColor(double height, Color color) {
+  static Widget horizontalSpaceWithColor(double height, Color color) {
     return Container(
       height: height,
       color: color,

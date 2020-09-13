@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "632859344347",
+    "firebase_url": "https://heba-project-3b3c4.firebaseio.com",
+    "project_id": "heba-project-3b3c4",
+    "storage_bucket": "heba-project-3b3c4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:632859344347:android:6980473aad409ea650bbfe",
+        "android_client_info": {
+          "package_name": "manoz.com.heba_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "632859344347-44d2pfqm22pm25ms8id0maf2n59mgjfj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "manoz.com.heba_project",
+            "certificate_hash": "f8f5a1fd790bf30c024f2aa73d17e780f5cd2393"
+          }
+        },
+        {
+          "client_id": "632859344347-62et50r1rgms6d0al4nmkucagapor1s2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPuVwOi13Cc-fAjGRVQjg-90zAz-kJqmo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "632859344347-62et50r1rgms6d0al4nmkucagapor1s2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

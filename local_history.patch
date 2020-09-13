@@ -1,0 +1,16 @@
+Index: lib/ui/Screens/ChatScreen.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- lib/ui/Screens/ChatScreen.dart	(date 1586959274218)
++++ lib/ui/Screens/ChatScreen.dart	(date 1586959274218)
+@@ -79,7 +79,7 @@
+     groupChatId = '';
+     readLocal();
+ 
+-    init();
++//    init();
+ //    mMessagesFromDb();
+   }
+ 

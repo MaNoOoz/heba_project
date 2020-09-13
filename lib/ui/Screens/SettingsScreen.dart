@@ -7,7 +7,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/service/database_service.dart';
+import 'package:heba_project/service/DatabaseService.dart';
 import 'package:image_picker/image_picker.dart';
 
 class SettingsScreen extends StatefulWidget {

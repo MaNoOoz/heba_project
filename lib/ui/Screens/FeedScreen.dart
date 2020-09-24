@@ -22,15 +22,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/ui/Screens/edit_heba_screen.dart';
+import 'package:heba_project/service/DatabaseService.dart';
+import 'package:heba_project/ui/Screens/Edit_Screen.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
-import 'package:heba_project/ui/shared/Constants.dart';
-import 'package:heba_project/ui/shared/mAppbar.dart';
-import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:heba_project/ui/shared/utili/Constants.dart';
+import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/widgets/CustomAppBar.dart';
 
 import 'HebaDetails.dart';
 
@@ -38,9 +40,11 @@ class FeedScreen extends StatefulWidget {
   static final String id = 'feed_screen';
   final String currentUserId;
   final String userId;
+  final bool isBarVisible;
+  final Function onChanged;
 
-  ///
-  FeedScreen({this.currentUserId, this.userId});
+  FeedScreen(
+      {this.currentUserId, this.userId, this.isBarVisible, this.onChanged});
 
   @override
   _FeedScreenState createState() => _FeedScreenState();
@@ -52,12 +56,14 @@ class _FeedScreenState extends State<FeedScreen>
   Logger logger = Logger();
 
   /// VARS ===================================================================
-  List<HebaModel> staticHebatListFromUser = [];
+  List<HebaModel> staticHebatListFromUser = <HebaModel>[];
+  List<HebaModel> duplicateItems = <HebaModel>[];
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   /// ViewMode :  0-grid,1-row,2-map
   var mDataViewMode = 1;
-  var isMine;
+  bool isMine;
   var featured = false;
   Position currentLocation;
 
@@ -67,9 +73,9 @@ class _FeedScreenState extends State<FeedScreen>
   /// Map View
   Completer<GoogleMapController> mapController = Completer();
   List<Marker> markers = <Marker>[];
-  Stream<QuerySnapshot> _PostsStream;
-  bool clientsToggle = false;
-  bool resetToggle = false;
+
+//  Stream<QuerySnapshot> _PostsStream;
+  bool clientsToggle = false, resetToggle = false;
   HebaModel currentHeba;
   double currentBearing;
   BitmapDescriptor ico;
@@ -80,8 +86,7 @@ class _FeedScreenState extends State<FeedScreen>
   /// Filtering Values :
   /// 0 = Filter [showBtnSheetForFiltiring]
   /// , 1 = Sort  [showBtnSheetForSorting]
-  var mBottomSheetForFiltiring;
-  var mBottomSheetForEditiing;
+  dynamic mBottomSheetForFiltiring, mBottomSheetForEditiing;
   List<DropdownMenuItem<String>> _dropDownMenuItems;
   String _currentCity;
 
@@ -90,26 +95,24 @@ class _FeedScreenState extends State<FeedScreen>
   /// Sorting Values : 0 =  popular
   /// "Default" , 1 = low to high
   /// , 2 = high to low
-  int _selectedFilter = 1;
-  int _selectedSort = 1;
+  int _selectedFilter = 1, _selectedSort = 1;
 
   /// Search Card
   final TextEditingController _searchController = TextEditingController();
-
-//  FocusNode focusNode;
-  final List<HebaModel> duplicateItems = [];
 
   /// METHODS ===================================================================
 
   @override
   void initState() {
     init();
-    getHebatFromFirestoreList().then((value) {
-      setState(() {
-        staticHebatListFromUser = value;
-      });
-    });
+    DatabaseService.getPosts().then((value) {
+      staticHebatListFromUser = value;
+      duplicateItems.addAll(staticHebatListFromUser);
 
+      log("staticHebatListFromUser init state ${staticHebatListFromUser.length}");
+      log("duplicateItems init state ${duplicateItems.length}");
+    });
+//    DatabaseService.initPostsStream();
     setMarckerIcon();
     _tabController = new TabController(length: 3, vsync: this);
     _dropDownMenuItems = getDropDownMenuItems();
@@ -121,6 +124,19 @@ class _FeedScreenState extends State<FeedScreen>
     log("init : CALLED");
     await getCurrentUserLocation();
   }
+
+//  Future<List<HebaModel>> _initPosts() async {
+//    logger.e("_initPosts Called : ");
+//    List<HebaModel> posts = await DatabaseService.getPosts("");
+//    setState(() {
+//      staticHebatListFromUser.addAll(posts);
+//      duplicateItems.addAll(staticHebatListFromUser);
+//    });
+//    logger.d("_initUserPosts posts : ${posts.length}");
+//    logger.d("_initUserPosts duplicateItems: ${duplicateItems.length}");
+//
+//    return staticHebatListFromUser;
+//  }
 
   @override
   void dispose() {
@@ -149,67 +165,46 @@ class _FeedScreenState extends State<FeedScreen>
 
   /// DATA ====================================
   ///
-  /// init methodes
+  /// FILTERS
 
-  Future<List<HebaModel>> getHebatFromFirestoreList() async {
-    log("getHebatFromFirestore Called:");
+  filterLisBytMe(int selected) async {
+    var meFilter;
 
-    List<HebaModel> hebat = [];
-    QuerySnapshot qn = await publicpostsRef
-        .orderBy("timestamp", descending: false)
-        .getDocuments();
-
-    List<DocumentSnapshot> documents = qn.documents;
-    documents.forEach((DocumentSnapshot doc) {
-//      var map = doc.data;
-      HebaModel postModel = new HebaModel.fromFirestore(doc);
-      hebat.add(postModel);
-    });
+    List<HebaModel> filterdHebat = <HebaModel>[];
+    filterdHebat.addAll(duplicateItems);
+    var resultList = filterdHebat.where((i) {
+      meFilter = i.authorId == widget.currentUserId;
+//        logger.d("cityFilter :${cityFilter}");
+      return meFilter;
+    }).toList();
 
     setState(() {
-      _PostsStream =
-          publicpostsRef.orderBy("timestamp", descending: false).snapshots();
+      _selectedFilter = selected;
+      log("selected :${selected}");
       staticHebatListFromUser.clear();
-      staticHebatListFromUser.addAll(hebat);
-//      staticHebatListFromUser = hebat;
-      duplicateItems.clear();
-      duplicateItems.addAll(staticHebatListFromUser);
+      staticHebatListFromUser = List.of(resultList);
+//          staticHebatListFromUser = s;
     });
-
-    logger.d("staticHebatListFromUser:${staticHebatListFromUser.length}");
-    logger.d("duplicateItems:${duplicateItems.length}");
-
     return staticHebatListFromUser;
+
+//      if (me == true) {
+//        setState(() {
+//          _selectedFilter = selected;
+//          log("selected :${selected}");
+//          staticHebatListFromUser.clear();
+//          staticHebatListFromUser = List.of(resultList);
+////          staticHebatListFromUser = s;
+//        });
+//
+//        log("me :${resultList}");
+//        return staticHebatListFromUser;
+//      }
   }
 
-  filterListMe(int selected) async {
-    List<HebaModel> filterdHebat = [];
-
-    if (selected == 0) {
-      filterdHebat.addAll(staticHebatListFromUser);
-      var me;
-      var s = filterdHebat.where((i) {
-        me = i.authorId == widget.currentUserId;
-        return me;
-      }).toList();
-
-      if (me == true) {
-        setState(() {
-          _selectedFilter = selected;
-          log("selected :${selected}");
-          staticHebatListFromUser = s;
-        });
-
-        log("me :${s}");
-        return staticHebatListFromUser;
-      }
-    }
-  }
-
-  filterListCity(int selected) async {
+  filterListByCity(int selected) async {
     var cityFilter;
-    List<HebaModel> filterdHebat = [];
-    filterdHebat.addAll(staticHebatListFromUser);
+    List<HebaModel> filterdHebat = <HebaModel>[];
+    filterdHebat.addAll(duplicateItems);
 
     var resultList = filterdHebat.where((i) {
       cityFilter = i.hCity == _currentCity;
@@ -218,24 +213,24 @@ class _FeedScreenState extends State<FeedScreen>
     }).toList();
     setState(() {
       _selectedFilter = selected;
-      log("sadasdasdas :${selected} ${_currentCity}");
-      staticHebatListFromUser = resultList;
+      staticHebatListFromUser.clear();
+      staticHebatListFromUser.addAll(resultList.toList());
     });
     return staticHebatListFromUser;
   }
 
-  searchList(String keyword) async {
-    var cityFilter;
+  filterListBySearch(String keyword) async {
+    var word;
     List<HebaModel> filterdHebat = [];
     filterdHebat.addAll(staticHebatListFromUser);
     if (keyword.isNotEmpty) {
       var resultList = filterdHebat.where((i) {
-        cityFilter = i.hName.toLowerCase().contains(keyword.toLowerCase());
+        word = i.hName.toLowerCase().contains(keyword.toLowerCase());
 //        logger.d("cityFilter :${cityFilter}");
-        return cityFilter;
+        return word;
       }).toList();
       setState(() {
-        logger.d("keyword :${keyword}  is ${cityFilter}");
+        logger.d("keyword :${keyword}  is ${word}");
         staticHebatListFromUser = resultList;
       });
       return staticHebatListFromUser;
@@ -246,88 +241,78 @@ class _FeedScreenState extends State<FeedScreen>
     }
   }
 
-  searchList2(String keyword) async {
-//    https://blog.usejournal.com/flutter-search-in-listview-1ffa40956685
+//  searchList2(String keyword) async {
+////    https://blog.usejournal.com/flutter-search-in-listview-1ffa40956685
+//
+//    List<HebaModel> filterdHebat = [];
+//    filterdHebat.addAll(duplicateItems);
+//    logger.d("filterdHebat :${filterdHebat.length}");
+//
+//    var searchFilter = keyword.length > 0;
+//    if (keyword.isNotEmpty) {
+//      log("keyword length:${keyword.length}");
+//      logger.d("searchFilter:${searchFilter}");
+//
+//      List<HebaModel> dummyListData = List<HebaModel>();
+//      filterdHebat.forEach((item) {
+//        if (item.hName.contains(keyword)) {
+//          dummyListData.add(item);
+//        }
+//      });
+//      setState(() {
+//        staticHebatListFromUser.clear();
+//        staticHebatListFromUser.addAll(dummyListData);
+//      });
+//      return;
+//    } else {
+//      setState(() {
+//        staticHebatListFromUser.clear();
+//        staticHebatListFromUser.addAll(duplicateItems);
+//        logger.d("duplicateItems :${duplicateItems.length}");
+//        logger.d("staticHebatListFromUser :${staticHebatListFromUser.length}");
+//      });
+//    }
+//  }
 
-    List<HebaModel> filterdHebat = [];
-    filterdHebat.addAll(duplicateItems);
-    logger.d("filterdHebat :${filterdHebat.length}");
-
-    var searchFilter = keyword.length > 0;
-    if (keyword.isNotEmpty) {
-      log("keyword length:${keyword.length}");
-      logger.d("searchFilter:${searchFilter}");
-
-      List<HebaModel> dummyListData = List<HebaModel>();
-      filterdHebat.forEach((item) {
-        if (item.hName.contains(keyword)) {
-          dummyListData.add(item);
-        }
-      });
-      setState(() {
-        staticHebatListFromUser.clear();
-        staticHebatListFromUser.addAll(dummyListData);
-      });
-      return;
-    } else {
-      setState(() {
-        staticHebatListFromUser.clear();
-        staticHebatListFromUser.addAll(duplicateItems);
-        logger.d("duplicateItems :${duplicateItems.length}");
-        logger.d("staticHebatListFromUser :${staticHebatListFromUser.length}");
-      });
-    }
-  }
-
-  /// Filters ====================================
-  _selctedFilterType(int selected) async {
-    var filterdList;
-
+  _selctedFilterType(int selected) {
+//    staticHebatListFromUser = duplicateItems;
     if (selected == 0) {
-      SchedulerBinding.instance.addPostFrameCallback((_) async {
-        filterdList = await filterListMe(selected);
-        Navigator.of(context).pop();
-        setState(() {
-          _selectedFilter = 0;
-//          this.staticHebatListFromUser = staticHebatListFromUser;
-          log("_selectedFilter Value :${_selectedFilter}");
-        });
-        return filterdList;
+      var filterdList = filterLisBytMe(selected);
+
+//      log(" SELECTED 0 : ${filterdList.length}");
+      Navigator.of(context).pop();
+      setState(() {
+        _selectedFilter = 0;
+        staticHebatListFromUser.clear();
+        staticHebatListFromUser.addAll(filterdList.toList());
       });
+      log(" SELECTED $selected : ${staticHebatListFromUser.length}");
     } else if (selected == 1) {
-      SchedulerBinding.instance.addPostFrameCallback((_) async {
-        await getHebatFromFirestoreList();
-        Navigator.of(context).pop();
-        setState(() {
-          _selectedFilter = 1;
-          this.staticHebatListFromUser = staticHebatListFromUser;
-          log("_selectedFilter Value :${_selectedFilter}");
-        });
+      Navigator.of(context).pop();
+      setState(() {
+        _selectedFilter = 1;
+        staticHebatListFromUser.clear();
+        staticHebatListFromUser.addAll(duplicateItems.toList());
+        log(
+            " SELECTED $selected : staticHebatListFromUser : ${staticHebatListFromUser
+                .length}duplicateItems: ${duplicateItems.length}");
       });
     } else if (selected == 2) {
-      var filterdList;
-      SchedulerBinding.instance.addPostFrameCallback((_) async {
-        await getHebatFromFirestoreList();
+      var filterdList2 = filterListByCity(selected);
+      log(" SELECTED $selected: ${filterdList2.length}");
 
-        filterdList = await filterListCity(selected);
-        Navigator.of(context).pop();
-        setState(() {
-          _selectedFilter = 2;
-          log("_selectedFilter Value :${_selectedFilter}");
-          staticHebatListFromUser = filterdList;
-        });
+      Navigator.of(context).pop();
+      setState(() {
+        _selectedFilter = 2;
+        staticHebatListFromUser.clear();
+        staticHebatListFromUser.addAll(filterdList2.toList());
+        log(" SELECTED $selected : ${filterdList2.length}");
+        log(" SELECTED $selected : ${staticHebatListFromUser.length}");
       });
-
-      return staticHebatListFromUser;
     }
-
-//    setState(() {
-//      _selected = selected;
-//      logger.d("$_selected");
-//    });
   }
 
-  _selctedSortingType(int selected) {
+  _selctedSortingType(int selected) async {
     if (selected == 0) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         staticHebatListFromUser
@@ -339,19 +324,18 @@ class _FeedScreenState extends State<FeedScreen>
       });
     }
     if (selected == 1) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        staticHebatListFromUser
-            .sort((a, b) => a.timestamp.compareTo(b.timestamp));
-        setState(() {
-          _selectedSort = selected;
-        });
-        log("selected :$selected");
+      staticHebatListFromUser
+          .sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      setState(() {
+        _selectedSort = selected;
       });
+      log("selected :$selected");
+      SchedulerBinding.instance.addPostFrameCallback((_) {});
     }
     Navigator.of(context).pop();
     setState(() {
       _selectedSort = selected;
-      this.staticHebatListFromUser = staticHebatListFromUser;
+      staticHebatListFromUser = List.from(staticHebatListFromUser);
     });
     log("selected :$selected");
   }
@@ -485,6 +469,7 @@ class _FeedScreenState extends State<FeedScreen>
                                                     state.didChange(newValue);
 //                                                    _city = state.value;
                                                   });
+//                                                  todo
                                                   await _selctedFilterType(2);
                                                 },
                                                 items:
@@ -595,7 +580,6 @@ class _FeedScreenState extends State<FeedScreen>
                             child: Container(
                               child: Column(
                                 children: <Widget>[
-
                                   ///old to  new
                                   Flexible(
                                     child: RadioListTile(
@@ -791,7 +775,7 @@ class _FeedScreenState extends State<FeedScreen>
     });
   }
 
-  /// WIDGETS ===================================================================
+  /// Widgets ===================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -806,8 +790,8 @@ class _FeedScreenState extends State<FeedScreen>
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(150),
         child: Column(
-          textDirection: TextDirection.rtl,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          textDirection: TextDirection.rtl,
           children: <Widget>[
             Container(
               child: CustomAppBar(
@@ -832,31 +816,34 @@ class _FeedScreenState extends State<FeedScreen>
             child: Visibility(
 
               /// todo
-              visible: true,
+              visible: false,
               child: Container(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Align(
-                      alignment: AlignmentDirectional.topCenter,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          staticHebatListFromUser.length == 0
-                              ? Text(" لا يوجد نتائج ")
-                              : Directionality(
-                              textDirection: TextDirection.rtl,
-                              child: Text(
-                                  "  النتائج ${staticHebatListFromUser
-                                      .length} ")),
-                        ],
-                      ),
+                height: 40,
+                color: Colors.blueGrey,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Align(
+                    alignment: AlignmentDirectional.topCenter,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        staticHebatListFromUser.length == 0
+                            ? Text(" لا يوجد نتائج ")
+                            : Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Text(
+                            "  النتائج ${staticHebatListFromUser.length} ",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  height: 40,
-                  color: Colors.white),
+                ),
+              ),
             ),
           ),
-          mData(context, staticHebatListFromUser),
+          mData(context),
         ],
       ),
     );
@@ -887,10 +874,10 @@ class _FeedScreenState extends State<FeedScreen>
       textAlign: TextAlign.start,
 //      textDirection: TextDirection.rtl,
       onChanged: (input) {
-        searchList(input);
+        filterListBySearch(input);
       },
       onSaved: (input) {
-        searchList(input);
+        filterListBySearch(input);
       },
 
       cursorColor: Colors.blueGrey,
@@ -1100,7 +1087,7 @@ class _FeedScreenState extends State<FeedScreen>
             ),
 
             /// View
-            getIcon(),
+            getIcon(context),
           ],
         ),
       ),
@@ -1109,7 +1096,7 @@ class _FeedScreenState extends State<FeedScreen>
 
   /// LIST-ITEM
 
-  Widget rowView(HebaModel post, int index) {
+  Widget rowView({HebaModel post, int index, Function onDelete}) {
     var fUser = Provider
         .of<FirebaseUser>(context)
         .displayName;
@@ -1173,13 +1160,13 @@ class _FeedScreenState extends State<FeedScreen>
               child: Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(0),
-                    bottomRight: Radius.circular(0),
-                    topLeft: Radius.circular(0),
-                    topRight: Radius.circular(0),
+                    bottomLeft: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10),
                   ),
                 ),
-                color: Colors.white,
+                color: Colors.white70,
                 elevation: 4,
                 child: Stack(
                   children: <Widget>[
@@ -1283,10 +1270,10 @@ class _FeedScreenState extends State<FeedScreen>
               child: Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(0),
-                    bottomRight: Radius.circular(0),
-                    topLeft: Radius.circular(0),
-                    topRight: Radius.circular(0),
+                    bottomLeft: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10),
                   ),
                 ),
                 color: Colors.white,
@@ -1348,7 +1335,6 @@ class _FeedScreenState extends State<FeedScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-
             /// Content Side
             rowContentSide(post),
 
@@ -1633,23 +1619,57 @@ class _FeedScreenState extends State<FeedScreen>
 
   /// DATA ========================================================
 
-  Widget mData(BuildContext context, List<HebaModel> hebatList) {
+//  Widget mData(BuildContext context) {
+//    QuerySnapshot emptyList;
+//    return StreamBuilder<QuerySnapshot>(
+//      initialData: emptyList,
+//      stream: publicpostsRef.orderBy('timestamp', descending: true).snapshots(),
+//      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> map) {
+//        if (map.connectionState == ConnectionState.done) {
+//          if (map.hasError) {
+//            return Text("Error ");
+//          }
+//        }
+//        return hebat(context);
+//
+////        return FutureBuilder<List<HebaModel>>(
+////          future: getHebatFromFirestoreList(),
+////          builder: (context, snapshot) {
+////            return hebat(context);
+////          },
+////        );
+//      },
+//    );
+//  }
+  /// Map View =============================================
+
+  /// Map View =============================================
+
+  Widget mData(BuildContext context) {
     QuerySnapshot emptyList;
     return StreamBuilder<QuerySnapshot>(
       initialData: emptyList,
-      stream: _PostsStream,
+      stream: publicpostsRef.snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> map) {
+        if (map.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
         if (map.connectionState == ConnectionState.done) {
           if (map.hasError) {
             return Text("Error ");
           }
         }
 
-        return StreamBuilder<HebaModel>(
-          builder: (context, snapshot) {
-            return hebat(context);
-          },
-        );
+//        return StreamBuilder<List<HebaModel>>(
+//          stream: DatabaseService.initPostsStream(),
+//          builder: (context, snapshot) {
+//            log("AA ${staticHebatListFromUser.length}");
+//            return hebat(context);
+//          },
+//        );
+        return hebat(context);
       },
     );
   }
@@ -1702,7 +1722,10 @@ class _FeedScreenState extends State<FeedScreen>
 //                _HebaPostsFromDb(widget.post);
 //                return rowView(_docsList[index], index);
             return GestureDetector(
-              child: rowView(staticHebatListFromUser[index], index),
+              child: Container(
+                  color: Colors.blueGrey,
+                  child: rowView(
+                      post: staticHebatListFromUser[index], index: index)),
               onTap: () {
 //                log(" TEST ${staticHebatListFromUser[index].id.toString()}");
 //                Navigator.push(
@@ -1724,6 +1747,7 @@ class _FeedScreenState extends State<FeedScreen>
 //        );
 //      }
       return mMapView(context);
+//      return MapScreen(context: context,);
     }
   }
 
@@ -1733,7 +1757,7 @@ class _FeedScreenState extends State<FeedScreen>
       child: Padding(
         padding: const EdgeInsets.all(0.0),
         child: Container(
-          color: Colors.white,
+          color: Colors.blueGrey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1746,7 +1770,13 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-  Widget getIcon() {
+  Widget getIcon(BuildContext context) {
+//    var showBNV = Provider.of<UserData>(context,listen: false).isMap;
+//  var showBNV = widget.isMap;
+    var isBar = widget.isBarVisible;
+    var isBarCallback;
+//                               widget.onChanged;
+
     return Builder(
       builder: (BuildContext context) {
         if (mDataViewMode == 0) {
@@ -1779,7 +1809,6 @@ class _FeedScreenState extends State<FeedScreen>
                                 : Colors.grey[400],
                           ),
                           onPressed: () {
-                            log("${mDataViewMode}");
                             setState(() {
                               mDataViewMode = 1;
                             });
@@ -1822,9 +1851,13 @@ class _FeedScreenState extends State<FeedScreen>
                                 : Colors.grey[400],
                           ),
                           onPressed: () {
-                            log("${mDataViewMode}");
+                            isBar = false;
+                            log("isBar ${isBar}");
                             setState(() {
                               mDataViewMode = 2;
+                              isBarCallback = widget.onChanged(isBar);
+                              log("isBarCallback ${isBarCallback}");
+                              log("mDataViewMode ${mDataViewMode}");
                             });
                           },
                         ),
@@ -1865,9 +1898,14 @@ class _FeedScreenState extends State<FeedScreen>
                                 : Colors.grey[400],
                           ),
                           onPressed: () {
+                            isBar = true;
+                            log("isBar ${isBar}");
+
                             log("${mDataViewMode}");
                             setState(() {
                               mDataViewMode = 0;
+                              isBarCallback = widget.onChanged(isBar);
+                              log("isBarCallback ${isBarCallback}");
                             });
                           },
                         ),
@@ -1885,6 +1923,20 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
+  bool _showMapStyle = false;
+
+  Future<void> _toggleMapStyle() async {
+    String style =
+    await DefaultAssetBundle.of(context).loadString('assets/mapstyle.json');
+
+    if (_showMapStyle) {
+      mapController.future.then((value) => value.setMapStyle(style));
+    } else {
+      mapController.future.then((value) => value.setMapStyle(null));
+    }
+  }
+
+  /// Map View =============================================
   Widget mMapView(context) {
     var h = MediaQuery
         .of(context)
@@ -1892,7 +1944,7 @@ class _FeedScreenState extends State<FeedScreen>
         .height - 100;
 
     return Container(
-      height: 200,
+      height: 300,
       child: Stack(
         children: [
           Positioned.fill(
@@ -1912,6 +1964,7 @@ class _FeedScreenState extends State<FeedScreen>
                 },
                 mapType: MapType.normal,
                 myLocationEnabled: true,
+                zoomControlsEnabled: false,
                 padding: EdgeInsets.all(10),
 
                 // Add little blue dot for device location, requires permission from user
@@ -1928,6 +1981,10 @@ class _FeedScreenState extends State<FeedScreen>
                   heroTag: "s",
                   mini: true,
                   onPressed: () async {
+                    setState(() {
+                      _showMapStyle = !_showMapStyle;
+                    });
+                    await _toggleMapStyle();
 //                    getGeo(_HebatListFromUsers[0]);
 //                    final _firestore = Firestore.instance;
 //                    final ref = _firestore.collection('locations');
@@ -1939,7 +1996,7 @@ class _FeedScreenState extends State<FeedScreen>
 //                    Map<String,dynamic> s ={'hName': 'random name','position': myLocation.data,'hebaId':"heba.id"};
 //                    _firestore.collection('locations').add(s);
                   },
-                  child: Icon(Icons.add),
+                  child: Icon(Icons.map),
                 ),
                 FloatingActionButton(
                   backgroundColor: Colors.red,
@@ -1957,11 +2014,11 @@ class _FeedScreenState extends State<FeedScreen>
           ),
           Positioned(
             left: 1,
-            bottom: 22,
+            bottom: 1,
             child: SizedBox(
               height: 100,
               child: Container(
-                color: Colors.transparent,
+//                  color: Colors.green,
                 width: MediaQuery
                     .of(context)
                     .size
@@ -1978,7 +2035,7 @@ class _FeedScreenState extends State<FeedScreen>
 //                          (a, b) => a.timestamp.compareTo(b.timestamp));
 //                    });
                     logger.d("hebatCards${staticHebatListFromUser.length}");
-                    return hebatCards(staticHebatListFromUser[index]);
+                    return listTile(staticHebatListFromUser[index]);
                   },
                   padding: EdgeInsets.all(8.0),
                 ),
@@ -1990,7 +2047,7 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-  Widget hebatCards(HebaModel post) {
+  Widget listTile(HebaModel post) {
     return Card(
       child: InkWell(
         onTap: () async {
@@ -2017,7 +2074,7 @@ class _FeedScreenState extends State<FeedScreen>
                 child: Text(post.hName),
               ),
               Flexible(
-                child: Text("${post.reference.toString()}"),
+                child: Text("${post.hDesc.toString()}"),
               ),
             ],
           ),

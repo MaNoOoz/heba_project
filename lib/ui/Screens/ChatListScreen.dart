@@ -12,11 +12,12 @@ import 'package:flutter/material.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
-import 'package:heba_project/ui/shared/Constants.dart';
-import 'package:heba_project/ui/shared/mAppbar.dart';
-import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:heba_project/ui/shared/utili/Constants.dart';
+import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+
+import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/widgets/CustomAppBar.dart';
 
 class ChatListScreen extends StatefulWidget {
   static final String id = 'ChatListScreen';
@@ -83,12 +84,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     logger.d("${usersList.length}");
   }
 
-  Future<List<User>> load(StreamController<User> streamController) async {
-    return await chatListStream
-        .expand((element) => element.documents)
-        .map((event) => User.fromFirestore(event))
-        .toList();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -268,12 +263,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return chattinWith;
   }
 
+  Future<List<User>> load(StreamController<User> streamController) async {
+    return await chatListStream
+        .expand((element) => element.documents)
+        .map((event) => User.fromFirestore(event))
+        .toList();
+  }
+
   /// ========================================= WIDGETS ============================================
 
   Widget buildFutureBuilder() {
-    var screenSize = MediaQuery
-        .of(context)
-        .size;
+    var screenSize = MediaQuery.of(context).size;
 //    var chat = Provider.of<Chat>(context).chatId;
     QuerySnapshot empty;
     return StreamBuilder<QuerySnapshot>(
@@ -363,26 +363,30 @@ class _ChatListScreenState extends State<ChatListScreen> {
           itemCount: usersList.length,
           shrinkWrap: true,
           itemBuilder: (context, i) {
-            return Card(
-              child: ListTile(
-                subtitle: Text("${i.toString()}"),
-                leading: Padding(
-                  padding: const EdgeInsets.all(1.0),
-                  child: Container(
-                    color: Colors.white,
-                    child: CircleAvatar(
-                      radius: 15.0,
-                      backgroundColor: Colors.cyan,
-                    ),
-//                                                ),
-                  ),
-                ),
-                title: Text("${usersList[i].name ?? "SS"}"),
-              ),
-            );
+            return ChatItem(i);
           },
         );
       },
+    );
+  }
+
+  Widget ChatItem(int i) {
+    return Card(
+      child: ListTile(
+        subtitle: Text("${i.toString()}"),
+        leading: Padding(
+          padding: const EdgeInsets.all(1.0),
+          child: Container(
+            color: Colors.white,
+            child: CircleAvatar(
+              radius: 15.0,
+              backgroundColor: Colors.cyan,
+            ),
+//                                                ),
+          ),
+        ),
+        title: Text("${usersList[i].name ?? "SS"}"),
+      ),
     );
   }
 
@@ -521,7 +525,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         mainAxisAlignment:
                                         MainAxisAlignment.center,
                                         children: <Widget>[
-
                                           /// Icons
                                           Container(
                                             width: 30,
@@ -674,7 +677,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                           mainAxisAlignment:
                                           MainAxisAlignment.center,
                                           children: <Widget>[
-
                                             /// Icons
                                             Container(
                                               width: 30,

@@ -85,7 +85,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
           style: GoogleFonts.cairo(
             textStyle: TextStyle(
               color: Colors.white,
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),

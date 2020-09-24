@@ -8,10 +8,12 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/SignupScreen.dart';
-import 'package:heba_project/ui/shared/UI_Helpers.dart';
-import 'package:heba_project/ui/shared/UtilsImporter.dart';
-import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:heba_project/ui/shared/Assets.dart';
+import 'package:heba_project/ui/shared/utili/UI_Helpers.dart';
+import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
+
+import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/utili/UtilsImporter.dart';
 
 class LoginScreen extends StatefulWidget {
   static final String id = 'login_screen';
@@ -94,21 +96,35 @@ class _LoginScreenState extends State<LoginScreen> {
             inAsyncCall: showSpinner,
             child: Column(
               children: <Widget>[
+
                 /// Logo
-                Flexible(
-                  flex: 5,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: CircleAvatar(
-                          radius: 60.0,
-                          backgroundColor: Colors.transparent,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    color: Colors.white70,
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width,
+                    // height: 200,
+                    child: Align(
+                      alignment: AlignmentDirectional.center,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: CircleAvatar(
+                            backgroundColor: Colors.amber,
+                            radius: 60,
+
 //                        backgroundImage:
 //                            AssetImage('assets/images/appicon.png'),
-                          child: Image.asset(
-                            'assets/images/appicon.png',
-                          )),
+                            child: Image.asset(
+                              AvailableImages.myIcon,
+                              fit: BoxFit.fill,
+                              scale: 1,
+                              height: 100,
+                              width: 100,
+                            )),
+                      ),
                     ),
                   ),
                 ),
@@ -261,36 +277,36 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
 
                 /// Continue as Guest btn
-                Flexible(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 10.0),
-                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                    child: new Row(
-                      children: <Widget>[
-                        new Expanded(
-                          child: FlatButton(
-                            shape: new RoundedRectangleBorder(
-                                borderRadius: new BorderRadius.circular(10.0)),
-                            color: Colors.transparent,
-                            child: Container(
-                              padding: const EdgeInsets.only(left: 20.0),
-                              alignment: Alignment.center,
-                              child: Text(
-                                "Continue as Guest",
-                                style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, HomeScreen.id);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+//                Flexible(
+//                  child: Container(
+//                    margin: const EdgeInsets.only(top: 10.0),
+//                    padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+//                    child: new Row(
+//                      children: <Widget>[
+//                        new Expanded(
+//                          child: FlatButton(
+//                            shape: new RoundedRectangleBorder(
+//                                borderRadius: new BorderRadius.circular(10.0)),
+//                            color: Colors.transparent,
+//                            child: Container(
+//                              padding: const EdgeInsets.only(left: 20.0),
+//                              alignment: Alignment.center,
+//                              child: Text(
+//                                "Continue as Guest",
+//                                style: TextStyle(
+//                                    color: Colors.green,
+//                                    fontWeight: FontWeight.bold),
+//                              ),
+//                            ),
+//                            onPressed: () {
+//                              Navigator.pushNamed(context, HomeScreen.id);
+//                            },
+//                          ),
+//                        ),
+//                      ],
+//                    ),
+//                  ),
+//                ),
 
                 /// Register btn
                 Flexible(
@@ -340,7 +356,6 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ListView(
         shrinkWrap: true,
         children: <Widget>[
-
           ///
           Column(
             mainAxisAlignment: MainAxisAlignment.center,

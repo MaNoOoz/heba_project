@@ -13,24 +13,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/models/user_data.dart';
-import 'package:heba_project/service/database_service.dart';
-import 'package:heba_project/service/storage_service.dart';
+import 'package:heba_project/service/DatabaseService.dart';
+import 'package:heba_project/service/StorageService.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/photoview.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
-import 'package:heba_project/ui/shared/Constants.dart';
 import 'package:heba_project/ui/shared/Dialogs.dart';
-import 'package:heba_project/ui/shared/UtilsImporter.dart';
-import 'package:heba_project/ui/shared/ui_helpers.dart';
-import 'package:heba_project/ui/widgets/CustomDialog.dart';
-import 'package:heba_project/ui/widgets/circular_clipper.dart';
-import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:heba_project/ui/shared/utili/Constants.dart';
+import 'package:heba_project/ui/shared/utili/UI_Helpers.dart';
+import 'package:heba_project/ui/shared/widgets/Clippers.dart';
+import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
 import 'package:logger/logger.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:provider/provider.dart';
+
+import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/utili/UtilsImporter.dart';
 
 enum TypeOperation {
   upload,
@@ -79,9 +80,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   bool isMine;
   Position currentPosition;
   Geoflutterfire geo = Geoflutterfire();
-  List<DropdownMenuItem<String>> _dropDownMenuItems;
+  List<DropdownMenuItem<dynamic>> _dropDownMenuItems;
   List<String> _dropDownMenuItemsStrings = [];
-  String _currentCity;
+  List<String> _dropDownMenuItemsStrings2 = [];
 
   /// Dialoag ====================================================
 
@@ -92,10 +93,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _textFieldControllerName;
   TextEditingController _textFieldControllerDesc;
+  TextEditingController _textFieldControllerContact;
   bool _autoValidate = false;
   String _name;
   String _desc;
-  String _city;
+  String _currentCity;
+  String _currentContactMethod;
   bool showSpinner = false;
   TypeOperation typeOperation = TypeOperation.download;
   bool isLoading = true;
@@ -125,16 +128,22 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     /// ===
     _textFieldControllerName = TextEditingController();
     _textFieldControllerDesc = TextEditingController();
+    _textFieldControllerContact = TextEditingController();
     this._name = _textFieldControllerName.text;
     this._desc = _textFieldControllerDesc.text;
+    this._currentContactMethod = _textFieldControllerContact.text;
 
     super.initState();
   }
 
   init() async {
     _dropDownMenuItemsStrings = cities;
+    _dropDownMenuItemsStrings2 = ContactMrthods;
+
     _currentCity = _dropDownMenuItemsStrings.elementAt(0);
+    _currentContactMethod = _dropDownMenuItemsStrings2.elementAt(0);
     log("_dropDownMenuItemsStrings : $_currentCity");
+    log("_dropDownMenuItemsStrings2 : $_currentContactMethod");
     logger = Logger();
 
     /// init Data
@@ -227,108 +236,140 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               /// Form
               FormUi(context),
 
-              /// Titles
-              Container(
-                margin: EdgeInsets.all(15.0),
-//            color: Colors.teal,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text(
-                        "صور الهبة :   ( ${files.length} ) ",
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black45,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
+              /// Grid
               Padding(
-                padding: const EdgeInsets.all(18.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Container(
-//                  decoration: BoxDecoration(
-//
-//                      color: Colors.white12.withOpacity(0.5),
-//                      borderRadius:
-//                      BorderRadius.all(Radius.circular(5)),
-//                     ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.5),
+                    borderRadius: BorderRadius.all(Radius.circular(5)),
+                  ),
+                  height: 300,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      /// Titles
 
-                  height: 200,
-                  child: Row(
-//                mainAxisSize: MainAxisSize.max,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-//                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      Expanded(flex: 5, child: buildGridView3()),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.max,
-                        children: <Widget>[
-
-                          /// ADD Btn
-                          GestureDetector(
-                            onTap: () async {
-                              await pickImages();
-//                      _clearCachedFiles();
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.blueGrey,
-                                    borderRadius:
-                                    BorderRadius.all(Radius.circular(5)),
-                                    boxShadow: [
-                                      BoxShadow(
-                                          color: Colors.black12, blurRadius: 20)
-                                    ]),
-                                height: 50,
-                                width: 50,
-                                child: Icon(
-                                  files.length == 0
-                                      ? Icons.add_circle
-                                      : Icons.edit,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blueGrey,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            topRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                            bottomRight: Radius.circular(10),
                           ),
-
-                          /// Upload Btn
-                          GestureDetector(
-                            onTap: () async {
-                              await _listOfImageLinks2();
-//                      _clearCachedFiles();
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.blueGrey,
-                                    borderRadius:
-                                    BorderRadius.all(Radius.circular(8)),
-                                    boxShadow: [
-                                      BoxShadow(
-                                          color: Colors.black12, blurRadius: 20)
-                                    ]),
-                                height: 50,
-                                width: 50,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.cloud_upload,
+                        ),
+                        margin: EdgeInsets.all(8.0),
+//            color: Colors.teal,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Center(
+                            child: Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text(
+                                "صور الهبة :   ( ${files.length} ) ",
+                                style: TextStyle(
+                                    fontSize: 14,
                                     color: Colors.white,
-                                  ),
-                                ),
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                           ),
-                        ],
+                        ),
+                      ),
+
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            // color: Colors.blueGrey,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              topRight: Radius.circular(10),
+                              bottomLeft: Radius.circular(10),
+                              bottomRight: Radius.circular(10),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: <Widget>[
+                              Flexible(
+                                  flex: 200,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: buildGridView3(),
+                                  )),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.max,
+                                children: <Widget>[
+                                  /// ADD Btn
+                                  GestureDetector(
+                                    onTap: () async {
+                                      await pickImages();
+//                      _clearCachedFiles();
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(5)),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                  color: Colors.black12,
+                                                  blurRadius: 20)
+                                            ]),
+                                        height: 50,
+                                        width: 50,
+                                        child: Icon(
+                                          files.length == 0
+                                              ? Icons.add_circle
+                                              : Icons.edit,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  /// Upload Btn
+                                  GestureDetector(
+                                    onTap: () async {
+                                      await _listOfImageLinks2();
+//                      _clearCachedFiles();
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(8)),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                  color: Colors.black12,
+                                                  blurRadius: 20)
+                                            ]),
+                                        height: 50,
+                                        width: 50,
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.cloud_upload,
+                                            color: Colors.blueGrey,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -378,6 +419,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 UtilsImporter().uStyleUtils.textFieldDecorationCircle(
                   hint: UtilsImporter().uStringUtils.hintName,
                   lable: UtilsImporter().uStringUtils.lableFullname1,
+                  style: TextStyle(
+                      color: Colors.grey,
+                      fontFamily: ArabicFonts.Cairo),
                   icon: Icon(Icons.card_giftcard),
                 ),
                 textDirection: TextDirection.rtl,
@@ -403,6 +447,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   hint: UtilsImporter().uStringUtils.hintDesc,
                   lable: UtilsImporter().uStringUtils.lableFullname2,
                   icon: Icon(Icons.description),
+                  style: TextStyle(
+                      color: Colors.grey,
+                      fontFamily: ArabicFonts.Cairo),
                 ),
                 textDirection: TextDirection.rtl,
                 validator: UtilsImporter().uCommanUtils.validateDesc,
@@ -415,6 +462,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
             Divider(),
 //            https://codingwithjoe.com/building-forms-with-flutter/
+            /// City
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
@@ -454,6 +502,99 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               ),
             ),
 
+            /// Contact
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  // Flexible(
+                  //   flex: 3,
+                  //   child: new FormField<String>(
+                  //     builder: (FormFieldState<String> state) {
+                  //       return InputDecorator(
+                  //         decoration: InputDecoration(
+                  //           icon: Icon(Icons.contact_phone),
+                  //           labelText: 'وسيلة التواصل',
+                  //         ),
+                  //         isEmpty: false,
+                  //         child: new DropdownButtonHideUnderline(
+                  //           child: new DropdownButton<String>(
+                  //             // value: "value",
+                  //             isDense: true,
+                  //             onChanged: (String newValue) {
+                  //               changedDropDownItem2(newValue);
+                  //             },
+                  //             items: _dropDownMenuItemsStrings2
+                  //                 .map((String value) {
+                  //               return new DropdownMenuItem<String>(
+                  //                 value: value,
+                  //                 child: Row(
+                  //                   textDirection: TextDirection.rtl,
+                  //                   children: [
+                  //                     Padding(
+                  //                       padding: const EdgeInsets.all(1.0),
+                  //                       child: new Icon(
+                  //                         FontAwesomeIcons.whatsappSquare,
+                  //                         color: Colors.green,
+                  //                       ),
+                  //                     ),
+                  //                     Spacer(),
+                  //                     Padding(
+                  //                       padding: const EdgeInsets.all(1.0),
+                  //                       child: new Text(
+                  //                         value,
+                  //                         style: TextStyle(color: Colors.blue),
+                  //                       ),
+                  //                     ),
+                  //                   ],
+                  //                 ),
+                  //               );
+                  //             }).toList(),
+                  //           ),
+                  //         ),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
+                  Text("s"),
+                ],
+              ),
+            ),
+
+            /// Contact info
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                maxLength: 10,
+                keyboardType: getType(_currentContactMethod),
+                controller: _textFieldControllerContact,
+                maxLines: 1,
+                style: UtilsImporter().uStyleUtils.loginTextFieldStyle(),
+                decoration:
+                UtilsImporter().uStyleUtils.textFieldDecorationCircle(
+                  style: TextStyle(
+                      color: Colors.grey,
+                      fontFamily: ArabicFonts.Cairo),
+                  hint: " 0555555555",
+                  lable: " رقم الهاتف",
+                  icon: Icon(Icons.contact_phone),
+                ),
+                textDirection: TextDirection.rtl,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly
+                ],
+                validator: (input) =>
+                input
+                    .trim()
+                    .length < 10
+                    ? 'Please enter a valid Number'
+                    : null,
+                onSaved: (String val) {
+                  _currentContactMethod = val;
+                },
+                onChanged: (val) => setState(() => _currentContactMethod = val),
+              ),
+            ),
             SizedBox(
               height: 10,
             ),
@@ -505,8 +646,16 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     });
   }
 
+  void changedDropDownItem2(String selectedContactWay) {
+    setState(() {
+      _currentContactMethod = selectedContactWay;
+      log(
+          "changedDropDownItem2 __currentContactMethod is :$_currentContactMethod");
+    });
+  }
+
   showAddHebaDialog(BuildContext context) {
-    return CustomDialog(
+    return CustomDialog2(
       title: 'إضافة الإعلان',
       buttonText: 'Yes',
       description: 'ss',
@@ -691,7 +840,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   Future<HebaModel> _CreatePost() async {
     log("_CreatePost Called");
+
     HebaModel hebaObject;
+
     pathes = await _listOfImageLinks2();
     log("pathes: ${pathes.length} ");
     currentPosition = await Geolocator().getCurrentPosition();
@@ -730,6 +881,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         geoPoint: gePoint,
         hDesc: _desc,
         hCity: _currentCity,
+        oContact: _currentContactMethod,
         authorId: widget.currentUserId,
         timestamp: ts);
 
@@ -750,7 +902,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     setState(() {
       _desc = '';
       _name = '';
-      _city = '';
+      _currentContactMethod = '';
 
 //      listOfImageLinks.length = -1;
     });
@@ -821,7 +973,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
     } else {
       final snackBar = SnackBar(
-        content: Text(" أدخل إسم للهبة $_name"),
+        content: Text(title),
         duration: Duration(seconds: 3),
       );
       _scaffoldKey.currentState.showSnackBar(snackBar);
@@ -915,32 +1067,46 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     final orientation = MediaQuery
         .of(context)
         .orientation;
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          crossAxisCount: (orientation == Orientation.portrait) ? 3 : 5),
-      itemCount: files.length ?? 6,
-      padding: const EdgeInsets.all(3.0),
-      shrinkWrap: true,
-      physics: ScrollPhysics(),
-      itemBuilder: (BuildContext context, int index) {
-        return files.length == 0
-            ? Container(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Image(
-              color: Colors.grey.withOpacity(0.4),
-              image: AssetImage(AvailableImages.appIcon),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.blueGrey, width: 1.0),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+          bottomLeft: Radius.circular(10),
+          bottomRight: Radius.circular(10),
+        ),
+      ),
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            crossAxisCount: (orientation == Orientation.portrait) ? 3 : 5),
+        itemCount: files.length ?? 6,
+        padding: const EdgeInsets.all(3.0),
+        shrinkWrap: true,
+        physics: ScrollPhysics(),
+        itemBuilder: (BuildContext context, int index) {
+          return files.length == 0
+              ? GridTile(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                    border:
+                    Border.all(color: Colors.deepOrange, width: 5)),
+                child: Image(
+                  color: Colors.grey.withOpacity(0.4),
+                  fit: BoxFit.fill,
+                  image: AssetImage(AvailableImages.myIcon),
+                ),
+              ),
             ),
-          ),
-          decoration: BoxDecoration(
-            color: Colors.black12,
-            borderRadius: BorderRadius.all(Radius.circular(18)),
-          ),
-        )
-            : rowItem(files[index], index);
-      },
+          )
+              : rowItem(files[index], index);
+        },
+      ),
     );
   }
 
@@ -965,9 +1131,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           child: Container(
             clipBehavior: Clip.hardEdge,
             decoration: BoxDecoration(
-              color: Colors.black12,
+              // color: Colors.black12,
               borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
+                bottomLeft: Radius.circular(10),
+                bottomRight: Radius.circular(10),
+              ),
             ),
             child: Image.file(
               image,
@@ -977,6 +1147,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             ),
           ),
         ),
+
+        /// top
         Align(
           alignment: AlignmentDirectional.bottomCenter,
           child: GestureDetector(
@@ -989,20 +1161,60 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               });
             },
             child: Container(
-              color: Colors.black38,
+              clipBehavior: Clip.antiAliasWithSaveLayer,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.7),
+                borderRadius: BorderRadius.only(
+                  // topLeft: Radius.circular(8),
+                  // topRight: Radius.circular(8),
+                  bottomLeft: Radius.circular(10),
+                  bottomRight: Radius.circular(10),
+                ),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
+                    padding: const EdgeInsets.all(1.0),
                     child: Icon(
                       Icons.delete,
                       textDirection: TextDirection.rtl,
                       color: Colors.white,
-                      size: 10,
+                      size: 12,
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+        ),
 
+        /// bottom
+        Align(
+          alignment: AlignmentDirectional.topCenter,
+          child: GestureDetector(
+            onTap: () {
+//               log("remove ");
+//               files.removeAt(index);
+//               setState(() {
+// //                https://stackoverflow.com/questions/51931017/update-ui-after-removing-items-from-list
+//                 files = List.from(files);
+//               });
+            },
+            child: Container(
+              clipBehavior: Clip.antiAliasWithSaveLayer,
+              decoration: BoxDecoration(
+                color: Colors.black12.withOpacity(0.7),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(10),
+                  // bottomLeft: Radius.circular(10),
+                  // bottomRight: Radius.circular(10),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
                   Container(
                     child: Padding(
                       padding: EdgeInsets.only(left: 4.0),
@@ -1094,16 +1306,21 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   _Buttons() {
 //    log('Location From _Buttons : Lat  ${userLocation?.latitude}, Long: ${userLocation?.longitude}');
 
+    bool ok = _currentContactMethod.length == 10 && _name.length > 5;
     return Padding(
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
         children: <Widget>[
+
           ///  Submit Btn
+
           FlatButton(
               shape: new RoundedRectangleBorder(
                   borderRadius: new BorderRadius.circular(10.0)),
               splashColor: Colors.blueAccent,
-              color: Colors.blue,
+              color: ok
+                  ? Colors.green
+                  : Colors.red,
               child: new Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -1131,7 +1348,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ],
               ),
               onPressed: () async {
-                _Send();
+                if (ok == true) _Send();
 
                 // or
 //                var s = submit().whenComplete(() {
@@ -1148,9 +1365,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   void _Send() async {
     log("Submit called ");
-    if (_name.isNotEmpty) {
-      final action = await Dialogs.addNewHebaDialog(
-          context, 'الإضافة هبة جديدة', '؟ تأكيد الإضافة ');
+    if (_name.isNotEmpty && _currentContactMethod.isNotEmpty) {
+      final action = await CustomDialog1.addNewHebaDialog(
+          context, '  إضافة الهبة', 'متأكد من المعلومات عزيزي ؟؟ ');
 
       if (action == DialogAction.yes) {
         log("Before _SendToServer ");
@@ -1183,8 +1400,19 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         );
       }
     } else {
-      _displaySnackBar(context, " أدخل إسم للهبة $_name");
+      _displaySnackBar(context, "أفااا تأكد عندك نقص بالمعلومات طال عمرك");
     }
+  }
+
+  getType(String type) {
+    type = _currentContactMethod;
+    switch (type) {
+      case 'واتساب':
+        return TextInputType.number;
+      case 'تيلجرام':
+        return TextInputType.text;
+    }
+    return TextInputType.text;
   }
 }
 

@@ -9,11 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:heba_project/service/DatabaseService.dart';
 import 'package:heba_project/service/LocationService.dart';
-import 'package:heba_project/service/database_service.dart';
-import 'package:heba_project/state/AppState.dart';
+import 'package:heba_project/ui/Screens/Add_Screen.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
-import 'package:heba_project/ui/Screens/Create_post_screen.dart';
+import 'package:heba_project/ui/Screens/Edit_Screen.dart';
 import 'package:heba_project/ui/Screens/FeedScreen.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/Location_Pickup.dart';
@@ -47,6 +47,7 @@ class MyApp extends StatelessWidget {
           if (!map.hasData == false) {
             var cU = Provider.of<UserData>(context, listen: true)
                 .currentUserId = map.data.uid;
+
 //            var fUser = Provider.of<FirebaseUser>(context);
 //
 //            var checkUserUid = cU == cU;
@@ -58,6 +59,7 @@ class MyApp extends StatelessWidget {
 
             Provider.of<UserData>(context, listen: true).currentChatId =
                 map.data.uid.toString().substring(0, 14);
+//           var isMap = Provider.of<UserData>(context, listen: true).isMap = true;
 
             return HomeScreen();
           } else {
@@ -88,9 +90,8 @@ class MyApp extends StatelessWidget {
 //
 //        statusBarBrightness: Brightness.dark)/* set Status bar icon color in iOS. */
 //    );
-    final textTheme = Theme
-        .of(context)
-        .textTheme;
+
+    final textTheme = Theme.of(context).textTheme;
     return MultiProvider(
       child: ChangeNotifierProvider(
         create: (context) => UserData(),
@@ -99,10 +100,8 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
 //          theme: ThemeData(textTheme: GoogleFonts.cairoTextTheme(textTheme).copyWith()),
           theme: ThemeData(
-
-            textTheme: GoogleFonts.cairoTextTheme(Theme
-                .of(context)
-                .textTheme),),
+            textTheme: GoogleFonts.cairoTextTheme(Theme.of(context).textTheme),
+          ),
 
           darkTheme: ThemeData.dark(),
           home: _getScreenId(),
@@ -115,16 +114,18 @@ class MyApp extends StatelessWidget {
             ProfileScreen.id: (context) => ProfileScreen(),
             SignupScreen.id: (context) => SignupScreen(),
             CreatePostScreen.id: (context) => CreatePostScreen(),
-//            MapScreen.id: (context) => MapScreen(
-//                  context: context,
-//                ),
             Location_Pickup.id: (context) => Location_Pickup(),
             FeedScreen.id: (context) => FeedScreen(),
+            Edit_Heba_Screen.id: (context) => Edit_Heba_Screen(),
+
+//        MapScreen.id: (context) => MapScreen(
+//                  context: context,
+//                ),
           },
         ),
       ),
       providers: [
-        ChangeNotifierProvider<AppState>(create: (_) => AppState()),
+//        ChangeNotifierProvider<AppState>(create: (_) => AppState()),
 //        ChangeNotifierProvider<ChatState>(create: (_) => ChatState()),
 
         StreamProvider<FirebaseUser>.value(

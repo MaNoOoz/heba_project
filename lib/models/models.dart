@@ -28,6 +28,7 @@ class HebaModel {
   String oImage;
   String hDesc;
   String hCity;
+  String oContact;
   String authorId;
   Timestamp timestamp;
   bool isFeatured;
@@ -48,6 +49,7 @@ class HebaModel {
     this.oName,
     this.isMine,
     this.hCity,
+    this.oContact,
     @required this.hName,
     @required this.hDesc,
     this.location,
@@ -63,19 +65,22 @@ class HebaModel {
 //
 
     return HebaModel(
-        id: doc['id'] ?? "show ya 3athem",
-        imageUrls: List<String>.from(doc['imagesUrls'] ?? ["ss", "ss"]),
-        hName: doc['hName'] ?? "noName",
-        oName: doc['oName'] ?? "noName",
-        hCity: doc['hCity'] ?? "hCity",
-        geoPoint: doc['geoPoint'],
-        isFeatured: doc['isFeatured'] ?? false,
-        oImage: doc['oImage'] ?? "noImage",
-        isMine: doc['isMine'],
-        hDesc: doc['hDesc'] ?? "noDesc",
-        authorId: doc['authorId'] ?? "noAuthorId",
-        timestamp: doc['timestamp' ?? "noDate"],
-        reference: doc.reference);
+//        id: doc['id'] ?? "show ya 3athem",
+      id: doc.documentID,
+      imageUrls: List<String>.from(doc['imagesUrls'] ?? ["ss", "ss"]),
+      hName: doc['hName'] ?? "noName",
+      oName: doc['oName'] ?? "noName",
+      hCity: doc['hCity'] ?? "hCity",
+      oContact: doc['oContact'] ?? "oContact",
+      geoPoint: doc['geoPoint'],
+      isFeatured: doc['isFeatured'] ?? false,
+      oImage: doc['oImage'] ?? "noImage",
+      isMine: doc['isMine'],
+      hDesc: doc['hDesc'] ?? "noDesc",
+      authorId: doc['authorId'] ?? "noAuthorId",
+      timestamp: doc['timestamp' ?? "noDate"],
+//        reference: doc.reference
+    );
   }
 
 //  HebaModel.fromSnapshot(DocumentSnapshot map)
@@ -94,17 +99,17 @@ class HebaModel {
 //        timestamp = map['timestamp' ?? "noDate"];
 
   factory HebaModel.fromMap(Map<dynamic, dynamic> map) => HebaModel(
-//      id: map['id'],
-        imageUrls: List.from(map['imagesUrls'] ?? ["ss", "ss"]),
-        hName: map['hName'] ?? "noName",
-        oName: map['oName'] ?? "noName",
-        hCity: map['hCity'] ?? "hCity",
-        geoPoint: map['geoPoint'] ?? "geoPoint",
-        isFeatured: map['isFeatured'] ?? false,
-        isMine: map['isMine'] ?? true,
-        oImage: map['oImage'] ?? "noImage",
-        hDesc: map['hDesc'] ?? "noDesc",
-        authorId: map['authorId'] ?? "noAuthorId",
+    id: map['id'],
+    imageUrls: List.from(map['imagesUrls'] ?? ["ss", "ss"]),
+    hName: map['hName'] ?? "noName",
+    oName: map['oName'] ?? "noName",
+    hCity: map['hCity'] ?? "hCity",
+    geoPoint: map['geoPoint'] ?? "geoPoint",
+    isFeatured: map['isFeatured'] ?? false,
+    isMine: map['isMine'] ?? true,
+    oImage: map['oImage'] ?? "noImage",
+    hDesc: map['hDesc'] ?? "noDesc",
+    authorId: map['authorId'] ?? "noAuthorId",
         timestamp: map['timestamp' ?? "noDate"],
 //      reference: map['reference'],
       );
@@ -144,10 +149,11 @@ class HebaModel {
     return <String, dynamic>{
       "imageUrls": jsonEncode(imageUrls),
       "hName": this.hName,
-      "id": this.id,
+//      "id": this.id,
       "oName": this.oName,
       "oImage": this.oImage,
       "hCity": this.hCity,
+      "oContact": this.oContact,
       "hDesc": this.hDesc,
       "geoPoint": this.geoPoint,
       "authorId": this.authorId,

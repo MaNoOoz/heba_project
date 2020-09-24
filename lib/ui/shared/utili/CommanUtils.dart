@@ -145,6 +145,14 @@ class CommanUtils {
     }
   }
 
+  String validateNumber(String value) {
+    if (value.length < 10) {
+      return 'أدخل رقم صحيح';
+    } else {
+      return null;
+    }
+  }
+
   String validateLocation(String value) {
     if (value.length < 2) {
       return 'أدخل موقع صحيح';

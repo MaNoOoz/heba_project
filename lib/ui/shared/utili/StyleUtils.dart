@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
+ * Copyright (c) 2020.  Made With Love By Yaman Al-khateeb
  */
 
 import 'package:flutter/material.dart';
@@ -8,9 +8,11 @@ import 'package:google_fonts_arabic/fonts.dart';
 import 'StringUtils.dart';
 import 'UtilsImporter.dart';
 
-const bold = TextStyle(fontWeight: FontWeight.bold);
-const link = TextStyle(color: Color(0xFF3F729B));
-const headerStyle = TextStyle(fontSize: 35, fontWeight: FontWeight.w900);
+const bold =
+    TextStyle(fontWeight: FontWeight.bold, fontFamily: ArabicFonts.Cairo);
+const link = TextStyle(color: Color(0xFF3F729B), fontFamily: ArabicFonts.Cairo);
+const headerStyle = TextStyle(
+    fontSize: 35, fontWeight: FontWeight.w900, fontFamily: ArabicFonts.Cairo);
 const subHeaderStyle = TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500);
 
 class StyleUtils {
@@ -43,15 +45,18 @@ class StyleUtils {
 
   /// ========================================================================================================
   InputDecoration textFieldDecorationCircle(
-      {String hint, String lable, Icon icon}) {
+      {String hint, String lable, Icon icon, TextStyle style}) {
+    style = TextStyle(color: Colors.grey, fontFamily: ArabicFonts.Cairo);
     return InputDecoration(
+
 //      prefixIcon: icon,
       icon: icon,
 //      suffixIcon: icon,
       contentPadding: EdgeInsets.all(10),
       hintText: hint,
       labelText: lable,
-      hintStyle: TextStyle(color: Colors.grey),
+      hintStyle: style,
+      labelStyle: style,
       focusedBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.blue),
         borderRadius: BorderRadius.all(Radius.circular(5)),

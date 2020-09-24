@@ -6,18 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/service/database_service.dart';
-import 'package:heba_project/ui/Screens/ChatScreen.dart';
+import 'package:heba_project/service/DatabaseService.dart';
 import 'package:heba_project/ui/Screens/SettingsScreen.dart';
-import 'package:heba_project/ui/Views/post_view.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
-import 'package:heba_project/ui/shared/MyClipper.dart';
-import 'package:heba_project/ui/shared/constants.dart';
-import 'package:heba_project/ui/shared/helperFuncs.dart';
-import 'package:heba_project/ui/shared/mAppbar.dart';
-import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:heba_project/ui/shared/utili/Constants.dart';
+import 'package:heba_project/ui/shared/widgets/Clippers.dart';
+import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
+import 'package:heba_project/ui/shared/widgets/post_view.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/utili/helperFuncs.dart';
+import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/widgets/CustomAppBar.dart';
+
+import 'Chat.dart';
 
 class ProfileScreen extends StatefulWidget {
   static String id = "profile_screen";
@@ -52,6 +54,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _initUserPosts();
   }
 
+  /// 1.create a chatroom, send user to the chatroom, other userdetails
+  sendMessage(String userName) {
+    List<String> users = [helperFunctions.myName, userName];
+
+    String chatRoomId = getChatRoomId(helperFunctions.myName, userName);
+
+    Map<String, dynamic> chatRoom = {
+      "users": users,
+      "chatRoomId": chatRoomId,
+    };
+
+    DatabaseService.addChatRoom(chatRoom, chatRoomId);
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ChatView(
+                  chatRoomId: chatRoomId,
+                )));
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -63,7 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
         isImageVisble: true,
-        IsBack: true,
+        IsBack: false,
         title: "Profile",
         color: Colors.blueGrey,
       ),
@@ -140,13 +163,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     var ss = await DatabaseService.CreateChatRoomWithMap(chatRoomId, chatMap);
     logger.d("ss ${ss.toString()}");
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => ChatScreen(
-                  chatRoomId: ss,
-                  loggedInUserUid: widget.currentUserId,
-                )));
+    // todo
+    // Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //         builder: (context) => ChatScreen(
+    //               chatRoomId: ss,
+    //               loggedInUserUid: widget.currentUserId,
+    //             )));
   }
 
   /// Widgets ======================
@@ -169,7 +193,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
-
                 /// image
                 Column(
                   children: <Widget>[
@@ -242,10 +265,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius:
-                            BorderRadius.all(Radius.circular(16)),
+                            BorderRadius.all(Radius.circular(10)),
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black12, blurRadius: 20)
+                                  color: Colors.black12, blurRadius: 10)
                             ]),
                       ),
                     ),
@@ -262,15 +285,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 //                          Navigator.push(
 //                              context,
 //                              MaterialPageRoute(
-//                                builder: (_) => ChatScreen(
-//                                  loggedInUserUid: widget.currentUserId,
-//                                  userId: widget.userId,
-////                                  user: currentUser,
-////                                  chat: widget.chat,
+// //                                builder: (_) => ChatScreen(
+// //                                  loggedInUserUid: widget.currentUserId,
+// //                                  userId: widget.userId,
+// // //                                  user: currentUser,
+// // //                                  chat: widget.chat,
+// //                                ),
+//                                builder: (_) => ChatView(
+//                                  chatRoomId: ,
 //                                ),
 //                              ));
-                    await createChatRoomAndStartChatting(
-                        widget.currentUserId);
+//                           await createChatRoomAndStartChatting(widget.currentUserId);
+                    sendMessage(widget.currentUserId);
                   },
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
@@ -285,10 +311,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius:
-                            BorderRadius.all(Radius.circular(16)),
+                            BorderRadius.all(Radius.circular(10)),
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black12, blurRadius: 20)
+                                  color: Colors.black12, blurRadius: 10)
                             ]),
                       ),
                     ),
@@ -356,38 +382,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: () {
                 logger.d("Clicked");
               },
-              child: Card(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 00.0),
-                  child: listFromFirebase.isEmpty
-                      ? mStatlessWidgets().EmptyView()
-                      : ImagesSlider(
-                    items: map<Widget>(listFromFirebase, (index, i) {
-                      logger.d(
-                          "listFromFirebase ${listFromFirebase.length}");
-                      return Container(
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                              image: post.imageUrls.isEmpty
-                                  ? Image.asset(AvailableImages.uph)
-                                  : NetworkImage(i),
-                              fit: BoxFit.cover),
-                        ),
-                      );
-                    }),
-                    autoPlay: false,
-                    viewportFraction: 1.0,
-                    aspectRatio: 2.0,
-                    distortion: false,
-                    align: IndicatorAlign.bottom,
-                    indicatorWidth: 5,
-                    updateCallback: (index) {
-                      setState(
-                            () {
-                          _current = index;
-                        },
-                      );
-                    },
+              child: Container(
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width / 3,
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 00.0),
+                    child: listFromFirebase.isEmpty
+                        ? mStatlessWidgets().LogoView()
+                        : ImagesSlider(
+                      items: map<Widget>(listFromFirebase, (index, i) {
+                        logger.d(
+                            "listFromFirebase ${listFromFirebase.length}");
+                        return Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: DecorationImage(
+                                image: post.imageUrls.isEmpty
+                                    ? Image.asset(
+                                  AvailableImages.uph,
+                                  width: MediaQuery
+                                      .of(context)
+                                      .size
+                                      .width /
+                                      3,
+                                )
+                                    : NetworkImage(i),
+                                fit: BoxFit.cover),
+                          ),
+                        );
+                      }),
+                      autoPlay: false,
+                      viewportFraction: 1.0,
+                      aspectRatio: 2.0,
+                      distortion: false,
+                      align: IndicatorAlign.bottom,
+                      indicatorWidth: 1,
+                      updateCallback: (index) {
+                        setState(
+                              () {
+                            _current = index;
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -466,6 +509,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       initialData: null,
       future: usersRef.document(widget.userId).get(),
       builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> map) {
+        if (map.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
         if (!map.hasData) {
           return Center(
             child: Column(
@@ -481,24 +529,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
         User userFromDb = User.fromFirestore(map.data);
 
-        return ListView(
-          children: <Widget>[
-            _buildProfileInfo(userFromDb),
+        return Container(
+          color: Colors.blueGrey,
+          child: ListView(
+            children: <Widget>[
+              _buildProfileInfo(userFromDb),
 //              _buildImageSlider(post);
 //              _buildToggleButtons(),
 
-            Divider(),
+              Divider(),
 
-            _posts.isEmpty
-                ? Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Center(
-                child: mStatlessWidgets().EmptyView(),
-              ),
-            )
-                : viewType(),
+              _posts.isEmpty
+                  ? Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(
+                  child: mStatlessWidgets().LogoView(),
+                ),
+              )
+                  : viewType(),
 //              Text("${_posts.length}"),
-          ],
+            ],
+          ),
         );
       },
     );

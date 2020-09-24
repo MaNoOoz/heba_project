@@ -55,6 +55,8 @@ dependencies:
   flare_flutter:
   flutter_staggered_grid_view:
   google_fonts:
+  flutter_launcher_icons:
+  flutter_open_whatsapp:
   #    DATA ============================================
   firebase_core:
   firebase_analytics:
@@ -69,6 +71,8 @@ dependencies:
   flutter_image_compress:
   uuid:
   cloud_firestore:
+  flutter_webview_plugin:
+  after_layout:
   multi_image_picker: ^4.6.7
   firebase_auth: ^0.15.4
   popup_menu:

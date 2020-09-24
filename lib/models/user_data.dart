@@ -10,4 +10,5 @@ class UserData extends ChangeNotifier {
   String currentChatId;
   String channelId;
   bool isFeatured;
+
 }

@@ -7,10 +7,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/service/database_service.dart';
+import 'package:heba_project/service/DatabaseService.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
-import 'package:heba_project/ui/shared/mAppbar.dart';
-import 'package:heba_project/ui/widgets/mWidgets.dart';
+import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
+
+import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/widgets/CustomAppBar.dart';
 
 class SearchScreen extends StatefulWidget {
   final String currentUserId;

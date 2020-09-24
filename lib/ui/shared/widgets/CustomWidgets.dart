@@ -80,7 +80,7 @@ class mStatlessWidgets {
     );
   }
 
-  Widget EmptyView() {
+  Widget LogoView() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Image(

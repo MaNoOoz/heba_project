@@ -6,6 +6,7 @@ import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 const googleMapsApiKey = 'AIzaSyDRMvVRVlma0gjFhELTtESq53WsVqvllGw';
 
@@ -31,6 +32,25 @@ const List<String> cities = [
   "نجران",
   "الجوف",
   "عرعر"
+];
+const List<String> ContactMrthods = [
+  "واتساب",
+  "تيلجرام",
+  "تويتر",
+  "انستجرام",
+  "فيسبوك",
+  "هبة",
+  "SMS",
+  "إتصال"
+];
+const smartChat = [
+  {'app': 'https://wa.me/849908854', 'iconData': FontAwesomeIcons.whatsapp},
+  {'app': 'tel:8499999999', 'iconData': FontAwesomeIcons.phone},
+  {'app': 'sms://8499999999', 'iconData': FontAwesomeIcons.sms},
+  {
+    'app': 'https://tawk.to/chat/5e5cab81a89cda5a1888d472/default',
+    'iconData': FontAwesomeIcons.facebookMessenger
+  }
 ];
 final themeColor = Color(0xfff5a623);
 final primaryColor = Color(0xff203152);

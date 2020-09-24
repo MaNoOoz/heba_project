@@ -7,13 +7,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
+import 'package:flutter_open_whatsapp/flutter_open_whatsapp.dart';
+import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
+import 'package:heba_project/ui/shared/utili/Constants.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-
-import 'ChatScreen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HebaDetails extends StatefulWidget {
   final HebaModel heba;
@@ -29,12 +34,24 @@ class HebaDetails extends StatefulWidget {
 
 class _HebaDetailsState extends State<HebaDetails>
     with TickerProviderStateMixin {
+  Logger logger = Logger();
+  final key = new GlobalKey<ScaffoldState>();
+  String contactMethod;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    contactMethod = widget.heba.oContact;
+  }
+
   @override
   Widget build(BuildContext context) {
     var listOfHebaImages =
         _getListOfImagesFromUser(widget.heba).cast<String>().toList();
 
     return Scaffold(
+      key: key,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -60,17 +77,30 @@ class _HebaDetailsState extends State<HebaDetails>
     return list;
   }
 
-  mDetailsPage(
-      BuildContext context, List<String> listOfHebaImages, HebaModel post2) {
-    Size screenSize = MediaQuery.of(context).size;
+  getChatRoomId(String a, String b) {
+    if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
+      return "$b\_$a";
+    } else {
+      return "$a\_$b";
+    }
+  }
+
+  mDetailsPage(BuildContext context, List<String> listOfHebaImages,
+      HebaModel post2) {
+    Size screenSize = MediaQuery
+        .of(context)
+        .size;
     var fUser = Provider.of<FirebaseUser>(context);
     TextEditingController _searchController = TextEditingController();
     var Btns = widget.isMe;
+    // String chatRoomId =
+    // getChatRoomId(helperFunctions.myName, post2.oName); // todo ?
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: SafeArea(
         child: ListView(children: <Widget>[
+
           /// Image Slider
           Container(
             height: 200,
@@ -134,6 +164,7 @@ class _HebaDetailsState extends State<HebaDetails>
               color: Colors.white,
               width: screenSize.width,
               child: Column(children: <Widget>[
+
                 /// First Row
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
@@ -222,9 +253,9 @@ class _HebaDetailsState extends State<HebaDetails>
                                     backgroundColor: Colors.white,
                                     backgroundImage: widget.heba.oImage.isEmpty
                                         ? AssetImage(
-                                            'assets/images/user_placeholder.jpg')
+                                        'assets/images/user_placeholder.jpg')
                                         : CachedNetworkImageProvider(
-                                            widget.heba.oImage),
+                                        widget.heba.oImage),
                                   ),
                                 ),
                               ),
@@ -237,104 +268,126 @@ class _HebaDetailsState extends State<HebaDetails>
                 ),
 
                 /// Contact Buttons
-                Btns == true
+                Btns == false
 
-                    /// todo flip value  later
+                /// todo flip value  later
                     ? Align(
-                        alignment: AlignmentDirectional.topStart,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                Expanded(
-                                  child: Container(
-                                    height: 40,
+                  alignment: AlignmentDirectional.topStart,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          Expanded(
+                            flex: 1,
+                            child: Container(
+                              height: 40,
 //                            width: 100,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(1.0),
-                                      child: FloatingActionButton.extended(
-                                        heroTag: "btn1",
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              new BorderRadius.circular(5.0),
-                                        ),
-                                        elevation: 1.0,
-                                        icon: const Icon(
-                                          FontAwesomeIcons.phoneAlt,
-                                        ),
-                                        label: const Text('  إتصل'),
-                                        onPressed: () {},
-                                      ),
-                                    ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(1.0),
+                                child: FloatingActionButton.extended(
+                                  heroTag: "btn1",
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    new BorderRadius.circular(5.0),
                                   ),
+                                  elevation: 1.0,
+                                  icon: const Icon(
+                                    FontAwesomeIcons.phoneAlt,
+                                    size: 16,
+                                  ),
+                                  label: const Text('إتصال',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w900)),
+                                  onPressed: () {
+                                    launch("tel://$contactMethod");
+                                    // launch('tel:+${contactMethod.toString()}');
+                                    _ContactThisMan(contactMethod);
+                                    logger.d(contactMethod);
+                                  },
                                 ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Container(
-                                    height: 40,
-                                    width: 100,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(1.0),
-                                      child: FloatingActionButton.extended(
-                                        heroTag: "btn2",
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              new BorderRadius.circular(5.0),
-                                        ),
-                                        elevation: 1.0,
-                                        icon: const Icon(
-                                            FontAwesomeIcons.commentAlt),
-                                        label: const Text('علق'),
-                                        onPressed: () {},
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Container(
-                                    height: 40,
-                                    width: 100,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(1.0),
-                                      child: FloatingActionButton.extended(
-                                        heroTag: "btn3",
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              new BorderRadius.circular(5.0),
-                                        ),
-                                        elevation: 1.0,
-                                        icon: const Icon(
-                                            FontAwesomeIcons.comments),
-                                        label: const Text('دردش'),
-                                        onPressed: () {
-//                                          todo Fix  Navigate to chat screen
-//                                          Navigator.push(
-//                                              context,
-//                                              MaterialPageRoute(
-//                                                builder: (_) => ChatScreen(
-//                                                  loggedInUserUid: fUser.uid,
-//                                                  userId: widget.userId,
-//                                                ),
-//                                              ));
-                                          /// open whats app
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      )
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              height: 40,
+                              child: Padding(
+                                padding: const EdgeInsets.all(1.0),
+                                child: FloatingActionButton.extended(
+                                  backgroundColor: Colors.green,
+                                  heroTag: "btn2",
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    new BorderRadius.circular(5.0),
+                                  ),
+                                  elevation: 1.0,
+                                  icon: const Icon(
+                                    FontAwesomeIcons.commentAlt,
+                                    size: 16,
+                                  ),
+                                  label: const Text(
+                                    'علق',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w400),
+                                  ),
+                                  onPressed: () {},
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: Container(
+                              height: 40,
+                              width: 100,
+                              child: Padding(
+                                padding: const EdgeInsets.all(1.0),
+                                child: FloatingActionButton.extended(
+                                  heroTag: "btn3",
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    new BorderRadius.circular(5.0),
+                                  ),
+                                  elevation: 1.0,
+                                  icon: const Icon(
+                                    FontAwesomeIcons.comments,
+                                    size: 16,
+                                  ),
+                                  label: const Text('دردش',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w900)),
+                                  onPressed: () {
+                                    FlutterOpenWhatsapp.sendSingleMessage(
+                                        "${widget.heba.oContact}",
+                                        "السلام عليكم بخصوص إتعلانك ${widget
+                                            .heba.hName}");
+//                                          todo Fix  Navigate to chat screen
+//                                           Navigator.push(
+//                                               context,
+//                                               MaterialPageRoute(
+//                                                   builder: (_) => ChatView(
+//                                                         chatRoomId: chatRoomId,
+//                                                       )));
+                                  },
+                                ),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                )
                     : Container(),
 
                 /// Body
                 Divider(),
 
-                ///
+                /// hName
                 Align(
                   alignment: AlignmentDirectional.topEnd,
                   child: Padding(
@@ -387,33 +440,82 @@ class _HebaDetailsState extends State<HebaDetails>
                   ),
                 ),
 
-                Align(
-                  alignment: AlignmentDirectional.topEnd,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text(
-                        "التفاصيل :",
-                        style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            color: Colors.black54),
+                /// التفاصيل
+
+                Card(
+                  child: Align(
+                    alignment: AlignmentDirectional.topEnd,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Row(
+                          children: [
+                            Text(
+                              "التفاصيل :",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.normal,
+                                  color: Colors.black54),
+                            ),
+                            Spacer(),
+                            Flexible(
+                              child: Text(
+                                " ${widget.heba.hDesc}",
+                                maxLines: 4,
+                                softWrap: true,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black54),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-                Align(
-                  alignment: AlignmentDirectional.topEnd,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text(
-                        " ${widget.heba.hDesc}",
-                        maxLines: 4,
-                        softWrap: true,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black54),
+
+                /// التواصل
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(
+                        new ClipboardData(text: widget.heba.oContact));
+                    key.currentState.showSnackBar(new SnackBar(
+                      duration: Duration(milliseconds: 500),
+                      content: new Text(
+                        "تم النسخ",
+                        style: TextStyle(fontFamily: ArabicFonts.Cairo),
+                      ),
+                    ));
+                    // },
+                  },
+                  child: Card(
+                    child: Align(
+                      alignment: AlignmentDirectional.topEnd,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Row(
+                            children: [
+                              Text(
+                                "التواصل :",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    color: Colors.black54),
+                              ),
+                              Spacer(),
+                              new SelectableText(
+                                "${widget.heba.oContact}",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    color: Colors.black54),
+                              ),
+                              Spacer(),
+                              Icon(Icons.content_copy),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -463,7 +565,7 @@ class _HebaDetailsState extends State<HebaDetails>
                                       alignment: AlignmentDirectional.center,
                                       child: Column(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        MainAxisAlignment.center,
                                         children: <Widget>[
                                           Align(
                                             child: Padding(
@@ -472,14 +574,15 @@ class _HebaDetailsState extends State<HebaDetails>
                                               child: Container(
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                                   children: <Widget>[
                                                     Row(
                                                       mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
+                                                      MainAxisAlignment
+                                                          .center,
                                                       children: <Widget>[
+
                                                         /// Icons
                                                         Container(
                                                           width: 20,
@@ -497,18 +600,18 @@ class _HebaDetailsState extends State<HebaDetails>
                                                         Container(
                                                           child: Align(
                                                             alignment:
-                                                                AlignmentDirectional
-                                                                    .center,
+                                                            AlignmentDirectional
+                                                                .center,
                                                             child: Padding(
                                                               padding: const EdgeInsets
-                                                                      .symmetric(
+                                                                  .symmetric(
                                                                   vertical: 8.0,
                                                                   horizontal:
-                                                                      8.0),
+                                                                  8.0),
                                                               child: Container(
                                                                 width: 20,
                                                                 child:
-                                                                    IconButton(
+                                                                IconButton(
                                                                   icon: Icon(
                                                                     FontAwesomeIcons
                                                                         .flag,
@@ -529,8 +632,8 @@ class _HebaDetailsState extends State<HebaDetails>
                                                     /// Space
                                                     Padding(
                                                       padding:
-                                                          const EdgeInsets.all(
-                                                              1.0),
+                                                      const EdgeInsets.all(
+                                                          1.0),
                                                       child: Container(
                                                         child: SizedBox(
                                                           width: 10,
@@ -542,51 +645,51 @@ class _HebaDetailsState extends State<HebaDetails>
                                                       children: <Widget>[
                                                         Padding(
                                                           padding:
-                                                              const EdgeInsets
-                                                                  .all(1.0),
+                                                          const EdgeInsets
+                                                              .all(1.0),
                                                           child: Align(
                                                             alignment:
-                                                                AlignmentDirectional
-                                                                    .center,
+                                                            AlignmentDirectional
+                                                                .center,
                                                             child: Container(
                                                               child: Text(
                                                                 widget
                                                                     .heba.oName,
                                                                 style: TextStyle(
                                                                     fontSize:
-                                                                        11,
+                                                                    11,
                                                                     fontWeight:
-                                                                        FontWeight
-                                                                            .bold),
+                                                                    FontWeight
+                                                                        .bold),
                                                               ),
                                                             ),
                                                           ),
                                                         ),
                                                         Padding(
                                                           padding:
-                                                              const EdgeInsets
-                                                                  .all(1.0),
+                                                          const EdgeInsets
+                                                              .all(1.0),
                                                           child: Align(
                                                             alignment:
-                                                                AlignmentDirectional
-                                                                    .center,
+                                                            AlignmentDirectional
+                                                                .center,
                                                             child: Container(
                                                               child:
-                                                                  CircleAvatar(
+                                                              CircleAvatar(
                                                                 radius: 15.0,
                                                                 backgroundColor:
-                                                                    Colors
-                                                                        .white,
+                                                                Colors
+                                                                    .white,
                                                                 backgroundImage: widget
-                                                                        .heba
-                                                                        .oImage
-                                                                        .isEmpty
+                                                                    .heba
+                                                                    .oImage
+                                                                    .isEmpty
                                                                     ? AssetImage(
-                                                                        'assets/images/user_placeholder.jpg')
+                                                                    'assets/images/user_placeholder.jpg')
                                                                     : CachedNetworkImageProvider(
-                                                                        widget
-                                                                            .heba
-                                                                            .oImage),
+                                                                    widget
+                                                                        .heba
+                                                                        .oImage),
                                                               ),
                                                             ),
                                                           ),
@@ -640,7 +743,7 @@ class _HebaDetailsState extends State<HebaDetails>
                                 onSubmitted: (input) {
                                   if (input.isNotEmpty) {
                                     setState(
-                                      () {
+                                          () {
 //    _users = DatabaseService.searchUsers(input);
                                       },
                                     );
@@ -705,9 +808,9 @@ class _HebaDetailsState extends State<HebaDetails>
     var imagesLength =
         _getListOfImagesFromUser(widget.heba).cast<String>().toList().length;
     var imagesList =
-        _getListOfImagesFromUser(widget.heba).cast<String>().toList();
+    _getListOfImagesFromUser(widget.heba).cast<String>().toList();
     TabController imagesController =
-        TabController(length: imagesLength, vsync: this);
+    TabController(length: imagesLength, vsync: this);
 
     List<Widget> listOfImageWidget = [];
     listOfImageWidget.length = imagesLength;
@@ -717,40 +820,40 @@ class _HebaDetailsState extends State<HebaDetails>
       padding: EdgeInsets.symmetric(vertical: 00.0),
       child: imagesList.isEmpty
           ? SizedBox(
-              height: 200,
-              child: Center(
-                child: Image.asset(AvailableImages.appIcon),
-              ),
-            )
+        height: 200,
+        child: Center(
+          child: Image.asset(AvailableImages.appIcon),
+        ),
+      )
           : ImagesSlider(
-              height: 200,
-              items: map<Widget>(imagesList, (index, i) {
-                print("listFromFirebase ${imagesList.length}");
-                return Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: widget.heba.imageUrls.isEmpty
-                            ? Image.asset('assets/images/user_placeholder.jpg')
-                            : NetworkImage(i),
-                        fit: BoxFit.cover),
-                  ),
-                );
-              }),
-              autoPlay: false,
-              viewportFraction: 1.0,
-              indicatorBackColor: Colors.grey,
-              aspectRatio: 2.0,
-              distortion: false,
-              align: IndicatorAlign.bottom,
-              indicatorWidth: 5,
-              updateCallback: (index) {
-                setState(
-                  () {
-                    _current = index;
-                  },
-                );
-              },
+        height: 200,
+        items: map<Widget>(imagesList, (index, i) {
+          print("listFromFirebase ${imagesList.length}");
+          return Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                  image: widget.heba.imageUrls.isEmpty
+                      ? Image.asset('assets/images/user_placeholder.jpg')
+                      : NetworkImage(i),
+                  fit: BoxFit.cover),
             ),
+          );
+        }),
+        autoPlay: false,
+        viewportFraction: 1.0,
+        indicatorBackColor: Colors.grey,
+        aspectRatio: 2.0,
+        distortion: false,
+        align: IndicatorAlign.bottom,
+        indicatorWidth: 5,
+        updateCallback: (index) {
+          setState(
+                () {
+              _current = index;
+            },
+          );
+        },
+      ),
     );
 
 //    return Padding(
@@ -839,6 +942,97 @@ class _HebaDetailsState extends State<HebaDetails>
         ],
       ),
     );
+  }
+
+  void _openChat(String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) =>
+            WebviewScaffold(
+              withJavascript: true,
+              appCacheEnabled: true,
+              resizeToAvoidBottomInset: true,
+              url: url,
+              appBar: AppBar(
+                title: Text("S.of(context).message"),
+                centerTitle: true,
+                leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    }),
+                elevation: 0.0,
+              ),
+              withZoom: true,
+              withLocalStorage: true,
+              hidden: true,
+              initialChild: Container(child: Text("context")),
+            ),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+
+  bool canLaunchAppURL;
+
+  IconButton getIconButton(IconData iconData, double iconSize, Color iconColor,
+      String appUrl) {
+    return IconButton(
+      icon: Icon(
+        iconData,
+        size: iconSize,
+        color: iconColor,
+      ),
+      onPressed: () async {
+        if (await canLaunch(appUrl)) {
+          if (appUrl.contains('http') && !appUrl.contains('wa.me')) {
+            _openChat(appUrl);
+          } else {
+            await launch(appUrl);
+          }
+          setState(() {
+            setState(() {
+              canLaunchAppURL = true;
+            });
+          });
+        } else {
+          setState(() {
+            canLaunchAppURL = false;
+          });
+        }
+        if (!canLaunchAppURL) {
+          final snackBar = SnackBar(
+            content: Text(
+              " S.of(context).canNotLaunch",
+            ),
+            action: SnackBarAction(
+              label: "S.of(context).undo",
+              onPressed: () {
+                // Some code to undo the change.
+              },
+            ),
+          );
+          Scaffold.of(context).showSnackBar(snackBar);
+        }
+      },
+    );
+  }
+
+  void _ContactThisMan(String contactMethod) {
+    for (int i = 0; i < smartChat.length; i++) {
+      switch (smartChat[i]['app']) {
+        default:
+          getIconButton(
+            smartChat[i]['iconData'],
+            35,
+            Theme
+                .of(context)
+                .primaryColorLight,
+            smartChat[i]['app'],
+          );
+      }
+    }
   }
 
 //  geenerateWidgets(int d) {

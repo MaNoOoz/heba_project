@@ -133,7 +133,7 @@ class _PostViewState extends State<PostView> {
         Align(
           alignment: AlignmentDirectional.topCenter,
           child: Container(
-            color: Colors.white30,
+            color: Colors.blueGrey,
             height: 200,
             margin: EdgeInsets.all(0),
             child: Padding(
@@ -141,10 +141,10 @@ class _PostViewState extends State<PostView> {
               child: Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(0),
-                    bottomRight: Radius.circular(0),
-                    topLeft: Radius.circular(0),
-                    topRight: Radius.circular(0),
+                    bottomLeft: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10),
                   ),
                 ),
                 color: Colors.white,
@@ -386,19 +386,23 @@ class _PostViewState extends State<PostView> {
           : ImagesSlider(
               items: map<Widget>(listFromFirebase, (index, i) {
 //                print("listFromFirebase ${listFromFirebase.length}");
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.zero,
-                      bottomRight: Radius.circular(0),
-                      topLeft: Radius.zero,
-                      topRight: Radius.circular(0),
+                return Padding(
+                  padding: const EdgeInsets.only(right: 4.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(10),
+                        bottomRight: Radius.circular(10),
+                        topLeft: Radius.circular(10),
+                        topRight: Radius.circular(10),
+                      ),
+                      image: DecorationImage(
+                          image: post.imageUrls.isEmpty
+                              ? Image.asset(
+                                  'assets/images/user_placeholder.jpg')
+                              : NetworkImage(i),
+                          fit: BoxFit.cover),
                     ),
-                    image: DecorationImage(
-                        image: post.imageUrls.isEmpty
-                            ? Image.asset('assets/images/user_placeholder.jpg')
-                            : NetworkImage(i),
-                        fit: BoxFit.cover),
                   ),
                 );
               }),

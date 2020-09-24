@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "632859344347-u4kfq8gm9t6gk0c55hkpifsj8kmd0hv2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "manoz.com.heba_project",
+            "certificate_hash": "573d719186e2e92665e3d591547d551614451ca0"
+          }
+        },
+        {
           "client_id": "632859344347-44d2pfqm22pm25ms8id0maf2n59mgjfj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -38,6 +46,13 @@
             {
               "client_id": "632859344347-62et50r1rgms6d0al4nmkucagapor1s2.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "632859344347-kjb96boscrmggh8nvoe7kb06vojc1avq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "manoz.com.hebaProject"
+              }
             }
           ]
         }

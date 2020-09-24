@@ -7,80 +7,61 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/ui/shared/Constants.dart';
+import 'package:heba_project/ui/shared/utili/Constants.dart';
 
 class DatabaseService {
-  //  Post2 post;
-  StreamController<HebaModel> controller = StreamController<HebaModel>();
-
-  //
-  //  Stream<Post2> get PostsStream => _Post2Controller.stream;
-
-  //
-  //  DatabaseService() {
-  //    List<Post2> posts = [];
-  //    publicpostsRef.snapshots().listen((snapshot) {
-  //      if (snapshot != null) {
-  //        List<DocumentSnapshot> documents = snapshot.documents;
-  //        documents.forEach((DocumentSnapshot doc) {
-  //          post = new Post2.fromSnapshot(doc);
-  //          posts.add(post);
-  //        });
-  //        _Post2Controller.add(post);
-  //      }
-  //    });
-  //  }
-
   /// Feed Page ==================================================
 
-  static HebaPostsFromDb(HebaModel postModel) async {
-    List<HebaModel> posts = [];
-    QuerySnapshot qn = await publicpostsRef.getDocuments();
-
-    List<DocumentSnapshot> documents = qn.documents;
-    documents.forEach((DocumentSnapshot doc) {
-      postModel = new HebaModel.fromFirestore(doc);
-      posts.add(postModel);
-    });
-
-    /// Logs
-    documents.map((e) => e.data.forEach((key, value) {
-          print("HebaPostsFromDb : Key : $key, Value : $value");
-        }));
-
-    /// Logs
-
-    return posts;
-  }
-
   /// as A Stream
-  Stream<HebaModel> get hebatStream => controller.stream;
 
-  mStreamOfHeba(HebaModel postModel) async {
-    List<HebaModel> posts = [];
-    QuerySnapshot qn = await publicpostsRef.getDocuments();
-    Stream<HebaModel> stream;
-    List<DocumentSnapshot> documents = qn.documents;
-    documents.map((DocumentSnapshot msg) {
-      var heba = HebaModel.fromFirestore(msg);
-      controller.add(heba);
-      return heba;
-    });
+  static Future<List<HebaModel>> getPosts() async {
+    QuerySnapshot userPostsSnapshot = await publicpostsRef
+        .orderBy('timestamp', descending: true)
+        .getDocuments();
 
-    documents.forEach((DocumentSnapshot doc) {
-      postModel = new HebaModel.fromFirestore(doc);
-      posts.add(postModel);
-    });
+    List<HebaModel> posts = userPostsSnapshot.documents
+        .map((doc) => HebaModel.fromFirestore(doc))
+        .toList();
+    return posts;
+  }
 
-    /// Logs
-    documents.map((e) => e.data.forEach((key, value) {
-          print("HebaPostsFromDb : Key : $key, Value : $value");
-        }));
-
-    /// Logs
+  static Stream<List<HebaModel>> initPostsStream() {
+    log("_initPostsStream Called : ");
+    var posts = DatabaseService.getPosts().asStream();
+//    setState(() {
+//      staticHebatListFromUser.addAll(posts);
+//      duplicateItems.addAll(staticHebatListFromUser);
+//    });
+//
 
     return posts;
   }
+
+//  mStreamOfHeba(HebaModel postModel) async {
+//    List<HebaModel> posts = [];
+//    QuerySnapshot qn = await publicpostsRef.getDocuments();
+//    Stream<HebaModel> stream;
+//    List<DocumentSnapshot> documents = qn.documents;
+//    documents.map((DocumentSnapshot msg) {
+//      var heba = HebaModel.fromFirestore(msg);
+//      controller.add(heba);
+//      return heba;
+//    });
+//
+//    documents.forEach((DocumentSnapshot doc) {
+//      postModel = new HebaModel.fromFirestore(doc);
+//      posts.add(postModel);
+//    });
+//
+//    /// Logs
+//    documents.map((e) => e.data.forEach((key, value) {
+//          print("HebaPostsFromDb : Key : $key, Value : $value");
+//        }));
+//
+//    /// Logs
+//
+//    return posts;
+//  }
 
   static void updateUser(User user) {
     usersRef.document(user.documentId).updateData({
@@ -142,6 +123,7 @@ class DatabaseService {
       'hName': post.hName,
       'oName': post.oName,
       'hCity': post.hCity,
+      'oContact': post.oContact,
       'isFeatured': post.isFeatured,
       'isMine': post.isMine ?? false,
       "location": post.location,
@@ -253,54 +235,85 @@ class DatabaseService {
 //    });
 //  }
 
-  static updatePublicPosts(Map<String, dynamic> map) async {
-    HebaModel resultObject;
-    final TransactionHandler createTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds =
-          await tx.get(publicpostsRef.document(map['id']));
-      if (ds.exists) {
-        await tx.update(ds.reference, map);
-      } else {
-        print(' result 1 : ${ds.exists}');
-        return null;
-      }
-
-//      await tx.set(ds.reference, map);
-//      print('error: ${ds.reference.path}');
-
-      return map;
-    };
-
-    var result = Firestore.instance.runTransaction(createTransaction);
-    print(' result 2: ${result}');
-
-    result.whenComplete(() {
-      log('Transaction success!');
-      resultObject = HebaModel.fromMap(map);
-      log('heba ${resultObject.hName} success!');
-    });
-
-    return resultObject;
-
-//    final DocumentReference postRef = publicpostsRef.document("${heba.id}");
-//    print("${postRef.path}");
-//
-//    Firestore.instance.runTransaction((Transaction transaction) async {
-//      final DocumentSnapshot postSnapshot = await transaction.get(postRef);
-//      await transaction.set(postSnapshot.reference, map);
-//
-//      if (postSnapshot.exists) {
-//        await transaction.update(postRef, map);
+//  static updatePublicPosts(Map<String, dynamic> map) async {
+//    HebaModel resultObject;
+//    final TransactionHandler createTransaction = (Transaction tx) async {
+//      final DocumentSnapshot ds =
+//          await tx.get(publicpostsRef.document(map['id']));
+//      if (ds.exists) {
+//        await tx.update(ds.reference, map);
+//      } else {
+//        print(' result 1 : ${ds.exists}');
+//        return null;
 //      }
-//    }).whenComplete(() {
+//
+////      await tx.set(ds.reference, map);
+////      print('error: ${ds.reference.path}');
+//
+//      return map;
+//    };
+//
+//    var result = Firestore.instance.runTransaction(createTransaction);
+//    print(' result 2: ${result}');
+//
+//    result.whenComplete(() {
 //      log('Transaction success!');
-//      log('heba ${heba.hName} success!');
-////      heba = HebaModel.fromMap(map);
-////      print("heba ${heba.hName}");
-////      return heba;
-//    }).catchError((err) {
-//      log("Transaction failure: ', $err");
+//      resultObject = HebaModel.fromMap(map);
+//      log('heba ${resultObject.hName} success!');
 //    });
+//
+//    return resultObject;
+//
+////    final DocumentReference postRef = publicpostsRef.document("${heba.id}");
+////    print("${postRef.path}");
+////
+////    Firestore.instance.runTransaction((Transaction transaction) async {
+////      final DocumentSnapshot postSnapshot = await transaction.get(postRef);
+////      await transaction.set(postSnapshot.reference, map);
+////
+////      if (postSnapshot.exists) {
+////        await transaction.update(postRef, map);
+////      }
+////    }).whenComplete(() {
+////      log('Transaction success!');
+////      log('heba ${heba.hName} success!');
+//////      heba = HebaModel.fromMap(map);
+//////      print("heba ${heba.hName}");
+//////      return heba;
+////    }).catchError((err) {
+////      log("Transaction failure: ', $err");
+////    });
+//  }
+
+  static Future updatePublicPosts2({HebaModel updatedPost}) async {
+    var map = updatedPost.toMapAsJson();
+
+//    var map = {
+//      'id': updatedPost.id,
+//      'geoPoint': updatedPost.geoPoint,
+//      'imagesUrls': updatedPost.imageUrls,
+//      'hName': updatedPost.hName,
+//      'oName': updatedPost.oName,
+//      'hCity': updatedPost.hCity,
+//      'isFeatured': updatedPost.isFeatured,
+//      'isMine': updatedPost.isMine ?? false,
+//      "location": updatedPost.location,
+//      'oImage': updatedPost.oImage,
+//      'hDesc': updatedPost.hDesc,
+//      'authorId': updatedPost.authorId,
+//      'timestamp': updatedPost.timestamp,
+//    };
+
+    return await publicpostsRef.document(updatedPost.id).setData(map);
+//    var docId2 = ref.documentID;
+
+//    todo ?? images paths ??
+
+//    return  ref.setData(map);
+
+//     var ss = await  publicpostsRef.document(passedPost.id).get();
+//    HebaModel result = HebaModel.fromFirestore(ss);
+//    return result;
   }
 
   //  static Stream<List<Post2>> getAllPosts() {
@@ -447,20 +460,79 @@ class DatabaseService {
 
   /// Chats Page ==================================================
 
-  static Future<List<String>> getUserChats(String userId, String chatId) async {
-    Chat chat;
-    print("${chat.chatId}");
 
-    DocumentSnapshot userPostsSnapshot = await usersRef.document(userId).get();
-
-    Map data = userPostsSnapshot.data;
-
-    var list = userPostsSnapshot['chatIds'] as List;
-    List<String> chatIds = list.map<String>((i) => chat.chatId).toList();
-    print("${chatIds}");
-
-    return chatIds;
+  Future<void> addUserInfo(userData) async {
+    Firestore.instance.collection("users").add(userData).catchError((e) {
+      print(e.toString());
+    });
   }
+
+  getUserInfo(String email) async {
+    return Firestore.instance
+        .collection("users")
+        .where("userEmail", isEqualTo: email)
+        .getDocuments()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  static searchByName(String searchField) {
+    return Firestore.instance
+        .collection("users")
+        .where('userName', isEqualTo: searchField)
+        .getDocuments();
+  }
+
+  static Future<bool> addChatRoom(chatRoom, chatRoomId) {
+    Firestore.instance
+        .collection("chatRoom")
+        .document(chatRoomId)
+        .setData(chatRoom)
+        .catchError((e) {
+      print(e);
+    });
+  }
+
+  static getUserChats(String itIsMyName) async {
+    return await Firestore.instance
+        .collection("chatRoom")
+        .where('users', arrayContains: itIsMyName)
+        .snapshots();
+  }
+
+  static getChats(String chatRoomId) async {
+    return Firestore.instance
+        .collection("chatRoom")
+        .document(chatRoomId)
+        .collection("chats")
+        .orderBy('time')
+        .snapshots();
+  }
+
+  static Future<void> addMessage(String chatRoomId, chatMessageData) {
+    Firestore.instance.collection("chatRoom")
+        .document(chatRoomId)
+        .collection("chats")
+        .add(chatMessageData).catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // static Future<List<String>> getUserChats(String userId, String chatId) async {
+  //   Chat chat;
+  //   print("${chat.chatId}");
+  //
+  //   DocumentSnapshot userPostsSnapshot = await usersRef.document(userId).get();
+  //
+  //   Map data = userPostsSnapshot.data;
+  //
+  //   var list = userPostsSnapshot['chatIds'] as List;
+  //   List<String> chatIds = list.map<String>((i) => chat.chatId).toList();
+  //   print("${chatIds}");
+  //
+  //   return chatIds;
+  // }
 
   static String getDocId() {
     String docID;

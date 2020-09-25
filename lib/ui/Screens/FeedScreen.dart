@@ -63,7 +63,7 @@ class _FeedScreenState extends State<FeedScreen>
 
   /// ViewMode :  0-grid,1-row,2-map
   var mDataViewMode = 1;
-  bool isMine;
+  bool isMine = false;
   var featured = false;
   Position currentLocation;
 
@@ -117,6 +117,7 @@ class _FeedScreenState extends State<FeedScreen>
     _tabController = new TabController(length: 3, vsync: this);
     _dropDownMenuItems = getDropDownMenuItems();
     _currentCity = _dropDownMenuItems[0].value;
+
     super.initState();
   }
 
@@ -1194,7 +1195,6 @@ class _FeedScreenState extends State<FeedScreen>
 
   Widget editIcon(HebaModel post) {
     featured = post.isFeatured;
-    isMine = post.authorId == widget.currentUserId;
 //    logger.d("isMine :${isMine.toString()} ${widget.currentUserId}  "); // true, contain the same characters
     var isMineWidget;
     if (isMine == true) {
@@ -1320,8 +1320,8 @@ class _FeedScreenState extends State<FeedScreen>
               builder: (context) =>
                   HebaDetails(
                       heba: staticHebatListFromUser[index],
-                      isMe: false,
-                      userId: widget.userId),
+                      isMe: true, // todo Fix Bug
+                      currentUserId: widget.userId),
             ),
           );
 //          Navigator.push(

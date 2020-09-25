@@ -172,6 +172,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   Widget build(BuildContext context) {
     fuser = Provider.of<FirebaseUser>(context).displayName;
     fuserImage = Provider.of<FirebaseUser>(context).photoUrl;
+    bool ok = _currentContactMethod.length == 10 && _name.length > 5;
 
     return Scaffold(
       key: _scaffoldKey,
@@ -378,7 +379,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               UIHelper.verticalSpace(10),
 
               /// Buttons
-              _Buttons(),
+              _Buttons(ok),
               UIHelper.verticalSpace(30),
             ],
           ),
@@ -1303,10 +1304,9 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 //  }
 
   ///  Buttons
-  _Buttons() {
+  _Buttons(ok) {
 //    log('Location From _Buttons : Lat  ${userLocation?.latitude}, Long: ${userLocation?.longitude}');
 
-    bool ok = _currentContactMethod.length == 10 && _name.length > 5;
     return Padding(
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
@@ -1318,26 +1318,38 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               shape: new RoundedRectangleBorder(
                   borderRadius: new BorderRadius.circular(10.0)),
               splashColor: Colors.blueAccent,
-              color: ok
-                  ? Colors.green
-                  : Colors.red,
+              color: ok ? Colors.green : Colors.red,
               child: new Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  Center(
-                    child: new Padding(
-                      padding: const EdgeInsets.only(left: 20.0),
-                      child: Center(
-                        child: Text(
-                          "إضافة ",
-                          style: TextStyle(
-                              fontSize: 22.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
+                  Row(
+                    children: [
+                      Center(
+                        child: new Padding(
+                          padding: const EdgeInsets.only(left: 20.0),
+                          child: Center(
+                            child: Text(
+                              "إضافة ",
+                              style: TextStyle(
+                                  fontSize: 22.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      new Padding(
+                        padding: const EdgeInsets.only(left: 20.0),
+                        child: Center(
+                          child: Icon(
+                            getIcon(ok),
+                            color: Colors.white,
+                            size: 23,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 //                Center(
 //                  child: Icon(
@@ -1348,7 +1360,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 ],
               ),
               onPressed: () async {
-                if (ok == true) _Send();
+                if (ok == true) {
+                  _Send();
+                } else {
+                  _displaySnackBar(context,
+                      "تأكد من إسم الهبة أن يكون أكثر من 7 أحرف وإدخال رقم الجوال بشكل صحيح");
+                }
 
                 // or
 //                var s = submit().whenComplete(() {
@@ -1361,6 +1378,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         ],
       ),
     );
+  }
+
+  IconData getIcon(ok) {
+    return !ok ? Icons.warning : Icons.done;
   }
 
   void _Send() async {

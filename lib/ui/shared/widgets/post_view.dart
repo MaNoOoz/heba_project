@@ -185,7 +185,9 @@ class _PostViewState extends State<PostView> {
             context,
             MaterialPageRoute(
               builder: (context) => HebaDetails(
-                  heba: widget.post, isMe: false, userId: widget.currentUserId),
+                  heba: widget.post,
+                  isMe: false,
+                  currentUserId: widget.currentUserId),
             ),
           );
 //          Navigator.push(

@@ -9,24 +9,26 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_images_slider/flutter_images_slider.dart';
-import 'package:flutter_open_whatsapp/flutter_open_whatsapp.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/models/models.dart';
+import 'package:heba_project/service/DatabaseService.dart';
+import 'package:heba_project/ui/Screens/ChatScreen.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
-import 'package:heba_project/ui/shared/utili/Constants.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HebaDetails extends StatefulWidget {
   final HebaModel heba;
   final DocumentSnapshot documentSnapshot;
   final bool isMe;
-  final String userId;
+  final String currentUserId;
 
-  HebaDetails({this.heba, this.documentSnapshot, this.isMe, this.userId});
+  HebaDetails(
+      {this.heba, this.documentSnapshot, this.isMe, this.currentUserId});
 
   @override
   _HebaDetailsState createState() => _HebaDetailsState();
@@ -85,11 +87,9 @@ class _HebaDetailsState extends State<HebaDetails>
     }
   }
 
-  mDetailsPage(BuildContext context, List<String> listOfHebaImages,
-      HebaModel post2) {
-    Size screenSize = MediaQuery
-        .of(context)
-        .size;
+  mDetailsPage(
+      BuildContext context, List<String> listOfHebaImages, HebaModel post2) {
+    Size screenSize = MediaQuery.of(context).size;
     var fUser = Provider.of<FirebaseUser>(context);
     TextEditingController _searchController = TextEditingController();
     var Btns = widget.isMe;
@@ -100,7 +100,6 @@ class _HebaDetailsState extends State<HebaDetails>
       onTap: () => FocusScope.of(context).unfocus(),
       child: SafeArea(
         child: ListView(children: <Widget>[
-
           /// Image Slider
           Container(
             height: 200,
@@ -164,7 +163,6 @@ class _HebaDetailsState extends State<HebaDetails>
               color: Colors.white,
               width: screenSize.width,
               child: Column(children: <Widget>[
-
                 /// First Row
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
@@ -179,40 +177,47 @@ class _HebaDetailsState extends State<HebaDetails>
                               width: 20,
                               child: IconButton(
                                 icon: Icon(
-                                  FontAwesomeIcons.shareSquare,
+                                  FontAwesomeIcons.shareAlt,
                                   color: Colors.black54,
                                   size: 16,
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  Share.share(
+                                      'check out my website https://example.com');
+                                },
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Container(
-                                width: 20,
-                                child: IconButton(
-                                  icon: Icon(
+                            GestureDetector(
+                              onTap: () async {
+                                _displaySnackBar(context, "الإرسال");
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  width: 20,
+                                  child: Icon(
                                     FontAwesomeIcons.flag,
                                     color: Colors.black54,
                                     size: 16,
                                   ),
-                                  onPressed: () {},
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Align(
-                                alignment: AlignmentDirectional.topEnd,
-                                child: Container(
-                                  width: 20,
-                                  child: IconButton(
-                                    icon: Icon(
+                            GestureDetector(
+                              onTap: () {
+                                _displaySnackBar(context, "الإرسال");
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Align(
+                                  alignment: AlignmentDirectional.topEnd,
+                                  child: Container(
+                                    width: 20,
+                                    child: Icon(
                                       FontAwesomeIcons.heart,
                                       color: Colors.black54,
                                       size: 16,
                                     ),
-                                    onPressed: () {},
                                   ),
                                 ),
                               ),
@@ -268,7 +273,7 @@ class _HebaDetailsState extends State<HebaDetails>
                 ),
 
                 /// Contact Buttons
-                Btns == false
+                Btns
 
                 /// todo flip value  later
                     ? Align(
@@ -304,7 +309,7 @@ class _HebaDetailsState extends State<HebaDetails>
                                   onPressed: () {
                                     launch("tel://$contactMethod");
                                     // launch('tel:+${contactMethod.toString()}');
-                                    _ContactThisMan(contactMethod);
+                                    sendMessage(contactMethod);
                                     logger.d(contactMethod);
                                   },
                                 ),
@@ -361,10 +366,17 @@ class _HebaDetailsState extends State<HebaDetails>
                                       style: TextStyle(
                                           fontWeight: FontWeight.w900)),
                                   onPressed: () {
-                                    FlutterOpenWhatsapp.sendSingleMessage(
-                                        "${widget.heba.oContact}",
-                                        "السلام عليكم بخصوص إتعلانك ${widget
-                                            .heba.hName}");
+                                    // FlutterOpenWhatsapp.sendSingleMessage(
+                                    //     "${widget.heba.oContact}",
+                                    //     "السلام عليكم بخصوص إتعلانك ${widget.heba.hName}");
+
+                                    sendMessage(widget.heba.authorId);
+                                    logger.d(
+                                        "auther Id ${widget.heba.authorId}");
+                                    logger.d(
+                                        "user Id  ${widget.currentUserId}");
+                                    logger.d(
+                                        "ROOM ID  ${widget.currentUserId}");
 //                                          todo Fix  Navigate to chat screen
 //                                           Navigator.push(
 //                                               context,
@@ -806,7 +818,10 @@ class _HebaDetailsState extends State<HebaDetails>
 
   _ImageSlider() {
     var imagesLength =
-        _getListOfImagesFromUser(widget.heba).cast<String>().toList().length;
+        _getListOfImagesFromUser(widget.heba)
+            .cast<String>()
+            .toList()
+            .length;
     var imagesList =
     _getListOfImagesFromUser(widget.heba).cast<String>().toList();
     TabController imagesController =
@@ -1019,20 +1034,33 @@ class _HebaDetailsState extends State<HebaDetails>
     );
   }
 
-  void _ContactThisMan(String contactMethod) {
-    for (int i = 0; i < smartChat.length; i++) {
-      switch (smartChat[i]['app']) {
-        default:
-          getIconButton(
-            smartChat[i]['iconData'],
-            35,
-            Theme
-                .of(context)
-                .primaryColorLight,
-            smartChat[i]['app'],
-          );
-      }
-    }
+  sendMessage(String userName) {
+    List<String> users = [widget.currentUserId, userName];
+
+    String chatRoomId = getChatRoomId(widget.currentUserId, userName);
+    Map<String, dynamic> chatRoom = {
+      "users": users,
+      "chatRoomId": chatRoomId,
+    };
+    DatabaseService.addChatRoom(chatRoom, chatRoomId);
+    Navigator.push(context, MaterialPageRoute(
+        builder: (context) =>
+            ChatScreen(
+              chatRoomId: chatRoomId,
+              loggedInUserUid: widget.currentUserId,
+            )
+    ));
+  }
+
+
+  _displaySnackBar(BuildContext context, String message) {
+    key.currentState.showSnackBar(new SnackBar(
+      duration: Duration(milliseconds: 500),
+      content: new Text(
+        "$message",
+        style: TextStyle(fontFamily: ArabicFonts.Cairo),
+      ),
+    ));
   }
 
 //  geenerateWidgets(int d) {

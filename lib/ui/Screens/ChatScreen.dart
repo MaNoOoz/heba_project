@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/ui/shared/utili/Constants.dart';
 import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
 import 'package:logger/logger.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
-import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/widgets/CustomAppBar.dart';
 
 class ChatScreen extends StatefulWidget {
   static const String id = "Chat_Screen";
@@ -97,12 +96,26 @@ class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 //
 //        },
 //      ),
-      appBar: CustomAppBar(
-        isImageVisble: false,
-        IsBack: true,
-        title: "$recverNameInAppbar",
-        color: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.blueGrey,
+        title: Text(
+          'UserName',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: ArabicFonts.Cairo,
+            fontSize: 16.0,
+          ),
+        ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              Icons.more_vert,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
+
       body: body(),
     );
   }

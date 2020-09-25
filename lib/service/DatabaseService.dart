@@ -25,6 +25,14 @@ class DatabaseService {
     return posts;
   }
 
+  static Future<void> DELETEALL() async {
+    publicpostsRef.getDocuments().then((snapshot) {
+      for (DocumentSnapshot ds in snapshot.documents) {
+        ds.reference.delete();
+      }
+    });
+  }
+
   static Stream<List<HebaModel>> initPostsStream() {
     log("_initPostsStream Called : ");
     var posts = DatabaseService.getPosts().asStream();
@@ -420,8 +428,8 @@ class DatabaseService {
     return messages;
   }
 
-  static Future<String> CreateChatRoomWithMap(String chatRoomId,
-      Map<String, dynamic> chatRoomMap) async {
+  static Future<String> CreateChatRoomWithMap(
+      String chatRoomId, Map<String, dynamic> chatRoomMap) async {
     await CHATS.document(chatRoomId).setData(chatRoomMap).catchError((onError) {
       print(onError.toString());
     });
@@ -459,7 +467,6 @@ class DatabaseService {
   }
 
   /// Chats Page ==================================================
-
 
   Future<void> addUserInfo(userData) async {
     Firestore.instance.collection("users").add(userData).catchError((e) {
@@ -511,10 +518,12 @@ class DatabaseService {
   }
 
   static Future<void> addMessage(String chatRoomId, chatMessageData) {
-    Firestore.instance.collection("chatRoom")
+    Firestore.instance
+        .collection("chatRoom")
         .document(chatRoomId)
         .collection("chats")
-        .add(chatMessageData).catchError((e) {
+        .add(chatMessageData)
+        .catchError((e) {
       print(e.toString());
     });
   }

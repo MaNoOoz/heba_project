@@ -2,6 +2,7 @@
  * Copyright (c) 2020.  Made With Love By Yaman Al-khateeb
  */
 
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,10 +10,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:heba_project/models/user_data.dart';
+import 'package:heba_project/service/DatabaseService.dart';
 import 'package:heba_project/service/FirestoreServiceAuth.dart';
 import 'package:heba_project/ui/Screens/HomeScreen.dart';
 import 'package:heba_project/ui/Screens/LoginScreen.dart';
 import 'package:heba_project/ui/Screens/profile_screen.dart';
+import 'package:heba_project/ui/shared/utili/Constants.dart';
 import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -219,6 +222,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 ),
                 offset: Offset(0, 55),
                 onSelected: ((value) async {
+                  if (value == 'DeleteAll') {
+                    await DatabaseService.DELETEALL().whenComplete(() {
+                      log("DELETED ALL ${publicpostsRef}");
+                    });
+                  }
                   if (value == 'Logout') {
                     await FirestoreServiceAuth.signOutFirebase();
                     await FirestoreServiceAuth.signOutGoogle().whenComplete(() {
@@ -251,6 +259,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     PopupMenuItem(
                       value: 'profile',
                       child: Text('Profile'),
+                    ),
+                    PopupMenuItem(
+                      value: 'DeleteAll',
+                      child: Text('DeleteAll'),
                     ),
                   ];
                 },

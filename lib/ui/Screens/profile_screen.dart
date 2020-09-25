@@ -103,16 +103,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _posts = posts;
     });
 
-    logger.d("_initUserPosts : ${_posts.length}");
+    // logger.d("_initUserPosts : ${_posts.length}");
   }
 
   Future<void> _initProfileInfo() async {
     isMyProfile = widget.userId == widget.currentUserId;
 
     User profileUser = await DatabaseService.getUserWithId(widget.userId);
-    logger.d("current profileUser id :  ${profileUser.documentId}");
-    logger.d("current profileUser email :  ${profileUser.email}");
-    logger.d("current profileUser name :  ${profileUser.name}");
+    // logger.d("current profileUser id :  ${profileUser.documentId}");
+    // logger.d("current profileUser email :  ${profileUser.email}");
+    // logger.d("current profileUser name :  ${profileUser.name}");
 
 //    var s = await usersRef.document(widget.userId).snapshots().length;
 //    logger.d("map : $s");
@@ -152,9 +152,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     targetUser = widget.userId;
     var loggedUser2 = widget.currentUserId;
 
-    logger.d("loggedUser ${loggedUser.toString()}"
-        " \n And Target USER : ${targetUser}"
-        " \n And Current USER ${loggedUser2}");
+    // logger.d("loggedUser ${loggedUser.toString()}"
+    //     " \n And Target USER : ${targetUser}"
+    //     " \n And Current USER ${loggedUser2}");
 
     var chatRoomId = getChatRoomId(targetUser, loggedUser2);
 
@@ -162,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Map<String, dynamic> chatMap = {"users": users, "chatRoomId": chatRoomId};
 
     var ss = await DatabaseService.CreateChatRoomWithMap(chatRoomId, chatMap);
-    logger.d("ss ${ss.toString()}");
+    // logger.d("ss ${ss.toString()}");
     // todo
     // Navigator.push(
     //     context,
@@ -176,7 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Widgets ======================
 
   _buildProfileInfo(User user) {
-    logger.d("_buildProfileInfo : Called");
+    // logger.d("_buildProfileInfo : Called");
 
     ///   logger.d("widget.userId : ${widget.userId} widget.currentUserId ${widget.currentUserId}");
     ///   logger.d("isMyProfile : ${isMyProfile}");
@@ -380,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: InkWell(
               onTap: () {
-                logger.d("Clicked");
+                // logger.d("Clicked");
               },
               child: Container(
                 width: MediaQuery
@@ -397,8 +397,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? mStatlessWidgets().LogoView()
                         : ImagesSlider(
                       items: map<Widget>(listFromFirebase, (index, i) {
-                        logger.d(
-                            "listFromFirebase ${listFromFirebase.length}");
+                        // logger.d(
+                        //     "listFromFirebase ${listFromFirebase.length}");
                         return Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
@@ -525,7 +525,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         } else if (map.hasError) {
-          logger.d('u have error in future');
+          // logger.d('u have error in future');
         }
         User userFromDb = User.fromFirestore(map.data);
 

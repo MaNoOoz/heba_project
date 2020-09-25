@@ -81,13 +81,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
       usersList = duplicateItems;
     });
 
-    logger.d("${usersList.length}");
+    logger.d("usersList =${usersList.length}");
   }
 
 
   @override
   Widget build(BuildContext context) {
     currentUserId = Provider.of<UserData>(context).currentUserId;
+    logger.d("duplicateItems : ${duplicateItems.length}");
+    logger.d("uss : ${usersList.map((e) => e.email)}");
 
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -219,21 +221,54 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //    return chattingWithUser;
   }
 
-  List<User> getUserFrom(String uid) {
+//   List<User> getUserFrom(String uid) {
+//     logger.d("getUserFromUid Called ");
+//
+//     Query query;
+//     query = usersRef.where("uid", isEqualTo: uid);
+//     var s = query.snapshots();
+//     List<User> users = [];
+//     s.forEach((element) {
+//       var docs = element.documents;
+//       for (var doc in docs) {
+//         logger.d("docs in user ref: ${docs.length}");
+//
+//         toUser = User.fromFirestore(doc);
+//         users.add(toUser);
+//         logger.d("usersss ${users.length}");
+//       }
+//     });
+//
+//     return users;
+// //
+// //  var q = await usersRef.where("uid", isEqualTo: uid).getDocuments();
+// //    var docs = q.documents;
+// //    for (var doc in docs) {
+// //      chattingWithUser = User.fromFirestore(doc);
+// //    }
+// ////    setState(() {
+// ////      chattingWithUser = user;
+// ////    });
+// ////    return chattingWithUser;
+// //    return chattingWithUser;
+//   }
+  getUserFrom(String uid) {
     logger.d("getUserFromUid Called ");
 
     Query query;
     query = usersRef.where("uid", isEqualTo: uid);
     var s = query.snapshots();
-    List<User> users = [];
+    List<String> users = [];
     s.forEach((element) {
       var docs = element.documents;
       for (var doc in docs) {
         logger.d("docs in user ref: ${docs.length}");
 
         toUser = User.fromFirestore(doc);
-        users.add(toUser);
-        logger.d("usersss ${users.length}");
+        var name = toUser.name;
+
+        users.add(name);
+        logger.d("usersss ${name}");
       }
     });
 
@@ -352,6 +387,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Widget chatRoomList() {
+    getUserFrom(widget.userID);
     return FutureBuilder<List<User>>(
       future: load(streamController),
       builder: (context, snapshot) {
@@ -368,12 +404,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
         );
       },
     );
+
   }
 
   Widget ChatItem(int i) {
     return Card(
       child: ListTile(
-        subtitle: Text("${i.toString()}"),
+        subtitle: Text("${i.toString()}"), // lastMessage
         leading: Padding(
           padding: const EdgeInsets.all(1.0),
           child: Container(
@@ -385,7 +422,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //                                                ),
           ),
         ),
-        title: Text("${usersList[i].name ?? "SS"}"),
+        title: Text("${getUserFrom(widget.currentUserId) ??
+            "${widget.currentUserId}"}"), // userName
       ),
     );
   }

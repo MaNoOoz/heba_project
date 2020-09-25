@@ -57,6 +57,7 @@ dependencies:
   google_fonts:
   flutter_launcher_icons:
   flutter_open_whatsapp:
+  share:
   #    DATA ============================================
   firebase_core:
   firebase_analytics:

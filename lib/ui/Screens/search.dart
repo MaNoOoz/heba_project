@@ -4,7 +4,7 @@ import 'package:google_fonts_arabic/fonts.dart';
 import 'package:heba_project/service/DatabaseService.dart';
 import 'package:heba_project/ui/shared/utili/helperFuncs.dart';
 
-import 'Chat.dart';
+import 'ChatView.dart';
 
 class Search extends StatefulWidget {
   @override

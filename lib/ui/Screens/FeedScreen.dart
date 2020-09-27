@@ -43,15 +43,13 @@ class FeedScreen extends StatefulWidget {
   final bool isBarVisible;
   final Function onChanged;
 
-  FeedScreen(
-      {this.currentUserId, this.userId, this.isBarVisible, this.onChanged});
+  FeedScreen({this.currentUserId, this.userId, this.isBarVisible, this.onChanged});
 
   @override
   _FeedScreenState createState() => _FeedScreenState();
 }
 
-class _FeedScreenState extends State<FeedScreen>
-    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _FeedScreenState extends State<FeedScreen> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   /// LOG ===================================================================
   Logger logger = Logger();
 
@@ -294,9 +292,7 @@ class _FeedScreenState extends State<FeedScreen>
         _selectedFilter = 1;
         staticHebatListFromUser.clear();
         staticHebatListFromUser.addAll(duplicateItems.toList());
-        log(
-            " SELECTED $selected : staticHebatListFromUser : ${staticHebatListFromUser
-                .length}duplicateItems: ${duplicateItems.length}");
+        log(" SELECTED $selected : staticHebatListFromUser : ${staticHebatListFromUser.length}duplicateItems: ${duplicateItems.length}");
       });
     } else if (selected == 2) {
       var filterdList2 = filterListByCity(selected);
@@ -316,8 +312,7 @@ class _FeedScreenState extends State<FeedScreen>
   _selctedSortingType(int selected) async {
     if (selected == 0) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        staticHebatListFromUser
-            .sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        staticHebatListFromUser.sort((a, b) => b.timestamp.compareTo(a.timestamp));
         setState(() {
           _selectedSort = selected;
         });
@@ -325,8 +320,7 @@ class _FeedScreenState extends State<FeedScreen>
       });
     }
     if (selected == 1) {
-      staticHebatListFromUser
-          .sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      staticHebatListFromUser.sort((a, b) => a.timestamp.compareTo(b.timestamp));
       setState(() {
         _selectedSort = selected;
       });
@@ -372,9 +366,7 @@ class _FeedScreenState extends State<FeedScreen>
                   height: h + 50,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10),
-                        topRight: Radius.circular(10)),
+                    borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
                   ),
                   child: Stack(
                     children: <Widget>[
@@ -396,10 +388,7 @@ class _FeedScreenState extends State<FeedScreen>
                                       title: Directionality(
                                         child: Text(
                                           "هباتي",
-                                          style: TextStyle(
-                                              fontWeight: _selectedFilter == 0
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal),
+                                          style: TextStyle(fontWeight: _selectedFilter == 0 ? FontWeight.bold : FontWeight.normal),
                                         ),
                                         textDirection: TextDirection.rtl,
                                       ),
@@ -414,10 +403,7 @@ class _FeedScreenState extends State<FeedScreen>
                                       title: Directionality(
                                         child: Text(
                                           "الكل",
-                                          style: TextStyle(
-                                              fontWeight: _selectedFilter == 1
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal),
+                                          style: TextStyle(fontWeight: _selectedFilter == 1 ? FontWeight.bold : FontWeight.normal),
                                         ),
                                         textDirection: TextDirection.rtl,
                                       ),
@@ -436,12 +422,7 @@ class _FeedScreenState extends State<FeedScreen>
                                             title: Directionality(
                                               child: Text(
                                                 "${_currentCity}",
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                    _selectedFilter == 2
-                                                        ? FontWeight.bold
-                                                        : FontWeight
-                                                        .normal),
+                                                style: TextStyle(fontWeight: _selectedFilter == 2 ? FontWeight.bold : FontWeight.normal),
                                               ),
                                               textDirection: TextDirection.rtl,
                                             ),
@@ -453,18 +434,15 @@ class _FeedScreenState extends State<FeedScreen>
                                       ),
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
-                                        child: FormField<String>(builder:
-                                            (FormFieldState<String> state) {
+                                        child: FormField<String>(builder: (FormFieldState<String> state) {
                                           return Container(
 //                                            width: 50,
-                                            child:
-                                            new DropdownButtonHideUnderline(
+                                            child: new DropdownButtonHideUnderline(
                                               child: new DropdownButton<String>(
                                                 value: _currentCity,
                                                 isDense: false,
                                                 isExpanded: false,
-                                                onChanged:
-                                                    (String newValue) async {
+                                                onChanged: (String newValue) async {
                                                   setState(() {
                                                     _currentCity = newValue;
                                                     state.didChange(newValue);
@@ -473,10 +451,8 @@ class _FeedScreenState extends State<FeedScreen>
 //                                                  todo
                                                   await _selctedFilterType(2);
                                                 },
-                                                items:
-                                                cities.map((String value) {
-                                                  return new DropdownMenuItem<
-                                                      String>(
+                                                items: cities.map((String value) {
+                                                  return new DropdownMenuItem<String>(
                                                     value: value,
                                                     child: new Text(value),
                                                   );
@@ -545,14 +521,8 @@ class _FeedScreenState extends State<FeedScreen>
   }
 
   showBtnSheetForSorting(BuildContext context, TabController _tabController) {
-    var w = MediaQuery
-        .of(context)
-        .size
-        .width * 0.1;
-    var h = MediaQuery
-        .of(context)
-        .size
-        .height * 0.2;
+    var w = MediaQuery.of(context).size.width * 0.1;
+    var h = MediaQuery.of(context).size.height * 0.2;
     mBottomSheetForFiltiring = showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
@@ -566,9 +536,7 @@ class _FeedScreenState extends State<FeedScreen>
                   height: h + 50,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10),
-                        topRight: Radius.circular(10)),
+                    borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
                   ),
                   child: Stack(
                     children: <Widget>[
@@ -591,10 +559,7 @@ class _FeedScreenState extends State<FeedScreen>
                                         textDirection: TextDirection.rtl,
                                         child: Text(
                                           'الأقدم',
-                                          style: TextStyle(
-                                              fontWeight: _selectedSort == 0
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal),
+                                          style: TextStyle(fontWeight: _selectedSort == 0 ? FontWeight.bold : FontWeight.normal),
                                         ),
                                       ),
                                     ),
@@ -610,10 +575,7 @@ class _FeedScreenState extends State<FeedScreen>
                                         textDirection: TextDirection.rtl,
                                         child: Text(
                                           'الأحدث',
-                                          style: TextStyle(
-                                              fontWeight: _selectedSort == 1
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal),
+                                          style: TextStyle(fontWeight: _selectedSort == 1 ? FontWeight.bold : FontWeight.normal),
                                         ),
                                       ),
                                     ),
@@ -671,9 +633,7 @@ class _FeedScreenState extends State<FeedScreen>
     }
 
     for (var i in staticHebatListFromUser) {
-      logger.d(
-          "getMarkersFromList2 :${i.geoPoint.latitude} - ${i.geoPoint
-              .longitude}");
+      logger.d("getMarkersFromList2 :${i.geoPoint.latitude} - ${i.geoPoint.longitude}");
 
       _markers.add(Marker(
         markerId: MarkerId(i.id),
@@ -687,8 +647,7 @@ class _FeedScreenState extends State<FeedScreen>
     setState(() {
       markers = _markers;
     });
-    logger.d(
-        "getMarkersFromList2 : _markers lenght${_markers.length.toString()}");
+    logger.d("getMarkersFromList2 : _markers lenght${_markers.length.toString()}");
 
     return markers;
   }
@@ -700,8 +659,7 @@ class _FeedScreenState extends State<FeedScreen>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            Edit_Heba_Screen(post: heba, currentUserId: widget.userId),
+        builder: (context) => Edit_Heba_Screen(post: heba, currentUserId: widget.userId),
       ),
     );
 //
@@ -711,16 +669,11 @@ class _FeedScreenState extends State<FeedScreen>
     log("getCurrentUserLocation :  Called");
 
     /// CurrentLocation
-    currentLocation = await Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+    currentLocation = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
     logger.d("getCurrentUserLocation :  $currentLocation");
 
     /// CameraPosition
-    CameraPosition currentPosition = CameraPosition(
-        bearing: 15.0,
-        target: LatLng(currentLocation.latitude, currentLocation.longitude),
-        tilt: 75.00,
-        zoom: 12.0);
+    CameraPosition currentPosition = CameraPosition(bearing: 15.0, target: LatLng(currentLocation.latitude, currentLocation.longitude), tilt: 75.00, zoom: 12.0);
     GoogleMapController controller = await mapController.future;
 
     controller.animateCamera(CameraUpdate.newCameraPosition(currentPosition));
@@ -734,12 +687,10 @@ class _FeedScreenState extends State<FeedScreen>
     GoogleMapController controller = await mapController.future;
 
     /// Heba Position Cords
-    LatLng latLng = new LatLng(
-        currentHeba.geoPoint.latitude, currentHeba.geoPoint.longitude);
+    LatLng latLng = new LatLng(currentHeba.geoPoint.latitude, currentHeba.geoPoint.longitude);
 
     /// Heba Position
-    CameraPosition hebaPosition =
-    CameraPosition(bearing: 15.0, target: latLng, tilt: 45.00, zoom: 14.0);
+    CameraPosition hebaPosition = CameraPosition(bearing: 15.0, target: latLng, tilt: 45.00, zoom: 14.0);
 
     /// Heba Camera Update
     CameraUpdate cameraUpdate = CameraUpdate.newLatLngZoom(latLng, 14);
@@ -769,9 +720,7 @@ class _FeedScreenState extends State<FeedScreen>
 
   /// Marker Icon From Assets
   setMarckerIcon() async {
-    await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(), AvailableImages.appIconsmall2)
-        .then((d) {
+    await BitmapDescriptor.fromAssetImage(ImageConfiguration(), AvailableImages.appIconsmall2).then((d) {
       ico = d;
     });
   }
@@ -815,7 +764,6 @@ class _FeedScreenState extends State<FeedScreen>
         children: <Widget>[
           Center(
             child: Visibility(
-
               /// todo
               visible: false,
               child: Container(
@@ -982,9 +930,7 @@ class _FeedScreenState extends State<FeedScreen>
                             child: Icon(
                               FontAwesomeIcons.filter,
                               size: 14,
-                              color: _selectedFilter != 1
-                                  ? Colors.blue
-                                  : Colors.black54,
+                              color: _selectedFilter != 1 ? Colors.blue : Colors.black54,
                             ),
                           ),
                         ),
@@ -1066,10 +1012,7 @@ class _FeedScreenState extends State<FeedScreen>
                         textDirection: TextDirection.rtl,
                         child: Text(
                           "  القريب",
-                          style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 14,
-                              fontWeight: FontWeight.normal),
+                          style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.normal),
                         ),
                       ),
                       Container(
@@ -1106,8 +1049,7 @@ class _FeedScreenState extends State<FeedScreen>
         .photoUrl;
 
     /// fetch the list
-    var listFromFirebase =
-        _getListOfImagesFromUser(post).cast<String>().toList() ?? [];
+    var listFromFirebase = _getListOfImagesFromUser(post).cast<String>().toList() ?? [];
     int _current = 0;
 
     return contentRow(fUser, fImage, listFromFirebase, post, _current, index);
@@ -1115,16 +1057,12 @@ class _FeedScreenState extends State<FeedScreen>
 
   Widget gridView(HebaModel post, int index) {
     /// fetch the list
-    var listFromFirebase =
-    _getListOfImagesFromUser(post).cast<String>().toList();
+    var listFromFirebase = _getListOfImagesFromUser(post).cast<String>().toList();
     int _current = 0;
-    return Container(
-        height: 200,
-        child: contentGrid(listFromFirebase, post, _current, index));
+    return Container(height: 200, child: contentGrid(listFromFirebase, post, _current, index));
   }
 
-  Widget contentGrid(List<String> listFromFirebase, HebaModel post,
-      int _current, index) {
+  Widget contentGrid(List<String> listFromFirebase, HebaModel post, int _current, index) {
     featured = post.isFeatured;
     var isFeaturedWidget;
     if (featured == true) {
@@ -1134,10 +1072,7 @@ class _FeedScreenState extends State<FeedScreen>
           padding: const EdgeInsets.only(left: 8.0),
           child: mLables(
             mColor: Colors.green,
-            mStyle: TextStyle(
-                color: Colors.white,
-                wordSpacing: 1,
-                fontWeight: FontWeight.bold),
+            mStyle: TextStyle(color: Colors.white, wordSpacing: 1, fontWeight: FontWeight.bold),
             mTitle: "new",
             mWidth: 40,
           ),
@@ -1171,13 +1106,8 @@ class _FeedScreenState extends State<FeedScreen>
                 elevation: 4,
                 child: Stack(
                   children: <Widget>[
-                    Align(
-                        alignment: AlignmentDirectional.topCenter,
-                        child:
-                        rowBody(listFromFirebase, post, _current, index)),
-                    Align(
-                        alignment: AlignmentDirectional.bottomCenter,
-                        child: rowFooter("fUserName", "fImage", post)),
+                    Align(alignment: AlignmentDirectional.topCenter, child: rowBody(listFromFirebase, post, _current, index)),
+                    Align(alignment: AlignmentDirectional.bottomCenter, child: rowFooter("fUserName", "fImage", post)),
                   ],
                 ),
               ),
@@ -1232,8 +1162,7 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-  Widget contentRow(String fUserName, String fImage,
-      List<String> listFromFirebase, HebaModel post, int _current, int index) {
+  Widget contentRow(String fUserName, String fImage, List<String> listFromFirebase, HebaModel post, int _current, int index) {
     featured = post.isFeatured;
     var isFeaturedWidget;
     if (featured == true) {
@@ -1243,10 +1172,7 @@ class _FeedScreenState extends State<FeedScreen>
           padding: const EdgeInsets.only(left: 8.0),
           child: mLables(
             mColor: Colors.green,
-            mStyle: TextStyle(
-                color: Colors.white,
-                wordSpacing: 1,
-                fontWeight: FontWeight.bold),
+            mStyle: TextStyle(color: Colors.white, wordSpacing: 1, fontWeight: FontWeight.bold),
             mTitle: "new",
             mWidth: 40,
           ),
@@ -1280,13 +1206,8 @@ class _FeedScreenState extends State<FeedScreen>
                 elevation: 4,
                 child: Stack(
                   children: <Widget>[
-                    Align(
-                        alignment: AlignmentDirectional.topCenter,
-                        child:
-                        rowBody(listFromFirebase, post, _current, index)),
-                    Align(
-                        alignment: AlignmentDirectional.bottomCenter,
-                        child: rowFooter(fUserName, fImage, post)),
+                    Align(alignment: AlignmentDirectional.topCenter, child: rowBody(listFromFirebase, post, _current, index)),
+                    Align(alignment: AlignmentDirectional.bottomCenter, child: rowFooter(fUserName, fImage, post)),
                   ],
                 ),
               ),
@@ -1302,8 +1223,7 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-  Widget rowBody(List<String> listFromFirebase, HebaModel post, int _current,
-      int index) {
+  Widget rowBody(List<String> listFromFirebase, HebaModel post, int _current, int index) {
     return Container(
       height: 150,
 //      color: Colors.blue,
@@ -1312,8 +1232,9 @@ class _FeedScreenState extends State<FeedScreen>
         splashColor: Colors.blueGrey,
         onTap: () async {
           log("${index} ");
-////          await FirestoreServiceAuth.signOutFirebase();
-////          await FirestoreServiceAuth.signInWithGoogle();
+          // await FirestoreServiceAuth.signOutFirebase();
+//          await FirestoreServiceAuth.signInWithGoogle();
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1324,6 +1245,7 @@ class _FeedScreenState extends State<FeedScreen>
                       currentUserId: widget.userId),
             ),
           );
+
 //          Navigator.push(
 //            context,
 //            MaterialPageRoute(
@@ -1417,17 +1339,13 @@ class _FeedScreenState extends State<FeedScreen>
                     "${timeago.format(post.timestamp.toDate())}",
                     maxLines: 1,
                     textAlign: TextAlign.end,
-                    style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.black,
-                        fontWeight: FontWeight.normal),
+                    style: TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.normal),
                   ),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0, left: 8),
-                child: Icon(FontAwesomeIcons.clock,
-                    size: 14, color: Colors.black38),
+                child: Icon(FontAwesomeIcons.clock, size: 14, color: Colors.black38),
               ),
               Expanded(
                 flex: 1,
@@ -1451,9 +1369,7 @@ class _FeedScreenState extends State<FeedScreen>
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10.0),
                         image: DecorationImage(
-                          image: post.oImage.isEmpty
-                              ? Image.asset(AvailableImages.appIcon)
-                              : NetworkImage(post.oImage),
+                          image: post.oImage.isEmpty ? Image.asset(AvailableImages.appIcon) : NetworkImage(post.oImage),
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -1469,8 +1385,7 @@ class _FeedScreenState extends State<FeedScreen>
     );
   }
 
-  Widget rowImageSide(List<String> listFromFirebase, HebaModel post,
-      int _current) {
+  Widget rowImageSide(List<String> listFromFirebase, HebaModel post, int _current) {
     return Container(
       height: 100,
       width: 100,
@@ -1491,11 +1406,7 @@ class _FeedScreenState extends State<FeedScreen>
                 topLeft: Radius.zero,
                 topRight: Radius.circular(0),
               ),
-              image: DecorationImage(
-                  image: post.imageUrls.isEmpty
-                      ? Image.asset('assets/images/user_placeholder.jpg')
-                      : NetworkImage(i),
-                  fit: BoxFit.cover),
+              image: DecorationImage(image: post.imageUrls.isEmpty ? Image.asset('assets/images/user_placeholder.jpg') : NetworkImage(i), fit: BoxFit.cover),
             ),
           );
         }),
@@ -1537,12 +1448,10 @@ class _FeedScreenState extends State<FeedScreen>
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.start,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.cairo(
-                    textStyle: Theme
-                        .of(context)
-                        .textTheme
-                        .subtitle1,
-                    fontSize: 16)),
+                style: GoogleFonts.cairo(textStyle: Theme
+                    .of(context)
+                    .textTheme
+                    .subtitle1, fontSize: 16)),
           ),
           Align(
             alignment: AlignmentDirectional.centerEnd,
@@ -1567,8 +1476,7 @@ class _FeedScreenState extends State<FeedScreen>
             children: [
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(FontAwesomeIcons.city,
-                    size: 14, color: Colors.black38),
+                child: Icon(FontAwesomeIcons.city, size: 14, color: Colors.black38),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
@@ -1661,6 +1569,7 @@ class _FeedScreenState extends State<FeedScreen>
             return Text("Error ");
           }
         }
+        return hebat(context);
 
 //        return StreamBuilder<List<HebaModel>>(
 //          stream: DatabaseService.initPostsStream(),
@@ -1669,7 +1578,6 @@ class _FeedScreenState extends State<FeedScreen>
 //            return hebat(context);
 //          },
 //        );
-        return hebat(context);
       },
     );
   }
@@ -1722,10 +1630,7 @@ class _FeedScreenState extends State<FeedScreen>
 //                _HebaPostsFromDb(widget.post);
 //                return rowView(_docsList[index], index);
             return GestureDetector(
-              child: Container(
-                  color: Colors.blueGrey,
-                  child: rowView(
-                      post: staticHebatListFromUser[index], index: index)),
+              child: Container(color: Colors.blueGrey, child: rowView(post: staticHebatListFromUser[index], index: index)),
               onTap: () {
 //                log(" TEST ${staticHebatListFromUser[index].id.toString()}");
 //                Navigator.push(
@@ -1790,10 +1695,7 @@ class _FeedScreenState extends State<FeedScreen>
                     textDirection: TextDirection.rtl,
                     child: Text(
                       "عرض",
-                      style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.normal),
+                      style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.normal),
                     ),
                   ),
                   Padding(
@@ -1804,9 +1706,7 @@ class _FeedScreenState extends State<FeedScreen>
                           icon: Icon(
                             FontAwesomeIcons.thLarge,
                             size: 14,
-                            color: mDataViewMode == 0
-                                ? Colors.blue
-                                : Colors.grey[400],
+                            color: mDataViewMode == 0 ? Colors.blue : Colors.grey[400],
                           ),
                           onPressed: () {
                             setState(() {
@@ -1832,10 +1732,7 @@ class _FeedScreenState extends State<FeedScreen>
                     textDirection: TextDirection.rtl,
                     child: Text(
                       "عرض",
-                      style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.normal),
+                      style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.normal),
                     ),
                   ),
                   Padding(
@@ -1846,9 +1743,7 @@ class _FeedScreenState extends State<FeedScreen>
                           icon: Icon(
                             FontAwesomeIcons.list,
                             size: 14,
-                            color: mDataViewMode == 1
-                                ? Colors.blue
-                                : Colors.grey[400],
+                            color: mDataViewMode == 1 ? Colors.blue : Colors.grey[400],
                           ),
                           onPressed: () {
                             isBar = false;
@@ -1879,10 +1774,7 @@ class _FeedScreenState extends State<FeedScreen>
                     textDirection: TextDirection.rtl,
                     child: Text(
                       "عرض",
-                      style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.normal),
+                      style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.normal),
                     ),
                   ),
                   Padding(
@@ -1893,9 +1785,7 @@ class _FeedScreenState extends State<FeedScreen>
                           icon: Icon(
                             FontAwesomeIcons.map,
                             size: 14,
-                            color: mDataViewMode == 2
-                                ? Colors.blue
-                                : Colors.grey[400],
+                            color: mDataViewMode == 2 ? Colors.blue : Colors.grey[400],
                           ),
                           onPressed: () {
                             isBar = true;
@@ -1926,8 +1816,7 @@ class _FeedScreenState extends State<FeedScreen>
   bool _showMapStyle = false;
 
   Future<void> _toggleMapStyle() async {
-    String style =
-    await DefaultAssetBundle.of(context).loadString('assets/mapstyle.json');
+    String style = await DefaultAssetBundle.of(context).loadString('assets/mapstyle.json');
 
     if (_showMapStyle) {
       mapController.future.then((value) => value.setMapStyle(style));
@@ -1954,10 +1843,7 @@ class _FeedScreenState extends State<FeedScreen>
                         () => new EagerGestureRecognizer(),
                   ),
                 ].toSet(),
-                initialCameraPosition: CameraPosition(
-                    target: LatLng(
-                        currentLocation.latitude, currentLocation.longitude),
-                    zoom: 1),
+                initialCameraPosition: CameraPosition(target: LatLng(currentLocation.latitude, currentLocation.longitude), zoom: 1),
                 onMapCreated: (controller) {
                   getMarkres();
                   this.mapController.complete(controller);
@@ -2059,9 +1945,7 @@ class _FeedScreenState extends State<FeedScreen>
         },
         child: Container(
           width: 150,
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5.0),
-              color: Colors.transparent),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(5.0), color: Colors.transparent),
           child: Row(
             children: <Widget>[
               Flexible(

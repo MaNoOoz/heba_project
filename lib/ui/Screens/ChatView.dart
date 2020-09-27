@@ -54,7 +54,7 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   void initState() {
-    DatabaseService.getChats(widget.chatRoomId).then((val) {
+    DatabaseService.getChats2(widget.chatRoomId).then((val) {
       setState(() {
         chats = val;
       });

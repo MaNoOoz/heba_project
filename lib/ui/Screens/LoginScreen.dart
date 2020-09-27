@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_formKey.currentState.validate()) {
         _formKey.currentState.save();
         FirestoreServiceAuth.loginWithFirebase(_email, _password);
-        var cu = await FirestoreServiceAuth.isUserLogged();
+        var cu = await FirestoreServiceAuth.isFirebaseUserLogged();
         print('current User Check bool : ${cu}  ');
 
         return true;
@@ -155,10 +155,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           Padding(
                             padding: const EdgeInsets.only(left: 20.0),
                             child: Text(
-                              "Login To Your Acount",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
+                              "Login To Your Account",
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -177,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         }).whenComplete(() {
-//                        Navigator.of(context).pushNamed(HomeScreen.id);
+                          Navigator.of(context).pushNamed(HomeScreen.id);
                           print("${_email}");
                         });
                       },
@@ -376,7 +374,10 @@ class _LoginScreenState extends State<LoginScreen> {
 //                      border: InputBorder.none,
 //                      hintText: 'Enter your email',
 //                    ),
-                  validator: UtilsImporter().uCommanUtils.validateName,
+                  validator: (input) =>
+                  !input.trim().contains('@')
+                      ? 'Please enter a valid email'
+                      : null,
 
 //                    validator: (input) {
 //                      log("$input");
@@ -397,8 +398,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: Icon(Icons.lock_open),
                   ),
                   validator: (input) =>
-                      UtilsImporter().uCommanUtils.validatePassword(input),
-                  obscureText: true,
+                  input
+                      .trim()
+                      .length < 6
+                      ? 'Must be at least 6 characters'
+                      : null, obscureText: true,
+                  onSaved: (input) => _password = input,
+
                 ),
               ),
             ],

@@ -7,6 +7,7 @@ import 'package:flutter_images_slider/flutter_images_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:heba_project/models/models.dart';
 import 'package:heba_project/service/DatabaseService.dart';
+import 'package:heba_project/ui/Screens/ChatView.dart';
 import 'package:heba_project/ui/Screens/SettingsScreen.dart';
 import 'package:heba_project/ui/shared/Assets.dart';
 import 'package:heba_project/ui/shared/utili/Constants.dart';
@@ -18,8 +19,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/utili/helperFuncs.dart';
 import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/widgets/CustomAppBar.dart';
-
-import 'Chat.dart';
 
 class ProfileScreen extends StatefulWidget {
   static String id = "profile_screen";
@@ -514,17 +513,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: CircularProgressIndicator(),
           );
         }
-        if (!map.hasData) {
-          return Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                mStatlessWidgets().mLoading(),
-              ],
-            ),
-          );
-        } else if (map.hasError) {
+
+        else if (map.hasError) {
           // logger.d('u have error in future');
         }
         User userFromDb = User.fromFirestore(map.data);

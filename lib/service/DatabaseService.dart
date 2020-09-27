@@ -15,14 +15,17 @@ class DatabaseService {
   /// as A Stream
 
   static Future<List<HebaModel>> getPosts() async {
-    QuerySnapshot userPostsSnapshot = await publicpostsRef
-        .orderBy('timestamp', descending: true)
-        .getDocuments();
+    QuerySnapshot userPostsSnapshot = await publicpostsRef.orderBy('timestamp', descending: true).getDocuments();
 
-    List<HebaModel> posts = userPostsSnapshot.documents
-        .map((doc) => HebaModel.fromFirestore(doc))
-        .toList();
+    List<HebaModel> posts = userPostsSnapshot.documents.map((doc) => HebaModel.fromFirestore(doc)).toList();
     return posts;
+  }
+
+  static Future<List<User>> getUsers() async {
+    QuerySnapshot userPostsSnapshot = await usersRef.orderBy('timestamp', descending: true).getDocuments();
+
+    List<User> users = userPostsSnapshot.documents.map((doc) => User.fromFirestore(doc)).toList();
+    return users;
   }
 
   static Future<void> DELETEALL() async {
@@ -79,26 +82,18 @@ class DatabaseService {
   }
 
   static Future<QuerySnapshot> searchUsers(String keyword) {
-    Future<QuerySnapshot> users =
-        usersRef.where('name', isGreaterThanOrEqualTo: keyword).getDocuments();
+    Future<QuerySnapshot> users = usersRef.where('name', isGreaterThanOrEqualTo: keyword).getDocuments();
     return users;
   }
 
   static Future<QuerySnapshot> searchUsers2(String keyword) {
-    Future<QuerySnapshot> users = usersRef
-        .where('name', isEqualTo: keyword.substring(0, 1))
-        .getDocuments();
+    Future<QuerySnapshot> users = usersRef.where('name', isEqualTo: keyword.substring(0, 1)).getDocuments();
     return users;
   }
 
   /// todo Fix
-  static Future<QuerySnapshot> searchChats(
-      String keyword, User user, Chat chat) {
-    Future<QuerySnapshot> chats = contacts
-        .document(user.uid)
-        .collection('userChats')
-        .where(chat.chatId, isGreaterThanOrEqualTo: keyword)
-        .getDocuments();
+  static Future<QuerySnapshot> searchChats(String keyword, User user, Chat chat) {
+    Future<QuerySnapshot> chats = contacts.document(user.uid).collection('userChats').where(chat.chatId, isGreaterThanOrEqualTo: keyword).getDocuments();
     return chats;
   }
 
@@ -359,14 +354,9 @@ class DatabaseService {
 //    return posts;
 //  }
   static Future<List<HebaModel>> getUserPosts2(String userId) async {
-    QuerySnapshot userPostsSnapshot = await publicpostsRef
-        .orderBy('timestamp', descending: true)
-        .where("authorId", isEqualTo: userId)
-        .getDocuments();
+    QuerySnapshot userPostsSnapshot = await publicpostsRef.orderBy('timestamp', descending: true).where("authorId", isEqualTo: userId).getDocuments();
 
-    List<HebaModel> posts = userPostsSnapshot.documents
-        .map((doc) => HebaModel.fromFirestore(doc))
-        .toList();
+    List<HebaModel> posts = userPostsSnapshot.documents.map((doc) => HebaModel.fromFirestore(doc)).toList();
     return posts;
   }
 
@@ -380,15 +370,10 @@ class DatabaseService {
 
   /// Chat  ==================================================
 
-  static Future<Message> CreateFakeMessageFuture(
-      {String senderID, String channelName, String reciverID}) async {
+  static Future<Message> CreateFakeMessageFuture({String senderID, String channelName, String reciverID}) async {
     var ts = Timestamp.fromDate(DateTime.now());
 
-    CHATS
-        .document(senderID)
-        .collection(USERCHATS)
-        .document(channelName)
-        .collection(channelName);
+    CHATS.document(senderID).collection(USERCHATS).document(channelName).collection(channelName);
 
     Message message = Message(
         chatId: channelName,
@@ -406,30 +391,19 @@ class DatabaseService {
   }
 
   ///  as a List future
-  static Future<List<Message>> GetMessagesFutureAsList(
-      String senderID, String reciverID, String channelName) async {
-    QuerySnapshot messagesSnapshots = await CHATS
-        .document(senderID)
-        .collection(USERCHATS)
-        .document(channelName)
-        .collection(channelName)
-        .orderBy('timestamp', descending: true)
-        .getDocuments();
+  static Future<List<Message>> GetMessagesFutureAsList(String senderID, String reciverID, String channelName) async {
+    QuerySnapshot messagesSnapshots = await CHATS.document(senderID).collection(USERCHATS).document(channelName).collection(channelName).orderBy('timestamp', descending: true).getDocuments();
 
     if (messagesSnapshots.documents.length > 0) {
       print("U Have  ${messagesSnapshots.documents.length} Messages");
     } else if (messagesSnapshots.documents.length <= 0) {
-      print(
-          "Error U Dont Have   ${messagesSnapshots.documents.length} Messages");
+      print("Error U Dont Have   ${messagesSnapshots.documents.length} Messages");
     }
-    List<Message> messages = messagesSnapshots.documents
-        .map((doc) => Message.fromFirestore(doc))
-        .toList();
+    List<Message> messages = messagesSnapshots.documents.map((doc) => Message.fromFirestore(doc)).toList();
     return messages;
   }
 
-  static Future<String> CreateChatRoomWithMap(
-      String chatRoomId, Map<String, dynamic> chatRoomMap) async {
+  static Future<String> CreateChatRoomWithMap(String chatRoomId, Map<String, dynamic> chatRoomMap) async {
     await CHATS.document(chatRoomId).setData(chatRoomMap).catchError((onError) {
       print(onError.toString());
     });
@@ -443,8 +417,7 @@ class DatabaseService {
   }
 
   /// todo
-  static Future<Message> CreateFakeMessageFuture2(
-      {String senderID, String charRoomId, String reciverID}) async {
+  static Future<Message> CreateFakeMessageFuture2({String senderID, String charRoomId, String reciverID}) async {
     print("CreateFakeMessageFuture Called ${charRoomId}");
 
     var ts = Timestamp.fromDate(DateTime.now());
@@ -475,55 +448,44 @@ class DatabaseService {
   }
 
   getUserInfo(String email) async {
-    return Firestore.instance
-        .collection("users")
-        .where("userEmail", isEqualTo: email)
-        .getDocuments()
-        .catchError((e) {
+    return Firestore.instance.collection("users").where("userEmail", isEqualTo: email).getDocuments().catchError((e) {
       print(e.toString());
     });
   }
 
   static searchByName(String searchField) {
-    return Firestore.instance
-        .collection("users")
-        .where('userName', isEqualTo: searchField)
-        .getDocuments();
+    return Firestore.instance.collection("users").where('userName', isEqualTo: searchField).getDocuments();
   }
 
+  // static Future<bool> addChatRoom(chatRoom, chatRoomId) {
+  //   Firestore.instance.collection("chatRoom").document(chatRoomId).setData(chatRoom).catchError((e) {
+  //     print(e);
+  //   });
+  // }
   static Future<bool> addChatRoom(chatRoom, chatRoomId) {
-    Firestore.instance
-        .collection("chatRoom")
-        .document(chatRoomId)
-        .setData(chatRoom)
-        .catchError((e) {
+    CHATS.document(chatRoomId).setData(chatRoom).catchError((e) {
       print(e);
     });
   }
 
-  static getUserChats(String itIsMyName) async {
-    return await Firestore.instance
-        .collection("chatRoom")
-        .where('users', arrayContains: itIsMyName)
-        .snapshots();
+  static getUserChats(String myUid) async {
+    return CHATS.where('users', arrayContains: myUid).snapshots();
   }
 
-  static getChats(String chatRoomId) async {
-    return Firestore.instance
-        .collection("chatRoom")
-        .document(chatRoomId)
-        .collection("chats")
-        .orderBy('time')
-        .snapshots();
+  static getChatRoomId(String chatRoomId) async {
+    return CHATS.document().documentID;
   }
+
+  static getChats2(String chatRoomId) async {
+    return CHATS.document(chatRoomId).collection("chats").snapshots();
+  }
+
+  // static getChats(String chatRoomId) async {
+  //   return Firestore.instance.collection("chatRoom").document(chatRoomId).collection("chats").orderBy('time').snapshots();
+  // }
 
   static Future<void> addMessage(String chatRoomId, chatMessageData) {
-    Firestore.instance
-        .collection("chatRoom")
-        .document(chatRoomId)
-        .collection("chats")
-        .add(chatMessageData)
-        .catchError((e) {
+    Firestore.instance.collection("chatRoom").document(chatRoomId).collection("chats").add(chatMessageData).catchError((e) {
       print(e.toString());
     });
   }
@@ -558,16 +520,12 @@ class DatabaseService {
   }
 
   static Future<QuerySnapshot> ChatsFromFuture(currentUserId) async {
-    var curentChats = await CHATS
-        .document(currentUserId)
-        .collection(USERCHATS)
-        .getDocuments();
+    var curentChats = await CHATS.document(currentUserId).collection(USERCHATS).getDocuments();
     return curentChats;
   }
 
   static Stream<QuerySnapshot> ChatsFromStream(currentUserId) {
-    var curentChats =
-    CHATS.document(currentUserId).collection(USERCHATS).snapshots();
+    var curentChats = CHATS.document(currentUserId).collection(USERCHATS).snapshots();
     return curentChats;
   }
 
@@ -578,11 +536,7 @@ class DatabaseService {
   Stream<Chat> get chatsStream => _chatsController.stream;
 
   Stream<Chat> ChatsFromStreamTest(currentUserId) {
-    CHATS
-        .document(currentUserId)
-        .collection(USERCHATS)
-        .snapshots()
-        .listen((querySnapshot) {
+    CHATS.document(currentUserId).collection(USERCHATS).snapshots().listen((querySnapshot) {
       var docs = querySnapshot.documents;
       for (var doc in docs) {
         var docID = doc.documentID;

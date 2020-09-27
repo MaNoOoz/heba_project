@@ -256,11 +256,7 @@ class _HebaDetailsState extends State<HebaDetails>
                                   child: CircleAvatar(
                                     radius: 15.0,
                                     backgroundColor: Colors.white,
-                                    backgroundImage: widget.heba.oImage.isEmpty
-                                        ? AssetImage(
-                                        'assets/images/user_placeholder.jpg')
-                                        : CachedNetworkImageProvider(
-                                        widget.heba.oImage),
+                                    backgroundImage: widget.heba.oImage.isEmpty ? AssetImage('assets/images/user_placeholder.jpg') : CachedNetworkImageProvider(widget.heba.oImage),
                                   ),
                                 ),
                               ),
@@ -366,24 +362,20 @@ class _HebaDetailsState extends State<HebaDetails>
                                       style: TextStyle(
                                           fontWeight: FontWeight.w900)),
                                   onPressed: () {
+                                    /// Open Whats App
                                     // FlutterOpenWhatsapp.sendSingleMessage(
                                     //     "${widget.heba.oContact}",
                                     //     "السلام عليكم بخصوص إتعلانك ${widget.heba.hName}");
 
+                                    /// App Meassages
                                     sendMessage(widget.heba.authorId);
                                     logger.d(
                                         "auther Id ${widget.heba.authorId}");
                                     logger.d(
                                         "user Id  ${widget.currentUserId}");
                                     logger.d(
-                                        "ROOM ID  ${widget.currentUserId}");
-//                                          todo Fix  Navigate to chat screen
-//                                           Navigator.push(
-//                                               context,
-//                                               MaterialPageRoute(
-//                                                   builder: (_) => ChatView(
-//                                                         chatRoomId: chatRoomId,
-//                                                       )));
+                                        "ROOM ID  ${chatRoom}");
+//
                                   },
                                 ),
                               ),
@@ -991,8 +983,7 @@ class _HebaDetailsState extends State<HebaDetails>
 
   bool canLaunchAppURL;
 
-  IconButton getIconButton(IconData iconData, double iconSize, Color iconColor,
-      String appUrl) {
+  IconButton getIconButton(IconData iconData, double iconSize, Color iconColor, String appUrl) {
     return IconButton(
       icon: Icon(
         iconData,
@@ -1034,24 +1025,26 @@ class _HebaDetailsState extends State<HebaDetails>
     );
   }
 
+  Map<String, dynamic> chatRoom;
+
   sendMessage(String userName) {
     List<String> users = [widget.currentUserId, userName];
 
     String chatRoomId = getChatRoomId(widget.currentUserId, userName);
-    Map<String, dynamic> chatRoom = {
+    chatRoom = {
       "users": users,
       "chatRoomId": chatRoomId,
     };
     DatabaseService.addChatRoom(chatRoom, chatRoomId);
-    Navigator.push(context, MaterialPageRoute(
-        builder: (context) =>
-            ChatScreen(
-              chatRoomId: chatRoomId,
-              loggedInUserUid: widget.currentUserId,
-            )
-    ));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                ChatScreen(
+                  chatRoomId: chatRoomId,
+                  loggedInUserUid: widget.currentUserId,
+                )));
   }
-
 
   _displaySnackBar(BuildContext context, String message) {
     key.currentState.showSnackBar(new SnackBar(

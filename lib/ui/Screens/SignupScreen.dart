@@ -108,8 +108,12 @@ class _SignupScreenState extends State<SignupScreen> {
 
         /// SignUp the User In Firebase
         FirestoreServiceAuth.signUpUserFromInput(
-                context, _name, _email, _password, _imageUrl)
-            .catchError((e) {
+          context,
+          _name,
+          _email,
+          _password,
+          _imageUrl,
+        ).catchError((e) {
           _displaySnackBarError(context, "$e");
         }).whenComplete(() {
 //          _displaySnackBarError(context, "Hey");
@@ -145,8 +149,8 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  _handleImageFromGallery() async {
-    File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
+  Future <void> _handleImageFromGallery() async {
+    File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
     if (imageFile != null) {
       setState(() {
         _profileImage = imageFile;
@@ -173,34 +177,35 @@ class _SignupScreenState extends State<SignupScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: CircleAvatar(
-                            radius: 60.0,
-                            backgroundColor: Colors.grey,
-                            backgroundImage: _displayProfileImage(),
-                          ),
-                        ),
-                        FlatButton(
-                          onPressed: () async {
-                            _handleImageFromGallery();
-                          },
-                          child: OutlineButton(
-                            onPressed: () => _handleImageFromGallery,
-                            child: Text(
-                              'Add Profile Image',
-                              style: TextStyle(
-                                  color: Theme
-                                      .of(context)
-                                      .accentColor,
-                                  fontSize: 16.0),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // Column(
+                    //   children: <Widget>[
+                    //     Padding(
+                    //       padding: const EdgeInsets.all(8.0),
+                    //       child: CircleAvatar(
+                    //         radius: 60.0,
+                    //         backgroundColor: Colors.grey,
+                    //         backgroundImage: _displayProfileImage(),
+                    //       ),
+                    //     ),
+                    //     FlatButton(
+                    //       onPressed: () async {
+                    //         await _handleImageFromGallery();
+                    //       },
+                    //       child: OutlineButton(
+                    //         onPressed: () => _handleImageFromGallery,
+                    //         child: Text(
+                    //           'إضافة صورة',
+                    //           style: TextStyle(
+                    //               color: Theme
+                    //                   .of(context)
+                    //                   .accentColor,
+                    //               fontSize: 16.0),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+
 
 //                    /// Image
 //                    Center(

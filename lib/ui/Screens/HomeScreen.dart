@@ -177,7 +177,7 @@ class buildCurvedNavigationBar extends StatelessWidget {
 //  }
   @override
   Widget build(BuildContext context) {
-    return CurvedNavigationBar(animationCurve: Curves.bounceInOut,
+    return CurvedNavigationBar(
         index: bottomSelectedIndex,
         height: 50,
         buttonBackgroundColor: Colors.blueGrey,

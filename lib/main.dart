@@ -45,8 +45,7 @@ class MyApp extends StatelessWidget {
         builder: (BuildContext context, AsyncSnapshot map) {
 //        todo make sure this is the right way to check user
           if (!map.hasData == false) {
-            var cU = Provider.of<UserData>(context, listen: true)
-                .currentUserId = map.data.uid;
+            var cU = Provider.of<UserData>(context, listen: true).currentUserId = map.data.uid;
 
 //            var fUser = Provider.of<FirebaseUser>(context);
 //
@@ -57,8 +56,7 @@ class MyApp extends StatelessWidget {
 //            helperFunctions.SaveUserEmail(fUser.email);
 //            helperFunctions.SaveUserName(fUser.displayName);
 
-            Provider.of<UserData>(context, listen: true).currentChatId =
-                map.data.uid.toString().substring(0, 14);
+            Provider.of<UserData>(context, listen: true).currentChatId = map.data.uid.toString().substring(0, 14);
 //           var isMap = Provider.of<UserData>(context, listen: true).isMap = true;
 
             return HomeScreen();
@@ -128,12 +126,9 @@ class MyApp extends StatelessWidget {
 //        ChangeNotifierProvider<AppState>(create: (_) => AppState()),
 //        ChangeNotifierProvider<ChatState>(create: (_) => ChatState()),
 
-        StreamProvider<FirebaseUser>.value(
-            value: FirebaseAuth.instance.onAuthStateChanged),
-        StreamProvider<UserLocation>.value(
-            value: LocationService().locationStream),
-        StreamProvider<Position>.value(
-            value: LocationService().locationStream2),
+        StreamProvider<FirebaseUser>.value(value: FirebaseAuth.instance.onAuthStateChanged),
+        StreamProvider<UserLocation>.value(value: LocationService().locationStream),
+        StreamProvider<Position>.value(value: LocationService().locationStream2),
         StreamProvider<Chat>.value(value: DatabaseService().chatsStream),
 //        StreamProvider<UserLocation>.value(value: LocationService().locationStream),
 //        StreamProvider<Post2>.value(value: DatabaseService().PostsStream), // Not Working

@@ -4,18 +4,17 @@
 
 import 'dart:async';
 
+import 'package:after_layout/after_layout.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heba_project/models/models.dart';
-import 'package:heba_project/models/user_data.dart';
+import 'package:heba_project/service/DatabaseService.dart';
 import 'package:heba_project/ui/Screens/ChatScreen.dart';
 import 'package:heba_project/ui/shared/utili/Constants.dart';
-import 'package:heba_project/ui/shared/widgets/CustomWidgets.dart';
 import 'package:logger/logger.dart';
-import 'package:provider/provider.dart';
 
 import 'file:///H:/Android%20Projects/Projects/Flutter%20Projects/Mine/heba_project/lib/ui/shared/widgets/CustomAppBar.dart';
 
@@ -25,39 +24,62 @@ class ChatListScreen extends StatefulWidget {
   final String currentUserId;
   final String userID;
 
-  ChatListScreen({Key key, this.currentUserId, this.scaffoldKey, this.userID})
-      : super(key: key);
+  ChatListScreen({Key key, this.currentUserId, this.scaffoldKey, this.userID}) : super(key: key);
 
   @override
   _ChatListScreenState createState() => _ChatListScreenState();
 }
 
-class _ChatListScreenState extends State<ChatListScreen> {
+class _ChatListScreenState extends State<ChatListScreen> with AfterLayoutMixin {
   /// vars ==================================================
 
   var _searchController = new TextEditingController();
   List<Text> texts;
   Chat mChat;
   String chatId;
+  String chatId2;
+  String cu;
   User toUser;
   QuerySnapshot empty;
   Stream<QuerySnapshot> chatListStream;
-  String currentUserId;
+  Stream<QuerySnapshot> chatRooms;
+  Stream<QuerySnapshot> usersStream;
+
+  // String currentUserId;
   FirebaseUser fUser;
   StreamController<User> streamController;
   List<User> usersList = [];
   List<User> duplicateItems = [];
+  String _ReciverName;
 
   /// Log ===================================================
   Logger logger = Logger();
 
   @override
   void initState() {
+    init();
+
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      init();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    // });
   }
+
+  @override
+  void afterFirstLayout(BuildContext context) async {
+    // await getUserInfogetChats();
+  }
+
+  // getUserInfogetChats() async {
+  //   cu = widget.currentUserId;
+  //   // var s = await getUserFrom(widget.currentUserId);
+  //   // print("getUserInfogetChats $s");
+  //   DatabaseService.getUserChats(cu).then((snapshots) {
+  //     setState(() {
+  //       chatRooms = snapshots;
+  //       print("we got the data + ${chatRooms.toString()} this is name  ${cu}");
+  //     });
+  //   });
+  // }
 
   @override
   void dispose() {
@@ -67,29 +89,71 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   init() async {
-    logger.d(
-        "init Called ${widget.currentUserId.length} ===== ${widget.currentUserId}");
+    logger.d("init Called ${widget.currentUserId.length} ===== ${widget.currentUserId}");
+
+    cu = widget.currentUserId;
+
+    DatabaseService.getUserChats(cu).then((snapshots) {
+      logger.d("DatabaseService.getUserChats");
+
+      setState(() {
+        chatRooms = snapshots;
+        logger.d("we got the data chatRooms  ${chatRooms.toString()} this is name  ${cu}");
+      });
+    });
+
+    _ReciverName = getUserNameFromUid2(cu).then((snapshot) {
+      logger.d("getUserNameFromUid2");
+
+      setState(() {
+        usersStream = snapshot;
+        logger.d("we got the data usersStream ${usersStream.toString()} this is name  ${cu}");
+      });
+    });
+
     chatListStream = getCurrentUserChats(widget.currentUserId).asStream();
+
     streamController = StreamController.broadcast();
+
     streamController.stream.listen((event) {
       setState(() {
         usersList.add(event);
       });
     });
+
     duplicateItems = await load(streamController);
+
     setState(() {
       usersList = duplicateItems;
     });
 
-    logger.d("usersList =${usersList.length}");
+    return usersList;
   }
 
+  // Widget chatRoomsList() {
+  //   return StreamBuilder<QuerySnapshot>(
+  //     stream: chatRooms,
+  //     builder: (context, snapshot) {
+  //       return snapshot.hasData
+  //           ? ListView.builder(
+  //               itemCount: snapshot.data.documents.length,
+  //               shrinkWrap: true,
+  //               itemBuilder: (context, index) {
+  //                 return ChatRoomsTile(
+  //                   userName: snapshot.data.documents[index].data['chatRoomId'].toString().replaceAll("_", "").replaceAll(cu, ""),
+  //                   chatRoomId: snapshot.data.documents[index].data["chatRoomId"],
+  //                 );
+  //               })
+  //           : Container();
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
-    currentUserId = Provider.of<UserData>(context).currentUserId;
-    logger.d("duplicateItems : ${duplicateItems.length}");
-    logger.d("uss : ${usersList.map((e) => e.email)}");
+    // currentUserId = Provider.of<UserData>(context).currentUserId;
+    logger.d("duplicateItems: ${duplicateItems.length}");
+    logger.d("usersList.map : ${usersList.map((e) => e.email)}");
 
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -110,10 +174,44 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ],
         ),
       ),
-//      body: chatRoomList2(toUser: toUser,chatId: chatId,chatListStream: chatListStream,currentUserId: currentUserId,),
-      body: chatRoomList(),
-//
 
+      body: StreamBuilder<QuerySnapshot>(
+        stream: chatRooms,
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot1) {
+          if (snapshot1.data == null) return Center(child: CircularProgressIndicator());
+
+          return snapshot1.hasData
+              ? ListView.builder(
+                  itemCount: snapshot1.data.documents.length,
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    var reciverName2 = snapshot1.data.documents[index].data['chatRoomId'].toString().replaceAll("_", "").replaceAll(cu, "");
+                    var chatRoomId = snapshot1.data.documents[index].data['chatRoomId'].toString();
+                    // var name = snapshot1.data.documents.map((e) => e.data['name']).toString();
+
+                    return FutureBuilder<QuerySnapshot>(
+                        future: usersRef.getDocuments(),
+                        builder: (context, snapshot) {
+                          var reciverName = snapshot.data.documents[index].data['name'];
+                          var reciverPic = snapshot.data.documents[index].data['profileImageUrl'];
+
+                          var realName = _ReciverName;
+
+                          // return ListTile(
+                          //   title: Text("${snapshot.data.documents[index].data['name']}"),
+                          //   leading: Text(reciverName2),
+                          // );
+                          //
+                          return ChatItem(i: index, reciverName: reciverName, chatRoomId: chatRoomId, reciverPic: reciverPic);
+                        });
+                  })
+              : Container(
+                  child: Text("aa"),
+                );
+        },
+      ),
+
+      // body: chatRoomList2(toUser: toUser,chatId: chatId,chatListStream: chatListStream,currentUserId: currentUserId,),
       /// SearchBar
     );
   }
@@ -129,6 +227,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         logger.d("getStreamOfUsers  : ${users.length} ");
       }
     }
+    return qn;
 //    var documents = qn.map((event) => event.documents).listen((event) {
 //      var docs = event;
 //
@@ -165,61 +264,61 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //    });
   }
 
-  getStreamOfChats() async {
-//    List<User> users = [];
-    var qn = CHATS.document(currentUserId).collection(USERCHATS).snapshots();
-    await for (var userSnapshot in qn) {
-      for (var doc in userSnapshot.documents) {
-//        User user = new User.fromFirestore(doc);
-//        users.add(user);
-        logger.d("getStreamOfChats  : ${userSnapshot.documents.length} ");
-      }
-    }
-//    var documents = qn.map((event) => event.documents).listen((event) {
-//      var docs = event;
-//
-//      docs.forEach((DocumentSnapshot doc) {
-//
-//
-//      });
-//    });
-  }
+//   getStreamOfChats() async {
+// //    List<User> users = [];
+//     var qn = CHATS.document(currentUserId).collection(USERCHATS).snapshots();
+//     await for (var userSnapshot in qn) {
+//       for (var doc in userSnapshot.documents) {
+// //        User user = new User.fromFirestore(doc);
+// //        users.add(user);
+//         logger.d("getStreamOfChats  : ${userSnapshot.documents.length} ");
+//       }
+//     }
+// //    var documents = qn.map((event) => event.documents).listen((event) {
+// //      var docs = event;
+// //
+// //      docs.forEach((DocumentSnapshot doc) {
+// //
+// //
+// //      });
+// //    });
+//   }
 
   Future<QuerySnapshot> getCurrentUserChats(String chattingFromId) {
     return CHATS.where("users", arrayContains: chattingFromId).getDocuments();
   }
 
-  User getUserFromUid(String uid) {
-    logger.d("getUserFromUid Called ");
-
-    Query query;
-    query = usersRef.where("uid", isEqualTo: uid);
-    var s = query.snapshots();
-//    var users = [];
-    s.forEach((element) {
-      var docs = element.documents;
-      for (var doc in docs) {
-        logger.d("docs in user ref: ${docs.length}");
-
-        toUser = User.fromFirestore(doc);
-//        users.add(chattingWithUser);
-//        logger.d("users ${users.length}");
-      }
-    });
-
-    return toUser;
+//   User getUserFromUid(String uid) {
+//     logger.d("getUserFromUid Called ");
 //
-//  var q = await usersRef.where("uid", isEqualTo: uid).getDocuments();
-//    var docs = q.documents;
-//    for (var doc in docs) {
-//      chattingWithUser = User.fromFirestore(doc);
-//    }
-////    setState(() {
-////      chattingWithUser = user;
-////    });
-////    return chattingWithUser;
-//    return chattingWithUser;
-  }
+//     Query query;
+//     query = usersRef.where("uid", isEqualTo: uid);
+//     var s = query.snapshots();
+// //    var users = [];
+//     s.forEach((element) {
+//       var docs = element.documents;
+//       for (var doc in docs) {
+//         logger.d("docs in user ref: ${docs.length}");
+//
+//         toUser = User.fromFirestore(doc);
+// //        users.add(chattingWithUser);
+// //        logger.d("users ${users.length}");
+//       }
+//     });
+//
+//     return toUser;
+// //
+// //  var q = await usersRef.where("uid", isEqualTo: uid).getDocuments();
+// //    var docs = q.documents;
+// //    for (var doc in docs) {
+// //      chattingWithUser = User.fromFirestore(doc);
+// //    }
+// ////    setState(() {
+// ////      chattingWithUser = user;
+// ////    });
+// ////    return chattingWithUser;
+// //    return chattingWithUser;
+//   }
 
 //   List<User> getUserFrom(String uid) {
 //     logger.d("getUserFromUid Called ");
@@ -252,11 +351,44 @@ class _ChatListScreenState extends State<ChatListScreen> {
 // ////    return chattingWithUser;
 // //    return chattingWithUser;
 //   }
-  getUserFrom(String uid) {
-    logger.d("getUserFromUid Called ");
+//   getUserNameFromUid(String chattingWith) {
+//     logger.d("getUserFrom Called ");
+//     var name;
+//     Query query;
+//     query = usersRef.where("uid", isEqualTo: chattingWith);
+//     var s = query.snapshots();
+//     List<String> users = [];
+//     s.forEach((element) {
+//       var docs = element.documents;
+//       for (var doc in docs) {
+//         logger.d("docs in user ref: ${docs.length}");
+//
+//         toUser = User.fromFirestore(doc);
+//         name = toUser.name;
+//
+//         users.add(name);
+//         logger.d("usersss ${name}");
+//       }
+//     });
+//
+//     return name;
+// //
+// //  var q = await usersRef.where("uid", isEqualTo: uid).getDocuments();
+// //    var docs = q.documents;
+// //    for (var doc in docs) {
+// //      chattingWithUser = User.fromFirestore(doc);
+// //    }
+// ////    setState(() {
+// ////      chattingWithUser = user;
+// ////    });
+// ////    return chattingWithUser;
+// //    return chattingWithUser;
+//   }
 
+  getUserNameFromUid2(String chatRoomID) {
+    logger.d("getUserFrom Called ");
     Query query;
-    query = usersRef.where("uid", isEqualTo: uid);
+    query = usersRef.where("uid", isEqualTo: chatRoomID);
     var s = query.snapshots();
     List<String> users = [];
     s.forEach((element) {
@@ -265,14 +397,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
         logger.d("docs in user ref: ${docs.length}");
 
         toUser = User.fromFirestore(doc);
-        var name = toUser.name;
+        _ReciverName = toUser.name;
 
-        users.add(name);
-        logger.d("usersss ${name}");
+        users.add(_ReciverName);
       }
     });
+    logger.d("USERNAME ${users[0]}");
 
-    return users;
+    return _ReciverName;
 //
 //  var q = await usersRef.where("uid", isEqualTo: uid).getDocuments();
 //    var docs = q.documents;
@@ -286,144 +418,161 @@ class _ChatListScreenState extends State<ChatListScreen> {
 //    return chattingWithUser;
   }
 
-  String getChattingWith(String chatRoomId) {
-    logger.d("getChattingWith Called ");
+  String getChattingWithFromChatRoomId(String chatRoomId) {
+    logger.d("getChattingWithFromChatRoomId Called ");
 
-    var chattinWith = chatRoomId
-        .toString()
-        .replaceAll("_", "")
-        .replaceAll(widget.currentUserId.toString(), "");
+    var chattinWith = chatRoomId.toString().replaceAll("_", "").replaceAll(widget.currentUserId.toString(), "");
     logger.d("chatting From : ${widget.currentUserId}");
-    logger.d("chatting With : $chattinWith");
+    // logger.d("chatting With : $chattinWith");
+    logger.d("chatting With : ${widget.userID}");
     return chattinWith;
   }
 
   Future<List<User>> load(StreamController<User> streamController) async {
-    return await chatListStream
-        .expand((element) => element.documents)
-        .map((event) => User.fromFirestore(event))
-        .toList();
+    return await chatListStream.expand((element) => element.documents).map((event) => User.fromFirestore(event)).toList();
+  }
+
+  Future<QuerySnapshot> load2() async {
+    return usersRef.getDocuments();
   }
 
   /// ========================================= WIDGETS ============================================
 
-  Widget buildFutureBuilder() {
-    var screenSize = MediaQuery.of(context).size;
-//    var chat = Provider.of<Chat>(context).chatId;
-    QuerySnapshot empty;
-    return StreamBuilder<QuerySnapshot>(
-        stream: usersRef.snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> userSnapshot) {
-          if (!userSnapshot.hasData) {
-            return Container(
-              color: Colors.amber,
-            );
-          }
-
-          return StreamBuilder<QuerySnapshot>(
-            initialData: empty,
-            stream:
-            CHATS.document(currentUserId).collection(USERCHATS).snapshots(),
-            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              logger.d("stream value : ${snapshot.data.documents.length} ");
-//        logger.d("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
-
-              if (!snapshot.hasData) {
-                return Center(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      mStatlessWidgets().mLoading(),
-                    ],
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                logger.d('u have error in future');
-              } else if (snapshot.data.documents.length == 0) {
-                return Center(
-                  child: Text('No Chats'),
-                );
-              }
-              return ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: snapshot.data.documents.length,
-                shrinkWrap: true,
-                itemBuilder: (context, i) {
-                  var txt = snapshot.data.documents
-                      .map((e) => e.documentID)
-                      .toString();
-
-                  texts = [];
-                  String tx = txt;
-                  Text text = Text(tx);
-//                  Text text2 = Text("${chat}");
-                  texts.add(text);
-                  return Column(children: texts);
-//                  return chatRow(screenSize);
+//   Widget buildFutureBuilder() {
+//     var screenSize = MediaQuery.of(context).size;
+// //    var chat = Provider.of<Chat>(context).chatId;
+//     QuerySnapshot empty;
+//     return StreamBuilder<QuerySnapshot>(
+//         stream: usersRef.snapshots(),
+//         builder: (context, AsyncSnapshot<QuerySnapshot> userSnapshot) {
+//           if (!userSnapshot.hasData) {
+//             return Container(
+//               color: Colors.amber,
+//             );
+//           }
 //
-//                  final messagedUsers = userSnapshot.data.documents;
-//                  List<Container> listOfViewHolder = [];
-//                  for (var userDoc in messagedUsers) {
-//                    final String userUid = userDoc.data['uid'];
-//                    var listOfDocuments = snapshot.data.documents;
-//                    for (var dc in listOfDocuments) {
-//                      if (dc["uid"] == userUid) {
-//                        downloadUrlFinal = dc["imageDownloadUrl"];
-//                        bioOfUser = dc["bio"];
-//                        receiverToken = dc['token'];
-//                      }
-//                    }
+//           return StreamBuilder<QuerySnapshot>(
+//             initialData: empty,
+//             stream: CHATS.document(currentUserId).collection(USERCHATS).snapshots(),
+//             builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+//               logger.d("stream value : ${snapshot.data.documents.length} ");
+// //        logger.d("chatId Id's  from chats : ${snapshot.data.documents.map((e) => e.data['chatId'])} ");
 //
-//                  }
-//                  users.add(user);
-//                  logger.d("getStreamOfUsers  : ${users.length} ");m
-//                  return Column(children: listOfViewHolder);
-                },
-              );
-            },
-          );
-        });
-  }
+//               if (!snapshot.hasData) {
+//                 return Center(
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.center,
+//                     mainAxisAlignment: MainAxisAlignment.center,
+//                     children: <Widget>[
+//                       mStatlessWidgets().mLoading(),
+//                     ],
+//                   ),
+//                 );
+//               } else if (snapshot.hasError) {
+//                 logger.d('u have error in future');
+//               } else if (snapshot.data.documents.length == 0) {
+//                 return Center(
+//                   child: Text('No Chats'),
+//                 );
+//               }
+//               return ListView.builder(
+//                 physics: NeverScrollableScrollPhysics(),
+//                 itemCount: snapshot.data.documents.length,
+//                 shrinkWrap: true,
+//                 itemBuilder: (context, i) {
+//                   var txt = snapshot.data.documents.map((e) => e.documentID).toString();
+//
+//                   texts = [];
+//                   String tx = txt;
+//                   Text text = Text(tx);
+// //                  Text text2 = Text("${chat}");
+//                   texts.add(text);
+//                   return Column(children: texts);
+// //                  return chatRow(screenSize);
+// //
+// //                  final messagedUsers = userSnapshot.data.documents;
+// //                  List<Container> listOfViewHolder = [];
+// //                  for (var userDoc in messagedUsers) {
+// //                    final String userUid = userDoc.data['uid'];
+// //                    var listOfDocuments = snapshot.data.documents;
+// //                    for (var dc in listOfDocuments) {
+// //                      if (dc["uid"] == userUid) {
+// //                        downloadUrlFinal = dc["imageDownloadUrl"];
+// //                        bioOfUser = dc["bio"];
+// //                        receiverToken = dc['token'];
+// //                      }
+// //                    }
+// //
+// //                  }
+// //                  users.add(user);
+// //                  logger.d("getStreamOfUsers  : ${users.length} ");m
+// //                  return Column(children: listOfViewHolder);
+//                 },
+//               );
+//             },
+//           );
+//         });
+//   }
 
-  Widget chatRoomList() {
-    getUserFrom(widget.userID);
+  Widget chatRoomList(AsyncSnapshot<QuerySnapshot> chatrooms, String rn) {
     return FutureBuilder<List<User>>(
       future: load(streamController),
       builder: (context, snapshot) {
-        logger.d(
-            "FutureBuilder  : usersList: ${usersList
-                .length} user names : ${usersList.map((e) => e.name)}");
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        logger.d("FutureBuilder  : usersList: ${usersList.length} user names : ${usersList.map((e) => e.name)}");
         return ListView.builder(
           physics: NeverScrollableScrollPhysics(),
           itemCount: usersList.length,
           shrinkWrap: true,
-          itemBuilder: (context, i) {
-            return ChatItem(i);
+          itemBuilder: (context, index) {
+            var reciverName = chatrooms.data.documents[index].data['chatRoomId'].toString().replaceAll("_", "").replaceAll(cu, "");
+            var chatRoomId = chatrooms.data.documents[index].data["chatRoomId"];
+            // getChattingWithFromChatRoomId(chatrooms.data.documents[index].data['chatRoomId'].toString());
+            return ChatItem(
+              i: index,
+              reciverName: rn,
+              chatRoomId: chatRoomId,
+            );
           },
         );
       },
     );
-
   }
 
-  Widget ChatItem(int i) {
-    return Card(
-      child: ListTile(
-        subtitle: Text("${i.toString()}"), // lastMessage
-        leading: Padding(
-          padding: const EdgeInsets.all(1.0),
-          child: Container(
+  Widget ChatItem({int i, String reciverName, String chatRoomId, var reciverPic}) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    ChatScreen(
+                      chatRoomId: chatRoomId,
+                    )));
+      },
+      child: Card(
+        child: ListTile(
+          subtitle: Text("${i.toString()}"), // lastMessage
+          leading: Container(
             color: Colors.white,
             child: CircleAvatar(
-              radius: 15.0,
-              backgroundColor: Colors.cyan,
+              radius: 30.0,
+              backgroundColor: Colors.transparent,
+              child: Image.network(
+                reciverPic,
+                scale: 1,
+                fit: BoxFit.contain,
+              ),
             ),
 //                                                ),
           ),
+          title: Text("$reciverName"), // userName
         ),
-        title: Text("${getUserFrom(widget.currentUserId) ??
-            "${widget.currentUserId}"}"), // userName
       ),
     );
   }
@@ -530,14 +679,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget chatRow(var screenSize, User user) {
+  Widget chatRow(User user) {
     return Container(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: <Widget>[
             Container(
-              width: screenSize.width,
               child: Visibility(
                 visible: true,
                 child: Card(
@@ -556,13 +704,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 padding: const EdgeInsets.only(right: 8.0),
                                 child: Container(
                                   child: Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: <Widget>[
+
                                           /// Icons
                                           Container(
                                             width: 30,
@@ -617,15 +764,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                           Padding(
                                             padding: const EdgeInsets.all(1.0),
                                             child: Align(
-                                              alignment:
-                                              AlignmentDirectional.center,
+                                              alignment: AlignmentDirectional.center,
                                               child: Container(
                                                 child: Text(
                                                   user.name ?? "SS",
-                                                  style: TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                      FontWeight.bold),
+                                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                                 ),
                                               ),
                                             ),
@@ -633,19 +776,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                           Padding(
                                             padding: const EdgeInsets.all(1.0),
                                             child: Align(
-                                              alignment:
-                                              AlignmentDirectional.center,
+                                              alignment: AlignmentDirectional.center,
                                               child: Container(
                                                 child: CircleAvatar(
                                                   radius: 15.0,
                                                   backgroundColor: Colors.white,
-                                                  backgroundImage: user
-                                                      .profileImageUrl
-                                                      .isEmpty
-                                                      ? AssetImage(
-                                                      'assets/images/user_placeholder.jpg')
-                                                      : CachedNetworkImageProvider(
-                                                      user.profileImageUrl),
+                                                  backgroundImage: user.profileImageUrl.isEmpty ? AssetImage('assets/images/user_placeholder.jpg') : CachedNetworkImageProvider(user.profileImageUrl),
                                                 ),
                                               ),
                                             ),
@@ -708,13 +844,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   padding: const EdgeInsets.only(right: 8.0),
                                   child: Container(
                                     child: Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: <Widget>[
                                         Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                          mainAxisAlignment: MainAxisAlignment.center,
                                           children: <Widget>[
+
                                             /// Icons
                                             Container(
                                               width: 30,
@@ -767,42 +902,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         Row(
                                           children: <Widget>[
                                             Padding(
-                                              padding:
-                                              const EdgeInsets.all(1.0),
+                                              padding: const EdgeInsets.all(1.0),
                                               child: Align(
-                                                alignment:
-                                                AlignmentDirectional.center,
+                                                alignment: AlignmentDirectional.center,
                                                 child: Container(
                                                   child: Text(
                                                     user[i].name ?? "SS",
-                                                    style: TextStyle(
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                        FontWeight.bold),
+                                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                                   ),
                                                 ),
                                               ),
                                             ),
                                             Padding(
-                                              padding:
-                                              const EdgeInsets.all(1.0),
+                                              padding: const EdgeInsets.all(1.0),
                                               child: Align(
-                                                alignment:
-                                                AlignmentDirectional.center,
+                                                alignment: AlignmentDirectional.center,
                                                 child: Container(
                                                   color: Colors.white,
                                                   child: CircleAvatar(
                                                     radius: 15.0,
-                                                    backgroundColor:
-                                                    Colors.white,
-                                                    backgroundImage: user[i]
-                                                        .profileImageUrl
-                                                        .isEmpty
-                                                        ? AssetImage(
-                                                        'assets/images/user_placeholder.jpg')
-                                                        : CachedNetworkImageProvider(
-                                                        user[i]
-                                                            .profileImageUrl),
+                                                    backgroundColor: Colors.white,
+                                                    backgroundImage:
+                                                    user[i].profileImageUrl.isEmpty ? AssetImage('assets/images/user_placeholder.jpg') : CachedNetworkImageProvider(user[i].profileImageUrl),
 //                                                ),
                                                   ),
                                                 ),
@@ -1381,4 +1502,44 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
 /// ======================================== END ============================================
 
+}
+
+class ChatRoomsTile extends StatelessWidget {
+  final String userName;
+  final String chatRoomId;
+
+  ChatRoomsTile({this.userName, @required this.chatRoomId});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    ChatScreen(
+                      chatRoomId: chatRoomId,
+                    )));
+      },
+      child: Container(
+        color: Colors.black26,
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Row(
+          children: [
+            Container(
+              height: 30,
+              width: 30,
+              decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(30)),
+              child: Text(userName.substring(0, 1), textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'OverpassRegular', fontWeight: FontWeight.w300)),
+            ),
+            SizedBox(
+              width: 12,
+            ),
+            Text(userName, textAlign: TextAlign.start, style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'OverpassRegular', fontWeight: FontWeight.w300))
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -7,7 +7,7 @@ import 'package:heba_project/ui/Screens/search.dart';
 import 'package:heba_project/ui/shared/utili/helperFuncs.dart';
 import 'package:heba_project/ui/shared/widgets/CustomAppBar.dart';
 
-import 'Chat.dart';
+import 'ChatView.dart';
 
 class ChatRoom extends StatefulWidget {
   @override
@@ -27,8 +27,7 @@ class _ChatRoomState extends State<ChatRoom> {
             return Center(
               child: CircularProgressIndicator(),
             );
-          } else if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasData) {
+          } else if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
             return ListView.builder(
                 // itemCount: snapshot.data.documents.length,
                 itemCount: 10,
@@ -65,8 +64,7 @@ class _ChatRoomState extends State<ChatRoom> {
     DatabaseService.getUserChats(helperFunctions.myName).then((snapshots) {
       setState(() {
         chatRooms = snapshots;
-        print(
-            "we got the data + ${chatRooms.toString()} this is name  ${helperFunctions.myName}");
+        print("we got the data + ${chatRooms.toString()} this is name  ${helperFunctions.myName}");
       });
     });
   }
@@ -91,8 +89,7 @@ class _ChatRoomState extends State<ChatRoom> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.search),
         onPressed: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => Search()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => Search()));
         },
       ),
     );
@@ -124,26 +121,13 @@ class ChatRoomsTile extends StatelessWidget {
             Container(
               height: 30,
               width: 30,
-              decoration: BoxDecoration(
-                  color: Colors.red, borderRadius: BorderRadius.circular(30)),
-              child: Text(userName.substring(0, 1),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontFamily: 'OverpassRegular',
-                      fontWeight: FontWeight.w300)),
+              decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(30)),
+              child: Text(userName.substring(0, 1), textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'OverpassRegular', fontWeight: FontWeight.w300)),
             ),
             SizedBox(
               width: 12,
             ),
-            Text(userName,
-                textAlign: TextAlign.start,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontFamily: 'OverpassRegular',
-                    fontWeight: FontWeight.w300))
+            Text(userName, textAlign: TextAlign.start, style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'OverpassRegular', fontWeight: FontWeight.w300))
           ],
         ),
       ),

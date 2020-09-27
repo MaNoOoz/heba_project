@@ -2,8 +2,6 @@
  * Copyright (c) 2019.  Made With Love By Yaman Al-khateeb
  */
 
-import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -34,52 +32,110 @@ class FirestoreServiceAuth {
   }
 
   /// signUpUser =================================================================
-  static Future<String> signUpUserFromInput(BuildContext context, String name,
-      String email, String password, String imageUrl) async {
+//   static Future<String> signUpUserFromInput(BuildContext context, String name, String email, String password, String imageUrl) async {
+//
+//
+//     try {
+//       log("signUpUserFromInput Called ");
+//
+//       AuthResult authResult = await _firebase_Auth.createUserWithEmailAndPassword(
+//         email: email,
+//         password: password,
+//       );
+//
+//       FirebaseUser signedInUser = authResult.user;
+//       print("signed in " + signedInUser.displayName + "\n" + signedInUser.photoUrl);
+//       // var clonedUser = await saveDetailsFromGoogleAuth(signedInUser);
+//       var clonedUser2 = await _userFromFirebaseUser(signedInUser);
+//
+//       print("signed in " +
+//           clonedUser2.documentId +
+//           clonedUser2.name +
+//           "\n" +
+// //        savedUser.name +
+// //        savedUser.id +
+//           "\n" +
+//           clonedUser2.profileImageUrl);
+//
+// //      if (signedInUser != null) {
+// //        usersRef.document(signedInUser.uid).setData({
+// //          'email': email,
+// //          'name': name,
+// //          'profileImageUrl': imageUrl ?? "${AvailableImages.appIcon}",
+// //          'uid': signedInUser.uid,
+// //          'chats': [],
+// //        });
+// //        Navigator.pop(context);
+// //      }
+//     } catch (e) {
+//       log(e.toString());
+//     }
+//     Navigator.pop(context);
+//   }
+  static Future signUpUserFromInput(BuildContext context, String name, String email, String password, String imageUrl) async {
     try {
-      log("signUpUserFromInput Called ");
-
-      AuthResult authResult =
-          await _firebase_Auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      FirebaseUser signedInUser = authResult.user;
-      print("signed in " +
-          signedInUser.displayName +
-          "\n" +
-          signedInUser.photoUrl);
-      var clonedUser = await saveDetailsFromGoogleAuth(signedInUser);
-      print("signed in " +
-          clonedUser.documentId +
-          clonedUser.name +
-          "\n" +
-//        savedUser.name +
-//        savedUser.id +
-          "\n" +
-          clonedUser.profileImageUrl);
-
-//      if (signedInUser != null) {
-//        usersRef.document(signedInUser.uid).setData({
-//          'email': email,
-//          'name': name,
-//          'profileImageUrl': imageUrl ?? "${AvailableImages.appIcon}",
-//          'uid': signedInUser.uid,
-//          'chats': [],
-//        });
-//        Navigator.pop(context);
-//      }
+      AuthResult result = await _firebase_Auth.createUserWithEmailAndPassword(email: email, password: password);
+      FirebaseUser user = result.user;
+      return _userFromFirebaseUser(user);
     } catch (e) {
-      log(e.toString());
+      print(e.toString());
+      Navigator.pop(context);
+
+      return null;
     }
-    Navigator.pop(context);
+  }
+
+  // Create user object based on FirebaseUser
+  // static Future<User> _userFromFirebaseUser(FirebaseUser fuser) async{
+  //    DocumentReference ref = usersRef.document(fuser.uid); //reference of the user's document node in database/users. This node is created using uid
+  //    final bool userExists = !await ref.snapshots().isEmpty; // check if user exists or not
+  //    var data = {
+  //      //add details received from google auth
+  //      'profileImageUrl': fuser.photoUrl,
+  //      'email': fuser.email,
+  //      'name': fuser.displayName,
+  //      'uid': fuser.uid,
+  //      'lastSeen': DateTime.now(),
+  //    };
+  //    if (!userExists && fuser.photoUrl != null) {
+  //      // if user entry exists then we would not want to override the photo url with the one received from googel auth
+  //      data['profileImageUrl'] = fuser.photoUrl;
+  //    }
+  //    ref.setData(data, merge: true); // set the data
+  //    final DocumentSnapshot currentDocument = await ref.get(); // get updated data reference
+  //
+  //    return User.fromFirestore(currentDocument); // create a user object and return
+  //
+  //    // return user != null ? User.fromMap(data) : null;
+  //
+  //  }
+  static User _userFromFirebaseUser(FirebaseUser fuser) {
+    // DocumentReference ref = usersRef.document(fuser.uid); //reference of the user's document node in database/users. This node is created using uid
+    // final bool userExists = !await ref.snapshots().isEmpty; // check if user exists or not
+    var data = {
+      //add details received from google auth
+      // 'profileImageUrl': fuser.photoUrl,
+      'email': fuser.email,
+      'name': fuser.displayName,
+      'uid': fuser.uid,
+      'lastSeen': DateTime.now(),
+    };
+    // if (!userExists && fuser.photoUrl != null) {
+    //   // if user entry exists then we would not want to override the photo url with the one received from googel auth
+    //   data['profileImageUrl'] = fuser.photoUrl;
+    // }
+    // ref.setData(data, merge: true); // set the data
+    // final DocumentSnapshot currentDocument = await ref.get(); // get updated data reference
+    //
+    // return User.fromFirestore(currentDocument); // create a user object and return
+
+    return fuser != null ? User.fromMap(data) : null;
   }
 
   /// login =================================================================
   static void loginWithFirebase(String email, String password) async {
     try {
-      await _firebase_Auth.signInWithEmailAndPassword(
-          email: email, password: password);
+      await _firebase_Auth.signInWithEmailAndPassword(email: email, password: password);
       new Future.delayed(new Duration(seconds: 3), () {});
     } catch (e) {
       print(e);
@@ -87,7 +143,7 @@ class FirestoreServiceAuth {
   }
 
   /// isUserLogged =================================================================
-  static Future<bool> isUserLogged() async {
+  static Future<bool> isFirebaseUserLogged() async {
     FirebaseUser firebaseUser = await getLoggedFirebaseUser();
 
     if (firebaseUser != null) {
@@ -108,16 +164,14 @@ class FirestoreServiceAuth {
 
     loading.add(true);
     final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
-    final GoogleSignInAuthentication googleSignInAuthentication =
-    await googleSignInAccount.authentication;
+    final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.getCredential(
       accessToken: googleSignInAuthentication.accessToken,
       idToken: googleSignInAuthentication.idToken,
     );
 
-    final AuthResult authResult =
-    await _firebase_Auth.signInWithCredential(credential);
+    final AuthResult authResult = await _firebase_Auth.signInWithCredential(credential);
     final FirebaseUser user = authResult.user;
 
     assert(!user.isAnonymous);
@@ -148,10 +202,8 @@ class FirestoreServiceAuth {
   static Future<User> saveDetailsFromGoogleAuth(FirebaseUser user) async {
     print("saveDetailsFromGoogleAuth");
 
-    DocumentReference ref = usersRef.document(user
-        .uid); //reference of the user's document node in database/users. This node is created using uid
-    final bool userExists =
-    !await ref
+    DocumentReference ref = usersRef.document(user.uid); //reference of the user's document node in database/users. This node is created using uid
+    final bool userExists = !await ref
         .snapshots()
         .isEmpty; // check if user exists or not
     var data = {
@@ -167,11 +219,34 @@ class FirestoreServiceAuth {
       data['profileImageUrl'] = user.photoUrl;
     }
     ref.setData(data, merge: true); // set the data
-    final DocumentSnapshot currentDocument =
-    await ref.get(); // get updated data reference
+    final DocumentSnapshot currentDocument = await ref.get(); // get updated data reference
 
-    return User.fromFirestore(
-        currentDocument); // create a user object and return
+    return User.fromFirestore(currentDocument); // create a user object and return
+  }
+
+  static Future<User> saveDetailsFromSignUp(User user) async {
+    print("saveDetailsFromGoogleAuth");
+
+    DocumentReference ref = usersRef.document(user.uid); //reference of the user's document node in database/users. This node is created using uid
+    final bool userExists = !await ref
+        .snapshots()
+        .isEmpty; // check if user exists or not
+    var data = {
+      //add details received from google auth
+      'profileImageUrl': user.profileImageUrl,
+      'email': user.email,
+      'name': user.name,
+      'uid': user.uid,
+      'lastSeen': DateTime.now(),
+    };
+    if (!userExists && user.profileImageUrl != null) {
+      // if user entry exists then we would not want to override the photo url with the one received from googel auth
+      data['profileImageUrl'] = user.profileImageUrl;
+    }
+    ref.setData(data, merge: true); // set the data
+    final DocumentSnapshot currentDocument = await ref.get(); // get updated data reference
+
+    return User.fromFirestore(currentDocument); // create a user object and return
   }
 
 /// saveDetailsFromGoogleAuth =================================================================
